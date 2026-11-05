@@ -28,7 +28,6 @@ import {
   usePaymentMethods,
   useReactivatePaymentMethod,
 } from "@/hooks/usePaymentMethods";
-import { cn } from "@/lib/utils";
 import type { PaymentMethodConfig, PaymentMethodType } from "@/types";
 
 const METHOD_TYPE_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -54,8 +53,8 @@ function MethodName({ method }: { method: PaymentMethodConfig }) {
   const Icon = METHOD_TYPE_ICONS[method.icon_name] || CreditCard;
   return (
     <div className="flex min-w-0 items-center gap-3">
-      <div className="bg-muted flex size-9 shrink-0 items-center justify-center rounded-lg">
-        <Icon className={cn("size-5", method.icon_color)} aria-hidden="true" />
+      <div className="bg-muted text-muted-foreground flex size-9 shrink-0 items-center justify-center rounded-lg">
+        <Icon className="size-5" aria-hidden="true" />
       </div>
       <div className="min-w-0">
         <div className="font-medium break-words">{method.display_name}</div>

@@ -143,16 +143,26 @@ const accountDetailQuery = (accountId: string) =>
 
 // Fetch single account
 
+const ACCOUNT_TYPES: readonly AccountType[] = ["Bank", "E-Wallet", "Cash"];
+
+const isAccountType = (value: string): value is AccountType =>
+  ACCOUNT_TYPES.some((accountType) => accountType === value);
+
 const accountBalancesQuery = (asOfDate?: Date) =>
   queryOptions({
     queryKey: accountKeys.balancesAsOf(asOfDate?.toISOString()),
-    queryFn: async () => {
+    queryFn: async (): Promise<AccountWithBalance[]> => {
       const { data, error } = await supabase.rpc("get_all_account_balances", {
         p_as_of_date: asOfDate?.toISOString() || new Date().toISOString(),
       });
 
       if (error) throw new Error(handleSupabaseError(error));
-      return (data || []) as AccountWithBalance[];
+      return (data ?? []).map((row) => {
+        if (!isAccountType(row.account_type)) {
+          throw new Error(`Unknown account type: ${row.account_type}`);
+        }
+        return { ...row, account_type: row.account_type };
+      });
     },
     staleTime: 30000, // 30 seconds - balances can change frequently
     refetchOnWindowFocus: true,
@@ -160,6 +170,12 @@ const accountBalancesQuery = (asOfDate?: Date) =>
 
 // Fetch all accounts with calculated balances
 export const useAccountBalances = (asOfDate?: Date) => useQuery(accountBalancesQuery(asOfDate));
+
+const selectActiveAccounts = (accounts: AccountWithBalance[]) =>
+  accounts.filter((account) => account.is_active);
+
+export const useActiveAccountBalances = (asOfDate?: Date) =>
+  useQuery({ ...accountBalancesQuery(asOfDate), select: selectActiveAccounts });
 
 // Create account
 export const useCreateAccount = () => {

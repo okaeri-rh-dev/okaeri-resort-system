@@ -5,7 +5,6 @@ import {
   E2E_PAYMENT_PROOF_PATHS,
   E2E_REFERENCE_PREFIX,
   E2E_UNIT,
-  E2E_USER,
 } from "./fixtures";
 import { getServiceRoleClient } from "./supabase-client";
 
@@ -15,27 +14,6 @@ const ONE_PIXEL_PNG = Buffer.from(
   "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=",
   "base64"
 );
-
-async function findUserIdByEmail(supabase: Supabase, email: string): Promise<string | null> {
-  const { data, error } = await supabase.auth.admin.listUsers();
-  if (error) throw new Error(`auth.listUsers failed: ${error.message}`);
-  return data.users.find((u) => u.email === email)?.id ?? null;
-}
-
-async function ensureE2EUser(supabase: Supabase): Promise<string> {
-  const existing = await findUserIdByEmail(supabase, E2E_USER.email);
-  if (existing) return existing;
-
-  const { data, error } = await supabase.auth.admin.createUser({
-    email: E2E_USER.email,
-    password: E2E_USER.password,
-    email_confirm: true,
-  });
-  if (error || !data.user) {
-    throw new Error(`auth.admin.createUser failed: ${error?.message ?? "no user returned"}`);
-  }
-  return data.user.id;
-}
 
 async function clearExistingE2E(supabase: Supabase): Promise<void> {
   // Order matters for FK constraints. Delete-then-insert avoids upsert/audit
@@ -65,19 +43,6 @@ async function uploadPaymentProofs(supabase: Supabase): Promise<void> {
 
 async function seed(): Promise<void> {
   const supabase = getServiceRoleClient();
-
-  const userId = await ensureE2EUser(supabase);
-  const { error: roleError } = await supabase.from("app_roles").upsert(
-    {
-      user_id: userId,
-      email: E2E_USER.email,
-      role: E2E_USER.role,
-      is_active: true,
-      notes: "E2E test user — managed by scripts/e2e",
-    },
-    { onConflict: "user_id" }
-  );
-  if (roleError) throw new Error(`app_roles upsert failed: ${roleError.message}`);
 
   await clearExistingE2E(supabase);
 
@@ -151,7 +116,7 @@ async function seed(): Promise<void> {
   await uploadPaymentProofs(supabase);
 
   console.log(
-    `✓ Seeded 1 user (${E2E_USER.email}), 1 guest, 1 unit, ${insertedBookings.length} bookings (prefix ${E2E_REFERENCE_PREFIX}*), ${E2E_PAYMENT_PROOF_PATHS.length} payment proof(s).`
+    `✓ Seeded 1 guest, 1 unit, ${insertedBookings.length} bookings (prefix ${E2E_REFERENCE_PREFIX}*), ${E2E_PAYMENT_PROOF_PATHS.length} payment proof(s).`
   );
 }
 

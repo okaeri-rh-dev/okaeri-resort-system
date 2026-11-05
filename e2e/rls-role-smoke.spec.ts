@@ -18,10 +18,10 @@
  */
 
 import { expect, test } from "@playwright/test";
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 import { E2E_REF } from "../scripts/e2e/fixtures";
 import { loginAsOwner, loginAsStaff } from "./fixtures/auth";
+import { serviceClient } from "./fixtures/service-client";
 import { BookingsTablePage } from "./pages/BookingsTablePage";
 
 // 1x1 PNG — a valid image the payment-proofs bucket (accept image/*) will accept.
@@ -30,20 +30,8 @@ const PNG_1X1 = Buffer.from(
   "base64"
 );
 
-function admin(): SupabaseClient {
-  // Local-only (all env files point at 127.0.0.1). Falls back to the well-known
-  // local service key so the spec is self-contained.
-  return createClient(
-    process.env.VITE_SUPABASE_URL || "http://127.0.0.1:54321",
-    process.env.SUPABASE_SERVICE_ROLE_KEY ||
-      process.env.TEST_SUPABASE_SERVICE_ROLE_KEY ||
-      "sb_secret_N7UND0UgjKTVK-Uodkm0Hg_xSvEMPvz",
-    { auth: { autoRefreshToken: false, persistSession: false } }
-  );
-}
-
 test.describe("RLS role smoke (browser)", () => {
-  const db = admin();
+  const db = serviceClient();
   let bookingId: string | null = null;
 
   test.beforeAll(async () => {

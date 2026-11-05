@@ -11,24 +11,16 @@
 
 import { createClient } from "@supabase/supabase-js";
 
+import type { UnitAvailability } from "@/lib/bookings/availability";
 import { isManilaDay, toStayInstants } from "@/lib/bookings/stay";
 import type { Database } from "@/types/database.types";
 
 interface Env {
   SUPABASE_URL: string;
   SUPABASE_ANON_KEY: string;
-  RATE_LIMIT_KV: KVNamespace;
 }
 
-/**
- * Availability check result from database
- */
-interface AvailabilityResult {
-  unit_id: string;
-  is_available: boolean;
-  conflicting_bookings: number;
-  next_available_date: string | null;
-}
+type AvailabilityResult = Omit<UnitAvailability, "unit_name">;
 
 /**
  * Main handler for multi-unit availability checking
@@ -78,31 +70,6 @@ export const onRequestGet = async (context: { request: Request; env: Env }): Pro
     }
     const { check_in: checkInUTC, check_out: checkOutUTC } = toStayInstants(checkIn, checkOut);
 
-    // ✅ Generate cache key
-    const sortedUnitIds = [...unitIds].sort();
-    const cacheKey = `availability:${sortedUnitIds.join(",")}:${checkIn}:${checkOut}`;
-
-    // ✅ Check KV cache first (1 minute TTL)
-    if (env.RATE_LIMIT_KV) {
-      try {
-        const cached = await env.RATE_LIMIT_KV.get(cacheKey);
-        if (cached) {
-          const cachedData = JSON.parse(cached);
-          return Response.json(cachedData, {
-            headers: {
-              "Content-Type": "application/json",
-              "X-Cache": "HIT",
-              "Cache-Control": "public, max-age=60",
-              "X-Processing-Time": "0ms",
-            },
-          });
-        }
-      } catch (cacheError) {
-        console.warn("[Availability] Cache read error:", cacheError);
-        // Continue to database query if cache fails
-      }
-    }
-
     // Call database function (from Phase 1)
     // Use Authorization header to authenticate as the logged-in user
     const authHeader = request.headers.get("Authorization");
@@ -150,6 +117,7 @@ export const onRequestGet = async (context: { request: Request; env: Env }): Pro
         unit_name: unitInfo?.unit_name || "Unknown",
         unit_code: unitInfo?.unit_code || "",
         is_available: item.is_available,
+        reason: item.reason,
         conflicting_bookings: item.conflicting_bookings || 0,
         next_available_date: item.next_available_date || null,
       };
@@ -175,24 +143,10 @@ export const onRequestGet = async (context: { request: Request; env: Env }): Pro
       },
     };
 
-    // ✅ Cache result for 1 minute
-    if (env.RATE_LIMIT_KV) {
-      try {
-        await env.RATE_LIMIT_KV.put(cacheKey, JSON.stringify(responseData), {
-          expirationTtl: 60, // 1 minute
-        });
-      } catch (cacheError) {
-        console.warn("[Availability] Cache write error:", cacheError);
-        // Continue even if caching fails
-      }
-    }
-
     return Response.json(responseData, {
       headers: {
         "Content-Type": "application/json",
-        "X-Cache": "MISS",
         "X-Processing-Time": `${processingTime}ms`,
-        "Cache-Control": "public, max-age=60",
       },
     });
   } catch (error) {

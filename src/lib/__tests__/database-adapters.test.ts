@@ -11,10 +11,26 @@ const walkInRow = {
   check_out: "2026-10-12T04:00:00Z",
   total_amount: 9000,
   is_walk_in: true,
+  booking_source: "Walk-in",
 } as DbBooking;
 
 describe("adaptBookingFromDB", () => {
   it.each([true, false])("keeps is_walk_in = %s", (isWalkIn) => {
     expect(adaptBookingFromDB({ ...walkInRow, is_walk_in: isWalkIn }).is_walk_in).toBe(isWalkIn);
+  });
+
+  it("keeps the booking source", () => {
+    expect(adaptBookingFromDB(walkInRow).booking_source).toBe("Walk-in");
+  });
+
+  it("keeps the fields the verification queue reads", () => {
+    const booking = adaptBookingFromDB({
+      ...walkInRow,
+      is_guest_booking: true,
+      unit_assignment_status: "pending",
+    });
+
+    expect(booking.is_guest_booking).toBe(true);
+    expect(booking.unit_assignment_status).toBe("pending");
   });
 });

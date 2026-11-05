@@ -52,7 +52,7 @@ describe("POST /api/guest-booking/status against the real schema", () => {
     });
     await testSupabaseAdmin
       .from("bookings")
-      .update({ is_guest_booking: true })
+      .update({ booking_source: "Website" })
       .eq("booking_id", booking.booking_id);
   });
 

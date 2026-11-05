@@ -38,10 +38,10 @@ export class AdminQueuePage {
   readonly mediumBadges: Locator;
   readonly lowBadges: Locator;
 
-  // Action buttons
-  readonly reviewPaymentButtons: Locator;
-  readonly assignUnitsButtons: Locator;
-  readonly viewDetailsButtons: Locator;
+  // Action links
+  readonly reviewPaymentLinks: Locator;
+  readonly assignUnitsLinks: Locator;
+  readonly viewDetailsLinks: Locator;
 
   // Refresh and real-time
   readonly refreshButton: Locator;
@@ -87,14 +87,14 @@ export class AdminQueuePage {
     this.mediumBadges = page.locator("table tbody").getByText("Medium");
     this.lowBadges = page.locator("table tbody").getByText("Low");
 
-    // Action buttons - exact text from component
-    this.reviewPaymentButtons = page.getByRole("button", {
+    // Action links - exact text from component
+    this.reviewPaymentLinks = page.getByRole("link", {
       name: "Review Payment",
     });
-    this.assignUnitsButtons = page.getByRole("button", {
+    this.assignUnitsLinks = page.getByRole("link", {
       name: "Assign Cabins",
     });
-    this.viewDetailsButtons = page.getByRole("link", { name: /view|details/i });
+    this.viewDetailsLinks = page.getByRole("link", { name: /^view|details/i });
 
     // Refresh controls
     this.refreshButton = page.getByRole("button", { name: /refresh/i });
@@ -109,6 +109,14 @@ export class AdminQueuePage {
   async goto(): Promise<void> {
     await this.page.goto(ROUTES.admin.bookingsQueue);
     await this.waitForPageLoad();
+  }
+
+  /**
+   * Open the Assign Cabins page from a queued booking's row
+   */
+  async openAssignCabins(reference: string): Promise<void> {
+    const row = this.page.getByRole("row").filter({ hasText: reference });
+    await row.getByRole("link", { name: "Assign Cabins" }).click();
   }
 
   /**
@@ -225,12 +233,11 @@ export class AdminQueuePage {
 
   /**
    * Get the urgency score for a specific booking
-   * Score is displayed next to badge in font-mono text
+   * Score is displayed next to the urgency badge
    */
   async getUrgencyScore(bookingRef: string): Promise<number> {
     const row = this.getQueueItemByReference(bookingRef);
-    // Score shown in first cell with font-mono class
-    const scoreText = await row.locator(".font-mono").first().textContent();
+    const scoreText = await row.locator(".tabular-nums").first().textContent();
     return parseInt(scoreText?.match(/\d+/)?.[0] || "0", 10);
   }
 
@@ -250,21 +257,11 @@ export class AdminQueuePage {
   }
 
   /**
-   * Get all booking references currently in queue
-   * References are in font-mono styled cells
+   * Get all booking references currently in queue (second column)
    */
   async getAllBookingReferences(): Promise<string[]> {
-    const refs: string[] = [];
-    const rows = await this.queueItems.all();
-    for (const row of rows) {
-      // Reference is typically in second column with font-mono
-      const refCell = row.locator("td").nth(1).locator(".font-mono");
-      const text = await refCell.textContent().catch(() => null);
-      if (text) {
-        refs.push(text.trim());
-      }
-    }
-    return refs;
+    const refs = await this.queueItems.locator("td:nth-child(2)").allTextContents();
+    return refs.map((ref) => ref.trim());
   }
 
   // ================== Actions ==================
@@ -274,8 +271,8 @@ export class AdminQueuePage {
    */
   async clickReviewPayment(bookingRef: string): Promise<void> {
     const row = this.getQueueItemByReference(bookingRef);
-    const button = row.getByRole("button", { name: "Review Payment" });
-    await button.click();
+    const link = row.getByRole("link", { name: "Review Payment" });
+    await link.click();
     await this.page.waitForURL(/\/verify-payment/);
   }
 
@@ -284,8 +281,8 @@ export class AdminQueuePage {
    */
   async clickAssignUnits(bookingRef: string): Promise<void> {
     const row = this.getQueueItemByReference(bookingRef);
-    const button = row.getByRole("button", { name: "Assign Cabins" });
-    await button.click();
+    const link = row.getByRole("link", { name: "Assign Cabins" });
+    await link.click();
     await this.page.waitForURL(/\/assign-units/);
   }
 
@@ -371,7 +368,7 @@ export class AdminQueuePage {
     const scores: number[] = [];
 
     for (const row of rows) {
-      const scoreText = await row.locator(".font-mono").first().textContent();
+      const scoreText = await row.locator(".tabular-nums").first().textContent();
       const score = parseInt(scoreText?.match(/\d+/)?.[0] || "0", 10);
       scores.push(score);
     }
@@ -383,35 +380,35 @@ export class AdminQueuePage {
   }
 
   /**
-   * Verify specific action button is visible for a booking
+   * Verify specific action link is visible for a booking
    */
   async expectActionVisible(
     bookingRef: string,
     action: "reviewPayment" | "assignUnits" | "viewDetails"
   ): Promise<void> {
     const row = this.getQueueItemByReference(bookingRef);
-    const buttonNames = {
+    const actionNames = {
       reviewPayment: "Review Payment",
       assignUnits: "Assign Cabins",
-      viewDetails: /view|details/i,
+      viewDetails: /^view|details/i,
     };
-    const button = row.getByRole("button", { name: buttonNames[action] });
-    await expect(button).toBeVisible();
+    const link = row.getByRole("link", { name: actionNames[action] });
+    await expect(link).toBeVisible();
   }
 
   /**
-   * Verify action button is NOT visible (e.g., for Staff role)
+   * Verify action link is NOT visible (e.g., for Staff role)
    */
   async expectActionHidden(
     bookingRef: string,
     action: "reviewPayment" | "assignUnits"
   ): Promise<void> {
     const row = this.getQueueItemByReference(bookingRef);
-    const buttonNames = {
+    const actionNames = {
       reviewPayment: "Review Payment",
       assignUnits: "Assign Cabins",
     };
-    const button = row.getByRole("button", { name: buttonNames[action] });
-    await expect(button).not.toBeVisible();
+    const link = row.getByRole("link", { name: actionNames[action] });
+    await expect(link).not.toBeVisible();
   }
 }

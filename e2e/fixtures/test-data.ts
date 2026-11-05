@@ -28,6 +28,12 @@ export const TEST_USERS = {
     password: process.env.TEST_STAFF_PASSWORD || "test-password",
     role: "staff",
   },
+  // Seeded by scripts/seed-test-users.mjs for e2e/auth.spec.ts logout tests only.
+  logout: {
+    email: "logout@okaeri.test",
+    password: "test-password",
+    role: "staff",
+  },
 } as const;
 
 // Invalid credentials for negative tests

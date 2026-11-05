@@ -25,10 +25,12 @@ import {
   Button,
   Card,
   DataTable,
+  Label,
   ListCard,
   ListCardRow,
   SortableHeader,
   StatusBadge,
+  Switch,
   TableEmptyState,
   TablePagination,
   TableSearch,
@@ -52,15 +54,12 @@ const netTransfers = (account: AccountWithBalance) => account.transfers_in - acc
 
 interface AccountsTableProps {
   onEditAccount?: (account: AccountWithBalance) => void;
-  showInactive?: boolean;
 }
 
-export const AccountsTable: React.FC<AccountsTableProps> = ({
-  onEditAccount,
-  showInactive = false,
-}) => {
+export const AccountsTable: React.FC<AccountsTableProps> = ({ onEditAccount }) => {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [globalFilter, setGlobalFilter] = useState("");
+  const [showInactive, setShowInactive] = useState(false);
 
   const [accountToDeactivate, setAccountToDeactivate] = useState<AccountWithBalance | null>(null);
 
@@ -227,13 +226,21 @@ export const AccountsTable: React.FC<AccountsTableProps> = ({
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-4">
+      <div className="flex flex-wrap items-center gap-4">
         <TableSearch
           value={globalFilter}
           onChange={setGlobalFilter}
           placeholder="Search accounts..."
           className="max-w-sm"
         />
+        <div className="flex items-center gap-2">
+          <Switch
+            id="show-inactive-accounts"
+            checked={showInactive}
+            onCheckedChange={setShowInactive}
+          />
+          <Label htmlFor="show-inactive-accounts">Show inactive</Label>
+        </div>
         <Button variant="outline" size="sm" onClick={() => refetch()}>
           <RefreshCcw className="mr-2 size-4" aria-hidden="true" />
           Refresh

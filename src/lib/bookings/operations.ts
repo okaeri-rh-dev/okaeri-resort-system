@@ -3,6 +3,9 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { BookingStatus } from "@/types/booking-status";
 import type { Database, Tables, TablesInsert, TablesUpdate } from "@/types/database.types";
 
+import { BlockedUnitError, isBlockedNightError } from "./availability";
+import { DuplicateConfirmationCodeError, isDuplicateConfirmationCode } from "./confirmation-code";
+import type { BookingSource } from "./source";
 import { toStayInstants, type ManilaDay } from "./stay";
 
 type Client = SupabaseClient<Database>;
@@ -15,18 +18,35 @@ export type BookingChanges = Partial<{
   num_guests: number;
   payment_method: string | null;
   special_requests: string | null;
-  is_walk_in: boolean;
+  booking_source: BookingSource;
+  airbnb_confirmation_code: string | null;
+  /** Manager and above only; split across the cabins by the database. */
+  total_amount: number;
 }> & { stay?: { check_in: ManilaDay; check_out: ManilaDay } };
+
+export const BOOKING_SEARCH_COLUMNS = [
+  "guest_name",
+  "booking_reference",
+  "email",
+  "contact_number",
+  "airbnb_confirmation_code",
+];
 
 type Result<T> = { data: T | null; error: { message: string; code?: string } | null };
 
 const EXCLUSION_VIOLATION = "23P01";
 
-function rowFrom<T>({ data, error }: Result<T>): NonNullable<T> {
+function throwIfError(error: Result<unknown>["error"]) {
   if (error?.code === EXCLUSION_VIOLATION) {
     throw new Error("This unit is already booked for some of these days");
   }
+  if (isBlockedNightError(error)) throw new BlockedUnitError();
+  if (isDuplicateConfirmationCode(error)) throw new DuplicateConfirmationCodeError();
   if (error) throw new Error(error.message);
+}
+
+function rowFrom<T>({ data, error }: Result<T>): NonNullable<T> {
+  throwIfError(error);
   if (data === null || data === undefined) throw new Error("The booking was not returned");
   return data;
 }
@@ -36,15 +56,19 @@ export async function updateBooking(
   bookingId: string,
   changes: BookingChanges
 ): Promise<BookingRow> {
-  const { stay, ...columns } = changes;
+  const { stay, total_amount, ...columns } = changes;
   const update: TablesUpdate<"bookings"> = { ...columns };
 
   if (stay) Object.assign(update, toStayInstants(stay.check_in, stay.check_out));
   if (changes.email) update.guest_id = await guestIdForEmail(client, changes.email, changes);
 
-  return rowFrom(
-    await client.from("bookings").update(update).eq("booking_id", bookingId).select().single()
-  );
+  const { error } = await client.rpc("update_booking", {
+    p_booking_id: bookingId,
+    p_changes: update,
+    p_total: total_amount,
+  });
+  throwIfError(error);
+  return rowFrom(await client.from("bookings").select().eq("booking_id", bookingId).single());
 }
 
 async function guestIdForEmail(

@@ -25,32 +25,8 @@ interface Env {
   RATE_LIMIT_KV?: KVNamespace;
 }
 
-// CORS headers helper (validates origin against allowlist)
-function getCorsHeaders(origin?: string | null) {
-  const allowedOrigins = [
-    "https://okaeri-resort.pages.dev",
-    /^https:\/\/[a-z0-9-]+\.okaeri-resort\.pages\.dev$/,
-    "http://localhost:5173",
-    "http://localhost:8788",
-    "http://127.0.0.1:5173",
-  ];
-
-  const isAllowed =
-    origin &&
-    allowedOrigins.some((allowed) =>
-      typeof allowed === "string" ? allowed === origin : allowed.test(origin)
-    );
-
-  return {
-    "Access-Control-Allow-Origin": isAllowed && origin ? origin : "https://okaeri-resort.pages.dev",
-    "Access-Control-Allow-Methods": "GET, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type, Authorization",
-  };
-}
-
 export async function onRequestGet(context: { request: Request; env: Env }): Promise<Response> {
   const { request, env } = context;
-  const corsHeaders = getCorsHeaders(request.headers.get("Origin"));
 
   try {
     const supabase = createClient<Database>(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, {
@@ -68,7 +44,7 @@ export async function onRequestGet(context: { request: Request; env: Env }): Pro
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json" },
       });
     }
     const token = authHeader.slice(7);
@@ -80,7 +56,7 @@ export async function onRequestGet(context: { request: Request; env: Env }): Pro
     if (authErr || !user) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json" },
       });
     }
 
@@ -90,7 +66,7 @@ export async function onRequestGet(context: { request: Request; env: Env }): Pro
         JSON.stringify({ error: "Forbidden", message: "Owner or admin access required" }),
         {
           status: 403,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json" },
         }
       );
     }
@@ -106,7 +82,7 @@ export async function onRequestGet(context: { request: Request; env: Env }): Pro
       console.error("[PendingUsers] Failed to list auth users:", authError.message);
       return new Response(JSON.stringify({ error: "Failed to fetch users" }), {
         status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json" },
       });
     }
 
@@ -117,7 +93,7 @@ export async function onRequestGet(context: { request: Request; env: Env }): Pro
       console.error("[PendingUsers] Failed to list roles:", roleError.message);
       return new Response(JSON.stringify({ error: "Failed to fetch roles" }), {
         status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json" },
       });
     }
 
@@ -136,13 +112,13 @@ export async function onRequestGet(context: { request: Request; env: Env }): Pro
 
     return new Response(JSON.stringify({ users: pendingUsers }), {
       status: 200,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json" },
     });
   } catch (error) {
     console.error("[PendingUsers] Unexpected error:", error);
     return new Response(JSON.stringify({ error: "An unexpected error occurred" }), {
       status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json" },
     });
   }
 }

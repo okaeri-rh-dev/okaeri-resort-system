@@ -20,12 +20,6 @@ interface Env {
 export const onRequestGet: PagesFunction<Env> = async (context) => {
   const { env } = context;
 
-  const corsHeaders = {
-    "Access-Control-Allow-Origin": "*",
-    "Content-Type": "application/json",
-    "Cache-Control": "public, max-age=3600", // 1 hour CDN cache
-  };
-
   try {
     const supabase = createClient<Database>(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, {
       auth: {
@@ -47,15 +41,13 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
       console.error("[RATES] Database error:", error);
       return Response.json(
         { success: false, error: "Failed to fetch configuration" },
-        { status: 500, headers: corsHeaders }
+        { status: 500 }
       );
     }
 
-    // Get total available units dynamically
     const { count: totalUnits } = await supabase
       .from("units")
-      .select("*", { count: "exact", head: true })
-      .eq("unit_status", "Available");
+      .select("*", { count: "exact", head: true });
 
     return Response.json(
       {
@@ -71,13 +63,13 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
           currency: data.currency,
         },
       },
-      { status: 200, headers: corsHeaders }
+      { status: 200 }
     );
   } catch (error: unknown) {
     console.error("[RATES] Unexpected error:", error);
     return Response.json(
       { success: false, error: "Failed to fetch configuration" },
-      { status: 500, headers: corsHeaders }
+      { status: 500 }
     );
   }
 };

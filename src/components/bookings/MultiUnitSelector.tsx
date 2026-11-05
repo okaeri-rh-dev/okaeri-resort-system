@@ -291,15 +291,13 @@ function UnitCard({
   onRemove,
   pricingConfig,
 }: UnitCardProps) {
-  const isAvailable = unit.unit_status === "Available";
   const displayRate = pricingConfig?.base_rate ?? unit.base_rate;
 
   return (
     <Card
       className={cn(
         "transition-shadow duration-150 hover:shadow-lg",
-        isSelected && "ring-primary ring-2",
-        !isAvailable && "opacity-60"
+        isSelected && "ring-primary ring-2"
       )}
       role="article"
       aria-label={`${unit.unit_name}, ${formatCurrency(displayRate)} per night, max ${unit.max_occupancy} guests${isSelected ? ", selected" : ""}`}
@@ -313,11 +311,6 @@ function UnitCard({
           </div>
           <p className="text-muted-foreground text-sm">Max {unit.max_occupancy} guests</p>
           <p className="text-primary text-lg font-semibold">{formatCurrency(displayRate)}/night</p>
-
-          {/* Availability Badge */}
-          <StatusBadge tone={isAvailable ? "success" : "danger"}>
-            {isAvailable ? "✓ Available" : "✗ Unavailable"}
-          </StatusBadge>
 
           {/* Date Range Display */}
           {checkIn && checkOut && (
@@ -345,10 +338,10 @@ function UnitCard({
             variant="default"
             size="sm"
             onClick={onAdd}
-            disabled={!canSelect || !isAvailable}
+            disabled={!canSelect}
             className="h-11 w-full"
             aria-label={`Add ${unit.unit_name} to booking`}
-            aria-disabled={!canSelect || !isAvailable}
+            aria-disabled={!canSelect}
           >
             Add to Booking
           </Button>

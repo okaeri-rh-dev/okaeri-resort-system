@@ -28,6 +28,7 @@ import { utcToResortTime } from "@/utils/date-helpers";
 
 import type { BookingCardProps } from "../types";
 import { CabinChip } from "./CabinChip";
+import { SourceBadge } from "./SourceBadge";
 
 const formatStayRange = (checkIn: string, checkOut: string): string => {
   try {
@@ -79,7 +80,7 @@ export const BookingCard: React.FC<BookingCardProps> = ({
   updateBookingStatus,
 }) => {
   const navigate = useNavigate();
-  const { canEdit, canConfirmBookings } = useUserRole();
+  const { canEdit, canEditBookings, canConfirmBookings } = useUserRole();
   const [showCancelDialog, setShowCancelDialog] = useState(false);
 
   const units = booking.booking_units || [];
@@ -120,7 +121,7 @@ export const BookingCard: React.FC<BookingCardProps> = ({
   const showActionZone = showConfirmPrimary || showPaymentPrimary;
 
   const menuActions = [
-    ...(canEdit ? [{ label: "Edit Booking", onClick: handleEdit }] : []),
+    ...(canEditBookings ? [{ label: "Edit Booking", onClick: handleEdit }] : []),
     ...(paymentIncomplete && !isCancelled
       ? [{ label: "Upload Payment", onClick: onUploadPayment }]
       : []),
@@ -151,7 +152,7 @@ export const BookingCard: React.FC<BookingCardProps> = ({
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-1.5">
               <span className="text-foreground text-base font-semibold">{booking.guest_name}</span>
-              {booking.is_walk_in && <StatusBadge tone="warning">Walk-in</StatusBadge>}
+              <SourceBadge source={booking.booking_source} />
             </div>
             <div className="text-muted-foreground text-xs tabular-nums">
               {booking.booking_reference}

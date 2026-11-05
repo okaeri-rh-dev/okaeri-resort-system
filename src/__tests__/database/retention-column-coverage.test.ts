@@ -35,6 +35,8 @@ const COLUMNS: Record<string, { clear: string[]; keep: string[] }> = {
     keep: [
       "booking_id",
       "booking_reference",
+      "booking_source",
+      "airbnb_confirmation_code",
       "guest_id",
       "booking_status",
       "payment_status",
@@ -89,6 +91,7 @@ const COLUMNS: Record<string, { clear: string[]; keep: string[] }> = {
       "payment_date",
       "payment_method",
       "status",
+      "kind",
       "created_at",
     ],
   },

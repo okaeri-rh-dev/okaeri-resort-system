@@ -1,8 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 
-import { E2E_USER } from "../scripts/e2e/fixtures";
+import { loginAsOwner } from "./fixtures/auth";
 import { COMPACT, EXPANDED, expectReadable, useDarkTheme } from "./fixtures/contrast";
-import { LoginPage } from "./pages/LoginPage";
 
 /**
  * Dark mode is readable on the app shell, the public pages and the shared fallbacks (#103):
@@ -54,9 +53,7 @@ test.describe("Dark mode app shell", () => {
   test("PWA install banner reads in dark", async ({ page }) => {
     await page.addInitScript(injectBeforeInstallPrompt);
     await page.setViewportSize(COMPACT);
-    const loginPage = new LoginPage(page);
-    await loginPage.goto();
-    await loginPage.loginAndWaitForDashboard(E2E_USER.email, E2E_USER.password);
+    await loginAsOwner(page);
 
     const banner = page.getByRole("region", { name: /install okaeri/i });
     await expect(banner).toBeVisible();
@@ -93,9 +90,7 @@ test.describe("Dark mode error boundary fallbacks", () => {
 
   test("page fallback in the admin layout reads in dark", async ({ page }) => {
     await page.setViewportSize(EXPANDED);
-    const loginPage = new LoginPage(page);
-    await loginPage.goto();
-    await loginPage.loginAndWaitForDashboard(E2E_USER.email, E2E_USER.password);
+    await loginAsOwner(page);
 
     // A numeric search value fails the route's string schema inside the admin page boundary
     await page.goto("/admin/transfers?search=123");

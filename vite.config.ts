@@ -18,7 +18,7 @@ export default defineConfig(({ mode }) => ({
     tsconfigPaths(),
     tailwindcss(),
     VitePWA({
-      registerType: "prompt",
+      registerType: "prompt", // keeps activation under app control (pwa-reload); nothing prompts the user
       // Use existing public/manifest.json; do not generate one
       manifest: false,
       injectRegister: null,
@@ -39,7 +39,7 @@ export default defineConfig(({ mode }) => ({
         ],
         cleanupOutdatedCaches: true,
         clientsClaim: true,
-        skipWaiting: false, // user-driven activation via UpdateToast
+        skipWaiting: false, // pwa-reload activates the waiting SW at a safe point
       },
       devOptions: {
         enabled: false, // never in dev to avoid surprise SWs during development

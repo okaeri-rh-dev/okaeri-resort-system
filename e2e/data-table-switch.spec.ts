@@ -1,7 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 
-import { E2E_REF, E2E_USER } from "../scripts/e2e/fixtures";
-import { LoginPage } from "./pages/LoginPage";
+import { E2E_REF } from "../scripts/e2e/fixtures";
+import { loginAsOwner } from "./fixtures/auth";
 
 /**
  * DataTable table ↔ card switch on the admin bookings list.
@@ -11,19 +11,20 @@ import { LoginPage } from "./pages/LoginPage";
  */
 
 async function openBookings(page: Page) {
-  const loginPage = new LoginPage(page);
-  await loginPage.goto();
-  await loginPage.loginAndWaitForDashboard(E2E_USER.email, E2E_USER.password);
+  await loginAsOwner(page);
   await page.goto("/admin/bookings");
   await expect(page.getByText(E2E_REF.PENDING)).toBeVisible();
 }
+
+// The menu's "Bookings" group is also a list named "Bookings", so look only in the page.
+const bookingCards = (page: Page) => page.getByRole("main").getByRole("list", { name: "Bookings" });
 
 test.describe("DataTable switch on the bookings list", () => {
   test("compact window shows booking cards and no table", async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await openBookings(page);
 
-    const cards = page.getByRole("list", { name: "Bookings" });
+    const cards = bookingCards(page);
     await expect(cards).toBeVisible();
     await expect(
       cards.getByRole("button", { name: `View booking ${E2E_REF.PENDING}` })
@@ -42,7 +43,7 @@ test.describe("DataTable switch on the bookings list", () => {
 
     const table = page.getByRole("table", { name: "Bookings" });
     await expect(table).toBeVisible();
-    await expect(page.getByRole("list", { name: "Bookings" })).toHaveCount(0);
+    await expect(bookingCards(page)).toHaveCount(0);
 
     const headerRow = table.getByRole("row").first();
     expect((await headerRow.boundingBox())?.height).toBe(40);
@@ -75,7 +76,32 @@ test.describe("DataTable switch on the bookings list", () => {
     await expect(page.getByRole("table", { name: "Bookings" })).toBeVisible();
 
     await page.setViewportSize({ width: 390, height: 844 });
-    await expect(page.getByRole("list", { name: "Bookings" })).toBeVisible();
+    await expect(bookingCards(page)).toBeVisible();
     await expect(page.getByRole("table")).toHaveCount(0);
+  });
+
+  test("the booking queue at 1280px hides its low-priority columns, so the pinned column covers no header", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await loginAsOwner(page);
+    await page.goto("/admin/bookings/queue");
+
+    const table = page.getByRole("table", { name: "Pending bookings" });
+    await expect(table.getByText(E2E_REF.QUEUE)).toBeVisible();
+    await expect(table.getByRole("columnheader", { name: "Pending" })).toBeVisible();
+    await expect(table.getByRole("columnheader", { name: "Payment" })).toHaveCount(0);
+    await expect(table.getByRole("columnheader", { name: "Cabins" })).toHaveCount(0);
+
+    const headers = await table.getByRole("columnheader").all();
+    const pinnedBox = (await headers.at(-1)!.boundingBox())!;
+    for (const header of headers.slice(0, -1)) {
+      const box = (await header.boundingBox())!;
+      expect(box.x + box.width).toBeLessThanOrEqual(pinnedBox.x + 1);
+    }
+
+    await page.setViewportSize({ width: 1600, height: 900 });
+    await expect(table.getByRole("columnheader", { name: "Payment" })).toBeVisible();
+    await expect(table.getByRole("columnheader", { name: "Cabins" })).toBeVisible();
   });
 });

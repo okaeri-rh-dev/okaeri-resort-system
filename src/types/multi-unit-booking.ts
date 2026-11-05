@@ -7,6 +7,8 @@
  * @module MultiUnitBookingTypes
  */
 
+import type { StaffBookingSource } from "@/lib/bookings/source";
+
 // ============================================
 // BOOKING UNIT TYPES
 // ============================================
@@ -140,7 +142,10 @@ export interface AdminMultiUnitBookingCreate {
   };
   special_requests?: string;
   internal_notes?: string;
-  is_walk_in?: boolean;
+  booking_source?: StaffBookingSource;
+  /** Required for an Airbnb booking: its total (ADR 0006). */
+  payout?: number;
+  airbnb_confirmation_code?: string;
   source?: string;
   idempotency_key?: string;
 }

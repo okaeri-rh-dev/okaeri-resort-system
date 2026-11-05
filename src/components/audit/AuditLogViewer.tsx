@@ -1,6 +1,6 @@
 // src/components/audit/AuditLogViewer.tsx
 
-import React, { useState } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 
 import {
   getCoreRowModel,
@@ -26,7 +26,7 @@ import { auditActorLabel } from "@/lib/audit-display";
 import { useAuditLogs } from "@/lib/audit-hooks";
 import { cn } from "@/lib/utils";
 import { useAuditStore } from "@/stores/useAuditStore";
-import type { AuditLog, AuditLogQueryResult } from "@/types/audit.types";
+import type { AuditLog } from "@/types/audit.types";
 
 import { ActionBadge } from "./ActionBadge";
 import { AuditDiffViewer } from "./AuditDiffViewer";
@@ -35,6 +35,9 @@ import { SafeAuditText } from "./SafeAuditText";
 // ============================================
 // MAIN TABLE COMPONENT
 // ============================================
+
+// A new array each render would reset the table page (see the DataTable TSDoc).
+const NO_LOGS: AuditLog[] = [];
 
 export function AuditLogViewer() {
   const filters = useAuditStore((state) => state.filters);
@@ -67,68 +70,78 @@ export function AuditLogViewer() {
   };
 
   const handleNextPage = () => {
-    if (data && (data as unknown as AuditLogQueryResult).hasMore) {
+    if (data?.hasMore) {
       handlePageChange(currentPage + 1);
     }
   };
 
-  // Open diff viewer dialog
-  const openDiffViewer = (log: AuditLog) => {
-    setSelectedLogForDiff(log);
-    setSelectedLog(log);
-    setDiffDialogOpen(true);
-  };
+  const openDiffViewer = useCallback(
+    (log: AuditLog) => {
+      setSelectedLogForDiff(log);
+      setSelectedLog(log);
+      setDiffDialogOpen(true);
+    },
+    [setSelectedLog]
+  );
 
-  const columns: ColumnDef<AuditLog>[] = [
-    {
-      id: "expand",
-      header: () => <span className="sr-only">Expand</span>,
-      cell: ({ row }) => (
-        <ExpandButton isExpanded={row.getIsExpanded()} onToggle={row.getToggleExpandedHandler()} />
-      ),
-      size: 48,
-    },
-    {
-      accessorKey: "created_at",
-      header: "Timestamp",
-      cell: ({ row }) => <LogTime log={row.original} />,
-    },
-    { id: "user", header: "User", cell: ({ row }) => <LogActor log={row.original} /> },
-    {
-      accessorKey: "table_name",
-      header: "Table",
-      cell: ({ row }) => <TableBadge log={row.original} />,
-    },
-    {
-      accessorKey: "action",
-      header: "Action",
-      cell: ({ row }) => <ActionBadge log={row.original} />,
-    },
-    {
-      accessorKey: "source",
-      header: "Source",
-      cell: ({ row }) => <SourceBadge source={row.original.source} />,
-    },
-    {
-      accessorKey: "record_id",
-      header: "Record ID",
-      cell: ({ row }) => <RecordId log={row.original} className="max-w-32" />,
-    },
-    {
-      id: "changed_fields",
-      header: "Changed Fields",
-      cell: ({ row }) => <ChangedFields log={row.original} />,
-    },
-    {
-      id: "actions",
-      header: () => <span className="sr-only">Actions</span>,
-      cell: ({ row }) => <ViewDiffButton log={row.original} onViewDiff={openDiffViewer} />,
-      meta: { pinned: true },
-    },
-  ];
+  const columns = useMemo<ColumnDef<AuditLog>[]>(
+    () => [
+      {
+        id: "expand",
+        header: () => <span className="sr-only">Expand</span>,
+        cell: ({ row }) => (
+          <ExpandButton
+            isExpanded={row.getIsExpanded()}
+            onToggle={row.getToggleExpandedHandler()}
+          />
+        ),
+        size: 48,
+      },
+      {
+        accessorKey: "created_at",
+        header: "Timestamp",
+        cell: ({ row }) => <LogTime log={row.original} />,
+      },
+      { id: "user", header: "User", cell: ({ row }) => <LogActor log={row.original} /> },
+      {
+        accessorKey: "table_name",
+        header: "Table",
+        cell: ({ row }) => <TableBadge log={row.original} />,
+      },
+      {
+        accessorKey: "action",
+        header: "Action",
+        cell: ({ row }) => <ActionBadge log={row.original} />,
+      },
+      {
+        accessorKey: "source",
+        header: "Source",
+        cell: ({ row }) => <SourceBadge source={row.original.source} />,
+        meta: { priority: "low" },
+      },
+      {
+        accessorKey: "record_id",
+        header: "Record ID",
+        cell: ({ row }) => <RecordId log={row.original} className="max-w-32" />,
+        meta: { priority: "low" },
+      },
+      {
+        id: "changed_fields",
+        header: "Changed Fields",
+        cell: ({ row }) => <ChangedFields log={row.original} />,
+      },
+      {
+        id: "actions",
+        header: () => <span className="sr-only">Actions</span>,
+        cell: ({ row }) => <ViewDiffButton log={row.original} onViewDiff={openDiffViewer} />,
+        meta: { pinned: true },
+      },
+    ],
+    [openDiffViewer]
+  );
 
   const table = useReactTable({
-    data: (data as unknown as AuditLogQueryResult | undefined)?.data ?? [],
+    data: data?.data ?? NO_LOGS,
     columns,
     getCoreRowModel: getCoreRowModel(),
     getRowId: (log) => log.audit_id,
@@ -148,7 +161,7 @@ export function AuditLogViewer() {
   }
 
   // Empty state
-  if (!data || (data as unknown as AuditLogQueryResult).data.length === 0) {
+  if (!data || data.data.length === 0) {
     return (
       <div className="text-muted-foreground py-12 text-center">
         <p className="text-lg font-medium">No audit logs found</p>
@@ -156,9 +169,6 @@ export function AuditLogViewer() {
       </div>
     );
   }
-
-  // Type-safe data access - TypeScript needs help narrowing the type
-  const queryResult = data as unknown as AuditLogQueryResult;
 
   return (
     <div className="space-y-4">
@@ -199,9 +209,8 @@ export function AuditLogViewer() {
       {/* Pagination */}
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="text-muted-foreground text-sm">
-          Showing {queryResult.data.length} of {queryResult.totalCount} logs
-          {queryResult.currentPage > 1 &&
-            ` (Page ${queryResult.currentPage} of ${queryResult.totalPages})`}
+          Showing {data.data.length} of {data.totalCount} logs
+          {data.currentPage > 1 && ` (Page ${data.currentPage} of ${data.totalPages})`}
         </div>
 
         <div className="flex items-center gap-2">
@@ -211,15 +220,10 @@ export function AuditLogViewer() {
           </Button>
 
           <span className="text-muted-foreground text-sm">
-            Page {currentPage} of {queryResult.totalPages}
+            Page {currentPage} of {data.totalPages}
           </span>
 
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleNextPage}
-            disabled={!queryResult.hasMore}
-          >
+          <Button variant="outline" size="sm" onClick={handleNextPage} disabled={!data.hasMore}>
             Next
             <Next className="ml-1 h-4 w-4" />
           </Button>

@@ -239,10 +239,11 @@ describe("GET /api/availability/multi-unit", () => {
     expect(response.headers.get("X-Processing-Time")).toMatch(/\d+ms/);
   });
 
-  it("should include cache headers", async () => {
+  it("does not rate-limit a signed-in request", async () => {
     const { onRequestGet } = await import("../../../functions/api/availability/multi-unit");
     const request = createMockRequest("https://api.example.com/api/availability/multi-unit", {
       method: "GET",
+      headers: { Authorization: "Bearer staff-session-token" },
       query: {
         "units[]": testUnits[0].unit_id,
         check_in: "2025-12-20",
@@ -253,7 +254,9 @@ describe("GET /api/availability/multi-unit", () => {
     const context = createMockContext(request, mockEnv);
     const response = await onRequestGet(context as never);
 
-    expect(response.headers.get("Cache-Control")).toContain("max-age=60");
+    expect(response.status).toBe(200);
+    expect(mockEnv.RATE_LIMIT_KV.get).not.toHaveBeenCalled();
+    expect(mockEnv.RATE_LIMIT_KV.put).not.toHaveBeenCalled();
   });
 
   // ========== VALIDATION ERROR TESTS ==========

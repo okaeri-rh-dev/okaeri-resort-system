@@ -10,13 +10,15 @@ export const DOCUMENT_PREFIX_MAP = {
 export const DEFAULT_LETTERHEAD: LetterheadConfig = {
   resort_name: "Okaeri Resort",
   tagline: "Your Home Away From Home",
-  address_line_1: "123 Resort Road",
-  city: "Nasugbu",
-  province: "Batangas",
-  zip_code: "4231",
-  phone: "0917 000 0000",
-  email: "info@okaeriresort.com",
-  website: "www.okaeriresort.com",
+  address_line_1: "Amita St., Brgy. Taboc",
+  address_line_2: "M8QQ+HF",
+  city: "San Juan",
+  province: "La Union",
+  zip_code: "2514",
+  // Phone and email come from the visible Contact channels once they load.
+  phone: "",
+  email: "",
+  website: "",
 };
 
 export const DEFAULT_PAYMENT_TERMS =

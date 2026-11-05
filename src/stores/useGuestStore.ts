@@ -3,9 +3,12 @@ import { create } from "zustand";
 import { devtools, persist } from "zustand/middleware";
 
 import { getAccessToken } from "@/hooks/useAuthToken";
+import { SEARCH_DEBOUNCE_MS, useDebouncedValue } from "@/hooks/useDebouncedValue";
+import { throwDetailLoadError } from "@/lib/detail-load-error";
 import { logger } from "@/lib/logger";
 import { afterGuestRetention, invalidateGuests } from "@/lib/query-invalidation";
 import { guestKeys } from "@/lib/query-keys";
+import { ilikeAnyFilter } from "@/lib/search-filter";
 import { db, handleSupabaseError, supabase } from "@/lib/supabase";
 import type { Booking, Guest } from "@/types";
 
@@ -116,7 +119,7 @@ export const guestDetailQuery = (guestId: string) =>
     queryKey: guestKeys.detail(guestId),
     queryFn: async () => {
       const { data, error } = await db.guests.withBookings(guestId);
-      if (error) throw new Error(`Failed to load guest: ${handleSupabaseError(error)}`);
+      if (error) throwDetailLoadError(error, "guest");
       return data;
     },
     staleTime: 30000,
@@ -135,9 +138,7 @@ const guestListQuery = ({
 
       // Apply search
       if (searchQuery) {
-        query = query.or(
-          `guest_name.ilike.%${searchQuery}%,email.ilike.%${searchQuery}%,phone_number.ilike.%${searchQuery}%`
-        );
+        query = query.or(ilikeAnyFilter(["guest_name", "email", "phone_number"], searchQuery));
       }
 
       // Apply sorting
@@ -169,8 +170,9 @@ const guestListQuery = ({
 
 export const useGuests = () => {
   const { searchQuery, sortBy, sortOrder } = useGuestStore();
+  const debouncedSearchQuery = useDebouncedValue(searchQuery, SEARCH_DEBOUNCE_MS);
 
-  return useQuery(guestListQuery({ searchQuery, sortBy, sortOrder }));
+  return useQuery(guestListQuery({ searchQuery: debouncedSearchQuery, sortBy, sortOrder }));
 };
 
 // Fetch single guest with booking history

@@ -24,7 +24,6 @@ import userEvent from "@testing-library/user-event";
 import { MainLayout } from "../layouts/MainLayout";
 import { BookingsTable } from "../components/bookings/BookingsTable";
 import { BookingForm } from "../components/bookings/BookingForm";
-import { DashboardStats } from "../components/dashboard/DashboardStats";
 import { validateTouchTarget, TOUCH_TARGETS, DEVICE_BREAKPOINTS } from "../utils/mobile-validation";
 
 // Mock data for testing
@@ -50,7 +49,6 @@ const mockUnits = [
     unit_id: "1",
     unit_name: "Deluxe Room A1",
     unit_type: "Deluxe" as const,
-    unit_status: "Available" as const,
     base_rate: 2500,
     weekend_rate: 3000,
     max_occupancy: 4,
@@ -350,45 +348,6 @@ describe("Mobile Responsive Design", () => {
     });
   });
 
-  describe("DashboardStats Mobile Grid", () => {
-    beforeEach(() => {
-      // Mock dashboard data hooks
-      vi.mock("../../stores", () => ({
-        useUnits: () => ({ data: mockUnits, isLoading: false }),
-        useBookings: () => ({ data: mockBookings, isLoading: false }),
-        useGuests: () => ({ data: [], isLoading: false }),
-      }));
-    });
-
-    it("should use single column on mobile", () => {
-      setViewportSize(DEVICE_BREAKPOINTS.MOBILE_SMALL);
-
-      render(
-        <TestWrapper>
-          <DashboardStats />
-        </TestWrapper>
-      );
-
-      // Check for single column grid on mobile
-      const statsContainer = document.querySelector(".grid-cols-1");
-      expect(statsContainer).toBeInTheDocument();
-    });
-
-    it("should adapt to tablet and desktop layouts", () => {
-      setViewportSize(DEVICE_BREAKPOINTS.TABLET_LARGE);
-
-      render(
-        <TestWrapper>
-          <DashboardStats />
-        </TestWrapper>
-      );
-
-      // Check for responsive grid classes
-      const statsContainer = document.querySelector(".sm\\:grid-cols-2");
-      expect(statsContainer).toBeInTheDocument();
-    });
-  });
-
   describe("Accessibility Compliance", () => {
     it("should provide proper ARIA labels for mobile navigation", () => {
       setViewportSize(DEVICE_BREAKPOINTS.MOBILE_MEDIUM);
@@ -521,7 +480,7 @@ describe("Responsive Breakpoint Tests", () => {
       render(
         <TestWrapper>
           <MainLayout currentPath="/">
-            <DashboardStats />
+            <p>Dashboard</p>
           </MainLayout>
         </TestWrapper>
       );

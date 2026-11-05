@@ -23,11 +23,6 @@ export async function onRequest(context: {
 }) {
   const { request, env, next } = context;
 
-  // Skip rate limiting for OPTIONS requests (CORS preflight)
-  if (request.method === "OPTIONS") {
-    return next();
-  }
-
   try {
     // Get client IP from Cloudflare headers
     const clientIP = request.headers.get("CF-Connecting-IP") ||

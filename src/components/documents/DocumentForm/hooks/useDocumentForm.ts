@@ -56,18 +56,24 @@ export function useDocumentForm() {
   }, [lineItems, discountAmount, vatRate, form.setValue]);
 
   // Sync form changes to store (debounced)
-  const syncTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
   useEffect(() => {
+    let syncTimeout: ReturnType<typeof setTimeout> | undefined;
+    let pendingValues: DocumentFormValues | null = null;
+
+    const flushPendingSync = () => {
+      clearTimeout(syncTimeout);
+      if (pendingValues) setFormData(pendingValues);
+      pendingValues = null;
+    };
+
     const subscription = form.watch((values) => {
-      if (syncTimeoutRef.current) clearTimeout(syncTimeoutRef.current);
-      syncTimeoutRef.current = setTimeout(() => {
-        setFormData(values as DocumentFormValues);
-      }, FORM_SYNC_DEBOUNCE_MS);
+      pendingValues = values as DocumentFormValues;
+      clearTimeout(syncTimeout);
+      syncTimeout = setTimeout(flushPendingSync, FORM_SYNC_DEBOUNCE_MS);
     });
     return () => {
       subscription.unsubscribe();
-      if (syncTimeoutRef.current) clearTimeout(syncTimeoutRef.current);
+      flushPendingSync();
     };
   }, [form, setFormData]);
 

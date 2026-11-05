@@ -1,10 +1,11 @@
 import { createClient } from "@supabase/supabase-js";
 import { format } from "date-fns";
 
+import { dayAfter, manilaDayStart, type ManilaDay } from "@/lib/bookings/stay";
 import type { MoveDirection } from "@/lib/contact-channel";
 import { toManilaDateString } from "@/lib/timezone";
 import type { AuditEventContext, AuditLogFilters } from "@/types/audit.types";
-import type { Database, Json, TablesInsert, TablesUpdate } from "@/types/database.types";
+import type { Database, Json, Tables, TablesInsert, TablesUpdate } from "@/types/database.types";
 
 import { requireEnv } from "./env";
 
@@ -28,7 +29,6 @@ interface PaymentMethodInsert {
   qr_code_url?: string | null;
   qr_code_storage_path?: string | null;
   icon_name?: string | null;
-  icon_color?: string | null;
   display_order?: number | null;
   instructions?: string | null;
   is_active?: boolean | null;
@@ -37,6 +37,37 @@ interface PaymentMethodInsert {
 }
 
 type PaymentMethodUpdate = Partial<PaymentMethodInsert>;
+
+type NewBlock = Pick<
+  TablesInsert<"availability_blackouts">,
+  "start_date" | "end_date" | "reason"
+> & {
+  unitIds: string[] | null;
+};
+
+type BlockEdit = Partial<
+  Pick<TablesUpdate<"availability_blackouts">, "start_date" | "end_date" | "reason">
+> & {
+  blackoutId: string;
+};
+
+export interface BlockNights {
+  /** null = resort closure */
+  unitIds: string[] | null;
+  firstNight: string;
+  lastNight: string;
+  /** The block being edited: only nights it does not already cover can conflict. */
+  blockId?: string;
+}
+
+export type BlockConflict =
+  Database["public"]["Functions"]["get_block_conflicts"]["Returns"][number];
+
+export interface CancelAndSaveResult {
+  status: "saved" | "conflicts_changed" | "checked_in";
+  conflicts: BlockConflict[];
+  blocks: Tables<"availability_blackouts">[];
+}
 
 // Expense Categories types
 // Same situation as payment_methods - using local type bridge
@@ -115,7 +146,8 @@ export const db = {
     update: (id: string, data: Database["public"]["Tables"]["units"]["Update"]) =>
       supabase.from("units").update(data).eq("unit_id", id).select().single(),
     delete: (id: string) => supabase.from("units").delete().eq("unit_id", id),
-    available: () => supabase.from("units").select("*").eq("unit_status", "Available"),
+    /** Blocked (with the reason), Booked or Free for each cabin on one night (ADR 0005). */
+    statesOn: (date: ManilaDay) => supabase.rpc("get_cabin_states", { p_date: date }),
   },
 
   bookings: {
@@ -147,6 +179,17 @@ export const db = {
         .eq("booking_id", id)
         .single(),
 
+    /** Each cabin's part of the bookings that hold a night from `firstNight` through `lastNight`. */
+    unitStaysInNights: (firstNight: ManilaDay, lastNight: ManilaDay) =>
+      supabase
+        .from("booking_unit_availability")
+        .select(
+          "unit_id, booking_id, check_in, check_out, booking_status, booking:bookings(booking_reference, guest_name)"
+        )
+        .neq("booking_status", "Cancelled")
+        .lt("check_in", manilaDayStart(dayAfter(lastNight)))
+        .gt("check_out", manilaDayStart(firstNight)),
+
     // Fetch bookings by unit (via junction table)
     byUnit: (unitId: string) =>
       supabase
@@ -163,20 +206,6 @@ export const db = {
         .eq("unit_id", unitId),
 
     byGuest: (guestId: string) => supabase.from("bookings").select("*").eq("guest_id", guestId),
-    create: async (
-      data: Omit<Database["public"]["Tables"]["bookings"]["Insert"], "booking_reference">
-    ) => {
-      // Generate booking reference
-      const { data: reference } = await supabase.rpc("generate_booking_reference");
-      return supabase
-        .from("bookings")
-        .insert({
-          ...data,
-          booking_reference: reference || `BK-${Date.now()}`,
-        } satisfies TablesInsert<"bookings">)
-        .select()
-        .single();
-    },
     update: (id: string, data: Database["public"]["Tables"]["bookings"]["Update"]) =>
       supabase.from("bookings").update(data).eq("booking_id", id).select().single(),
 
@@ -297,16 +326,53 @@ export const db = {
       supabase.from("pricing_config").update(data).eq("id", "default").select().single(),
   },
 
-  // Blackout period management
+  // Blocks (GLOSSARY.md); a NULL unit_id is a resort closure
   blackouts: {
     all: () => supabase.from("availability_blackouts").select("*"),
+    list: ({ includePast = false } = {}) => {
+      const query = supabase.from("availability_blackouts").select("*");
+      const listed = includePast ? query : query.gte("end_date", toManilaDateString(new Date()));
+      return listed.order("start_date").order("end_date");
+    },
     byUnit: (unitId: string) =>
       supabase.from("availability_blackouts").select("*").eq("unit_id", unitId),
-    create: (data: Database["public"]["Tables"]["availability_blackouts"]["Insert"]) =>
-      supabase.from("availability_blackouts").insert(data).select().single(),
+    /** One block per cabin, or one resort closure when `unitIds` is null. */
+    create: ({ unitIds, ...block }: NewBlock) => {
+      // Sorted so each row's trigger locks its unit in unit-id order, as the booking guard does.
+      const sortedUnitIds = unitIds ? [...unitIds].sort() : [null];
+      const rows: TablesInsert<"availability_blackouts">[] = sortedUnitIds.map((unitId) => ({
+        ...block,
+        unit_id: unitId,
+      }));
+      return supabase.from("availability_blackouts").insert(rows).select();
+    },
     update: (id: string, data: Database["public"]["Tables"]["availability_blackouts"]["Update"]) =>
       supabase.from("availability_blackouts").update(data).eq("blackout_id", id).select().single(),
     delete: (id: string) => supabase.from("availability_blackouts").delete().eq("blackout_id", id),
+    conflicts: ({ unitIds, firstNight, lastNight, blockId }: BlockNights) =>
+      supabase.rpc("get_block_conflicts", {
+        p_unit_ids: unitIds ?? undefined,
+        p_first_night: firstNight,
+        p_last_night: lastNight,
+        p_block_id: blockId,
+      }),
+    /** Cancels the confirmed bookings and saves the block atomically; nothing saves unless status is "saved". */
+    cancelAndSave: async (block: NewBlock | BlockEdit, seenConflictIds: string[]) => {
+      const nights = {
+        start_date: block.start_date,
+        end_date: block.end_date,
+        reason: block.reason,
+      };
+      const blockArg =
+        "blackoutId" in block
+          ? { blackout_id: block.blackoutId, ...nights }
+          : { unit_ids: block.unitIds, ...nights };
+      const { data, error } = await supabase.rpc("cancel_bookings_and_save_block", {
+        p_block: blockArg,
+        p_booking_ids: seenConflictIds,
+      });
+      return { data: data as unknown as CancelAndSaveResult | null, error };
+    },
     inDateRange: (startDate: string, endDate: string) =>
       supabase
         .from("availability_blackouts")

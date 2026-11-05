@@ -127,7 +127,6 @@ const mockUnits: Unit[] = [
     unit_name: "Ocean View Suite",
     unit_code: "OV-101",
     unit_type: "Suite",
-    unit_status: "Available",
     base_occupancy: 2,
     max_occupancy: 4,
     base_rate: 3000,
@@ -142,7 +141,6 @@ const mockUnits: Unit[] = [
     unit_name: "Garden Villa",
     unit_code: "GV-201",
     unit_type: "Villa",
-    unit_status: "Available",
     base_occupancy: 4,
     max_occupancy: 6,
     base_rate: 5000,
@@ -234,7 +232,7 @@ describe("MultiUnitBookingForm", () => {
         email: "test@example.com",
         contact_number: "+639123456789",
         payment_method: "GCash" as const,
-        is_walk_in: false,
+        booking_source: "Direct",
       });
       expect(fullSchemaResult.success).toBe(false);
       if (!fullSchemaResult.success) {
@@ -471,7 +469,7 @@ describe("MultiUnitBookingForm", () => {
         payment_proof_url: "https://example.com/proof.jpg",
         special_requests: "Early check-in requested",
         internal_notes: "VIP guest",
-        is_walk_in: false,
+        booking_source: "Direct",
       };
 
       const result = multiUnitBookingSchema.safeParse(completeBookingData);

@@ -88,7 +88,7 @@ Deploy status 2026-10-10: pushed to `origin/main` (up to `2e3feb0`), but GitHub 
 ## Resume state (2026-10-13)
 
 - Booking module (Candidate 1) done: Tasks 1-10 complete, deployed `79396f4`, post-deploy normalize found nothing to fix (2026-10-13); ticks and commits on the task lines above (the SDD ledger was scratch and was deleted 2026-10-15). Final whole-branch review done; its pre-deploy fixes and decisions are in "Booking module execution (2026-10-11)" below.
-- Next: Candidate 4 on the client (order: client 4 → 6; server 3 → 2 → 8), per the task list above.
+- Next: Candidate 4 on the client (order: client 4 → 6; server 3 → 2 → 8). Grilled 2026-10-14 (rounds 1-3 below); plan `docs/plans/2026-10-14-invalidate-by-domain-fact.md`. Not started. The plan predates about 430 commits on `main` (checked 2026-11-02): re-check its call sites and key map before execution.
 - A concurrent session committed into this working tree on 2026-10-11 and its commit crossed with Task 1; reworded to `5998f5d`/`419d12f`. Its orphaned phone-search fix was committed as `7798f7f` (user choice). Commit with `git commit -- <paths>` while other sessions share the tree.
 
 ## Decisions & Deferrals
@@ -199,3 +199,36 @@ Booking module deploy (2026-10-12). Facts: migration pushed by the user; prod ha
 - **Built (user-approved): `e2e/booking-api-auth.spec.ts`, POST `/api/bookings/multi-unit` over HTTP through `wrangler pages dev` (no token 401, role-less user 403, staff empty body 400, staff booking 201).** Why: unit tests build the handler context themselves, so they cannot see the Pages template's Request clone; the spec fails (403 test receives 401) with the original Request-attached user restored. Runs in `scripts/e2e/run-hooked.sh` (CI `infra-health` e2e job). Revisit: n/a.
 - **Deferred: a post-deploy prod probe (staff smoke account, empty-body POST expecting 400).** Why: needs a prod account and a stored credential; the local spec covers the code path. Revisit: if a prod-only 401 happens (e.g. `SUPABASE_JWT_SECRET` drift).
 - **Fixed: `e2e/booking-card-mobile.spec.ts` still expected the owner-only Delete that Task 8 removed.** Why: CI could not run (Actions quota), so the red `infra-health` e2e job went unseen. Revisit: n/a.
+
+Candidate 4 grilling, round 1 (2026-10-14). Recommended defaults, accepted by the user. Branch `refactor/invalidate-by-domain-fact` (worktree `../okaeri-invalidate-by-domain-fact`) from `1b06d1b`:
+
+- **Scope: every table the client writes, config tables included (payment methods, expense categories, pricing config, seasonal rates, discount rules, roles).** Why: one way to say "I wrote X", which the lint rule needs. Revisit: n/a.
+- **Mutations report table names, typed from `Database["public"]["Tables"]`: `afterWrite(...tables)`.** Why: the narrowest fact a mutation knows; domain events would rebuild today's operation helpers. Revisit: n/a.
+- **The module owns DB cascades (e.g. `payments` → `bookings.payment_status` trigger); callers report only tables they write directly.** Why: cascades are DB facts; each sits beside its trigger name and is tested. Revisit: n/a.
+- **Invalidation is coarse: a table refreshes whole key roots, no per-id targeting.** Why: hundreds of rows, only mounted queries refetch, and per-id precision is where today's misses come from. Revisit: if a list gets heavy.
+- **Lint bans `queryClient.invalidateQueries`/`removeQueries` outside the module (pricing memo exempt); optimistic `setQueryData` stays where it is.** Why: rollback is a different job. Revisit: n/a.
+- **Call sites stay in place (store/hook `onSettled`) and swap to `afterWrite`; moving mutations out of stores is Candidate 6.** Revisit: Candidate 6.
+- **Tests: per-table → keys, cascades, and a coverage test that every key root in `query-keys.ts` is reachable from a table or listed as not table data; `query-invalidation.test.ts` rewritten.** Why: catches "added a query, forgot invalidation". Revisit: n/a.
+- **Server availability cache (60 s KV + `Cache-Control: public`) and its `exclude_booking_id` key bug stay out of scope.** Why: decided under Candidate 1; save re-check covers correctness. Revisit: Candidate 6.
+- **Correction: PWA updates apply without a prompt (`UpdateToast.tsx` calls `updateServiceWorker(false)` once the page is visible); a device never opened stays on the old version.** Earlier lines saying "the PWA update is a prompt" are out of date. Revisit: n/a.
+
+Candidate 4 grilling, round 2 (2026-10-14). Facts from read/write maps (two read-only agents): embeds make `bookings.*`/`payments.*` read guests, units, booking_units; `transfers.list` reads accounts; balances RPC reads accounts, payments, expenses, account_transfers; 7 invalidated keys have no reader; `audit-logs.*`, `publicAvailability`, `user-role.current` are never invalidated; the only realtime subscription listens to a non-existent `multi_unit_bookings` table and no table is in `supabase_realtime`. Cascades: `payments` → `bookings.payment_status`; `booking_units` → `bookings` totals; `bookings` → `guests` statistics (every row write) and → `booking_unit_availability` (status, dates); guest delete sets `bookings.guest_id` null; every table → `audit_logs`. Recommended defaults, accepted by the user:
+
+- **A key reads a table when its fetch reads it: embeds, RPCs and API routes count.** Why: fixes guest/unit/status staleness in bookings and payments with no caller work. Revisit: n/a.
+- **Delete the 7 dead keys (`multi-unit-bookings`, `unit-availability`, `unit-availability-fast`, `availability-calendar`, `upcoming-checkins`/`-checkouts`) and unused factory entries; `multiUnitBookingKeys.pending` stays.** The logged "`afterBookingUpdate` doesn't refresh upcoming check-ins" is void: nothing reads upcoming check-ins. Revisit: n/a.
+- **Delete the dead realtime subscription (`useMultiUnitAvailabilitySubscription`, `useAvailabilityRealtime`, its `MultiUnitBookingForm` call, the commented guest/unit channels); realtime stays out of the map.** Revisit: if several devices need live updates, feed realtime events into `afterWrite(table)`.
+- **Every write cascades to `audit_logs`, so mounted audit views refresh.** Revisit: n/a.
+- **`publicAvailability` is excluded from the map ("not admin-written"; 300 s edge cache).** Revisit: n/a.
+- **Roles, pending users, current user role and audit keys move into `query-keys.ts`; `afterWrite("app_roles")` refreshes all role reads; the 60 s in-memory `roleCache` still clears separately.** Revisit: n/a.
+- **Cascades are a graph of direct edges (one per trigger/FK, named in a comment); the module computes the closure.** Revisit: n/a.
+- **Done in `e4ae3a79` (2026-10-29).** **Standalone `fix(db):` (separate PR from Candidate 4): `get_all_account_balances` counts only `Active` payments; DB test; read-only prod diff of per-account balance change reviewed before the user's `db push`.** Why: deleted and refunded payments count toward balances today; Active-only matches ADR 0001. Revisit: if refunds are recorded as money out.
+- **`pricing_config`, `seasonal_rates`, `discount_rules` map to `pricingKeys.cache`; the lint rule has no exemptions.** Revisit: n/a.
+- **Logged for Candidate 7: `trigger_cleanup_availability` deletes availability rows of every unit in the booking when one `booking_units` row is deleted; `trigger_sync_availability_unit` ignores `unit_id` updates.** Why: only assign-units (online booking, not live) removes units from a booking. Revisit: Candidate 7.
+
+Candidate 4 grilling, round 3 (2026-10-14). Recommended defaults, accepted by the user; grilling complete:
+
+- **Every call site calls `afterWrite` in `onSettled`.** Why: a Worker route can fail after a partial write (guest inserted, RPC failed). Revisit: n/a.
+- **Each Worker route's written tables are a constant in its client wrapper (e.g. `BOOKING_CREATE_WRITES` in `requestBooking`); the route carries a comment pointing to it.** Revisit: Candidate 2, if routes return the tables they wrote.
+- **Dashboard refresh calls `refetch()` from `useBookings`; the module stays write-only.** Revisit: n/a.
+- **`afterWrite` is the only export; old `invalidate*`/`after*` helpers deleted; file renamed `src/lib/after-write.ts`.** Why: replace, don't layer. Revisit: n/a.
+- **Slices: 1 module + map + cascades + tests (roles/audit keys into `query-keys.ts`); 2 bookings, payments, assign/verify; 3 accounts, transfers, expenses; 4 units, guests, `useEntityEdit`, config hooks; 5 delete dead keys, realtime and old helpers, Dashboard refetch, lint rule. Subagent-driven, review between tasks, browser check (guest rename → bookings list; payment → payments list, booking status, balance, audit; confirm → payments list), PR, CI deploy; no migration. Balances fix (round 2) is a separate branch/PR after.** Revisit: n/a.

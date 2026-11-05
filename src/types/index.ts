@@ -1,12 +1,21 @@
 // Core type definitions for Okaeri Resort System
 
+import type { BookingSource } from "@/lib/bookings/source";
+
 import type { BookingStatus, PaymentStatus } from "./booking-status";
 
 // ============================================
 // UNIT TYPES
 // ============================================
 export type UnitType = "Standard" | "Deluxe" | "Suite" | "Villa";
-export type UnitStatus = "Available" | "Occupied" | "Maintenance" | "Reserved";
+/** A cabin's state on one night, derived from blocks and bookings (ADR 0005). */
+export type CabinState = "Blocked" | "Booked" | "Free";
+
+export interface CabinNight {
+  state: CabinState;
+  /** The block reasons when Blocked, else null. */
+  blockReason: string | null;
+}
 
 export interface Unit {
   unit_id: string;
@@ -18,7 +27,6 @@ export interface Unit {
   base_rate: number;
   weekend_rate: number;
   extra_person_rate: number;
-  unit_status: string | null; // Database returns nullable string
   amenities: string[] | null;
   cleaning_fee?: number | null;
   description?: string | null;
@@ -53,7 +61,7 @@ export {
   type PaymentStatus,
 } from "./booking-status";
 export { APP_ROLE_NAMES } from "./app-role";
-export type PaymentMethod = "Cash" | "GCash" | "BankTransfer" | "Card" | "Other";
+export type PaymentMethod = "Cash" | "GCash" | "BankTransfer" | "Card" | "Airbnb payout" | "Other";
 export type PaymentRecordStatus = "Active" | "Deleted" | "Refunded";
 
 // Database booking unit junction table record
@@ -92,7 +100,11 @@ export interface Booking {
   internal_notes?: string | null;
   anonymized_at?: string | null;
   is_multi_unit?: boolean | null;
+  booking_source?: BookingSource;
+  airbnb_confirmation_code?: string | null;
   is_walk_in?: boolean;
+  is_guest_booking?: boolean | null;
+  unit_assignment_status?: string | null;
   unit_count?: number | null;
   pricing_metadata?: {
     hasSeasonalRates?: boolean;
@@ -115,6 +127,8 @@ export interface Booking {
   // Relations (NEW: junction table pattern)
   booking_units?: BookingUnitRecord[];
   guest?: Guest | null;
+  /** Only amount and status: what the outstanding balance needs */
+  payments?: { amount: number; status: string }[];
   // Deprecated: Direct unit relation removed (use booking_units instead)
   // unit?: Unit;
 }
@@ -153,7 +167,6 @@ export interface PaymentMethodConfig {
   qr_code_url: string | null;
   qr_code_storage_path: string | null;
   icon_name: string;
-  icon_color: string;
   display_order: number;
   instructions: string | null;
   is_active: boolean;
@@ -261,15 +274,10 @@ export interface BookingFilters {
   date_from?: string;
   date_to?: string;
   search?: string;
-  /**
-   * Filter by walk-in flag.
-   * `true` = only walk-ins, `false` = only non-walk-ins, `undefined` = both.
-   */
-  is_walk_in?: boolean;
+  booking_source?: BookingSource;
 }
 
 export interface UnitFilters {
-  status?: UnitStatus;
   type?: UnitType;
   min_rate?: number;
   max_rate?: number;

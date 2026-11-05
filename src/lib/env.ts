@@ -36,9 +36,6 @@ export interface Env {
   // Cloudflare Turnstile (Bot Protection)
   TURNSTILE_SECRET_KEY?: string;
 
-  // Email Configuration
-  RESEND_API_KEY?: string;
-
   // Debug Flags
   VITE_QUERY_DEBUG?: string;
   VITE_TEST_VERBOSE?: string;

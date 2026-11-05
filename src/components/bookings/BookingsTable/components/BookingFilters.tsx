@@ -14,7 +14,7 @@ import {
   SelectValue,
   TableSearch,
 } from "@/components/patterns";
-import { pickedDay } from "@/lib/bookings";
+import { BOOKING_SOURCES, pickedDay, type BookingSource } from "@/lib/bookings";
 import type { BookingStatus, PaymentStatus } from "@/types";
 
 import type { BookingFiltersProps, DateRange } from "../types";
@@ -25,6 +25,7 @@ export const BookingFilters: React.FC<BookingFiltersProps> = ({
   searchQuery,
   setSearchQuery,
   resetFilters,
+  hasActiveFilters,
   onExport,
   resultCount,
   totalCount,
@@ -39,29 +40,15 @@ export const BookingFilters: React.FC<BookingFiltersProps> = ({
   });
   const [dateFilterOpen, setDateFilterOpen] = useState(false);
 
-  // Check if any filters are actually active (have non-undefined values)
-  const hasActiveFilters = (): boolean => {
-    const hasFilterValues =
-      filters.status !== undefined ||
-      filters.payment_status !== undefined ||
-      filters.date_from !== undefined ||
-      filters.date_to !== undefined ||
-      filters.is_walk_in !== undefined;
-    return hasFilterValues || searchQuery.trim().length > 0;
-  };
-
   // Count active filter types (excluding search)
   const activeFilterCount = (): number => {
     let count = 0;
     if (filters.status !== undefined) count++;
     if (filters.payment_status !== undefined) count++;
     if (filters.date_from !== undefined || filters.date_to !== undefined) count++;
-    if (filters.is_walk_in !== undefined) count++;
+    if (filters.booking_source !== undefined) count++;
     return count;
   };
-
-  const walkInLabel =
-    filters.is_walk_in === true ? "Walk-ins" : filters.is_walk_in === false ? "Reserved" : "";
 
   // Filter controls (shared between mobile and desktop)
   const StatusFilter = () => (
@@ -134,25 +121,19 @@ export const BookingFilters: React.FC<BookingFiltersProps> = ({
     </FilterPopover>
   );
 
-  const WalkInFilter = () => (
+  const SourceFilter = () => (
     <FilterPopover
-      isActive={filters.is_walk_in !== undefined}
-      badgeLabel={walkInLabel}
+      isActive={!!filters.booking_source}
+      badgeLabel={filters.booking_source}
       content={
         <div className="space-y-2">
           <div className="text-sm font-medium">Booking Source</div>
           <Select
-            value={
-              filters.is_walk_in === true
-                ? "walk_in"
-                : filters.is_walk_in === false
-                  ? "reserved"
-                  : "all"
-            }
+            value={filters.booking_source || "all"}
             onValueChange={(value: string) =>
               setFilters({
                 ...filters,
-                is_walk_in: value === "walk_in" ? true : value === "reserved" ? false : undefined,
+                booking_source: value === "all" ? undefined : (value as BookingSource),
               })
             }
           >
@@ -160,15 +141,18 @@ export const BookingFilters: React.FC<BookingFiltersProps> = ({
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All bookings</SelectItem>
-              <SelectItem value="walk_in">Walk-ins only</SelectItem>
-              <SelectItem value="reserved">Reserved only</SelectItem>
+              <SelectItem value="all">All Sources</SelectItem>
+              {BOOKING_SOURCES.map((source) => (
+                <SelectItem key={source} value={source}>
+                  {source}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
       }
     >
-      Walk-in
+      Source
     </FilterPopover>
   );
 
@@ -217,7 +201,7 @@ export const BookingFilters: React.FC<BookingFiltersProps> = ({
     resultCount !== undefined &&
     totalCount !== undefined && (
       <span className="text-muted-foreground text-sm">
-        {hasActiveFilters() ? (
+        {hasActiveFilters ? (
           <>
             <span className="text-foreground font-medium">{resultCount}</span> of {totalCount}{" "}
             bookings
@@ -243,12 +227,12 @@ export const BookingFilters: React.FC<BookingFiltersProps> = ({
         <>
           <StatusFilter />
           <PaymentFilter />
-          <WalkInFilter />
+          <SourceFilter />
           <DateFilter />
         </>
       }
       activeFilterCount={activeFilterCount()}
-      onClearFilters={hasActiveFilters() ? resetFilters : undefined}
+      onClearFilters={hasActiveFilters ? resetFilters : undefined}
       summary={<ResultCount />}
       actions={
         <Button variant="outline" size="sm" onClick={onExport}>

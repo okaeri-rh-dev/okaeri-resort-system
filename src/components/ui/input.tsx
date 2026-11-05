@@ -152,37 +152,6 @@ const CurrencyInput = React.forwardRef<HTMLInputElement, InputProps>(
 );
 CurrencyInput.displayName = "CurrencyInput";
 
-// Search Input Component
-const SearchInput = React.forwardRef<HTMLInputElement, InputProps>(
-  ({ className, ...props }, ref) => {
-    return (
-      <Input
-        ref={ref}
-        type="search"
-        startIcon={
-          <svg
-            width="16"
-            height="16"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <circle cx="11" cy="11" r="8" />
-            <path d="21 21l-4.35-4.35" />
-          </svg>
-        }
-        className={className}
-        placeholder="Search..."
-        {...props}
-      />
-    );
-  }
-);
-SearchInput.displayName = "SearchInput";
-
 // Phone Input Component for Philippine format
 const PhoneInput = React.forwardRef<HTMLInputElement, InputProps>(
   ({ className, ...props }, ref) => {
@@ -354,4 +323,4 @@ const NumberInput = React.forwardRef<HTMLInputElement, NumberInputProps>(
 );
 NumberInput.displayName = "NumberInput";
 
-export { Input, CurrencyInput, SearchInput, PhoneInput, NumberInput };
+export { Input, CurrencyInput, PhoneInput, NumberInput };

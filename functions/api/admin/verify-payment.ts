@@ -13,7 +13,7 @@
  * @returns {401} Missing or invalid authentication token
  * @returns {403} User does not have admin role
  * @returns {404} Booking not found
- * @returns {409} Payment already processed (not in Pending state)
+ * @returns {409} Payment already processed, or the downpayment is already recorded
  * @returns {500} Internal server error
  */
 
@@ -52,21 +52,6 @@ export async function onRequest(context: {
 }) {
   const { request, env } = context;
 
-  // CORS headers
-  const corsHeaders = {
-    "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Methods": "POST, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type, Authorization",
-  };
-
-  // Handle preflight OPTIONS request
-  if (request.method === "OPTIONS") {
-    return new Response(null, {
-      status: 204,
-      headers: corsHeaders,
-    });
-  }
-
   // Only allow POST method
   if (request.method !== "POST") {
     return new Response(
@@ -76,7 +61,7 @@ export async function onRequest(context: {
       }),
       {
         status: 405,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json" },
       }
     );
   }
@@ -92,7 +77,7 @@ export async function onRequest(context: {
         }),
         {
           status: 401,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json" },
         }
       );
     }
@@ -115,7 +100,7 @@ export async function onRequest(context: {
         }),
         {
           status: 401,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json" },
         }
       );
     }
@@ -135,7 +120,7 @@ export async function onRequest(context: {
         }),
         {
           status: 403,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json" },
         }
       );
     }
@@ -152,7 +137,7 @@ export async function onRequest(context: {
         }),
         {
           status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json" },
         }
       );
     }
@@ -166,7 +151,7 @@ export async function onRequest(context: {
         }),
         {
           status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json" },
         }
       );
     }
@@ -179,7 +164,7 @@ export async function onRequest(context: {
         }),
         {
           status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json" },
         }
       );
     }
@@ -194,7 +179,7 @@ export async function onRequest(context: {
           }),
           {
             status: 400,
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
+            headers: { "Content-Type": "application/json" },
           }
         );
       }
@@ -218,7 +203,7 @@ export async function onRequest(context: {
         }),
         {
           status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json" },
         }
       );
     }
@@ -231,7 +216,7 @@ export async function onRequest(context: {
         }),
         {
           status: 404,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json" },
         }
       );
     }
@@ -246,7 +231,7 @@ export async function onRequest(context: {
         }),
         {
           status: 409,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json" },
         }
       );
     }
@@ -264,7 +249,7 @@ export async function onRequest(context: {
           }),
           {
             status: 409,
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
+            headers: { "Content-Type": "application/json" },
           }
         );
       }
@@ -275,8 +260,22 @@ export async function onRequest(context: {
         payment_method: booking.payment_method,
         proof_url: booking.payment_proof_url,
         status: "Active",
+        kind: "online_downpayment",
         notes: "Online booking downpayment",
       } satisfies TablesInsert<"payments">);
+
+      if (paymentError?.code === "23505") {
+        return new Response(
+          JSON.stringify({
+            error: "Conflict",
+            message: "This downpayment is already recorded",
+          }),
+          {
+            status: 409,
+            headers: { "Content-Type": "application/json" },
+          }
+        );
+      }
 
       if (paymentError) {
         console.error("Failed to record payment:", paymentError);
@@ -287,7 +286,7 @@ export async function onRequest(context: {
           }),
           {
             status: 500,
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
+            headers: { "Content-Type": "application/json" },
           }
         );
       }
@@ -350,7 +349,7 @@ export async function onRequest(context: {
       }),
       {
         status: 200,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json" },
       }
     );
   } catch (error) {
@@ -363,7 +362,7 @@ export async function onRequest(context: {
       }),
       {
         status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json" },
       }
     );
   }

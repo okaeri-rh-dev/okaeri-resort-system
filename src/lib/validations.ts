@@ -1,5 +1,8 @@
 import { z } from "zod";
 
+import { STAFF_BOOKING_SOURCES } from "./bookings/source";
+import { typeError } from "./validation/type-error";
+
 // ============================================
 // UTILITY VALIDATION FUNCTIONS
 // ============================================
@@ -52,8 +55,7 @@ export const nameSchema = z
 
 // Date validation
 export const dateSchema = z.date({
-  required_error: messages.required,
-  invalid_type_error: "Please select a valid date",
+  error: typeError(messages.required, "Please select a valid date"),
 });
 
 // Future date validation
@@ -79,7 +81,7 @@ export const unitFormSchema = z.object({
   unit_code: unitCodeSchema,
 
   unit_type: z.enum(["Standard", "Deluxe", "Suite", "Villa"] as const, {
-    required_error: "Please select a unit type",
+    error: typeError("Please select a unit type"),
   }),
 
   base_occupancy: z
@@ -153,6 +155,25 @@ export const bookingStep3Schema = z.object({
   payment_method: z.enum(["GCash", "BankTransfer", "Cash", "Card"] as const),
 });
 
+/** An Airbnb booking's total is the payout staff type in (ADR 0006). */
+export const payoutSchema = z
+  .number()
+  .positive("The payout must be more than zero")
+  .max(99_999_999.99, "The payout is too large") // bookings.total_amount is DECIMAL(10,2)
+  .optional();
+
+export const hasPayoutIfAirbnb = (data: { booking_source?: string; payout?: number }) =>
+  data.booking_source !== "Airbnb" || data.payout !== undefined;
+
+export const payoutRequiredIssue = { message: "Enter the Airbnb payout", path: ["payout"] };
+
+export const confirmationCodeSchema = z
+  .string()
+  .trim()
+  .toUpperCase()
+  .max(50, "Use 50 characters or fewer for the confirmation code")
+  .optional();
+
 // Complete booking form schema (all steps combined)
 export const completeBookingSchema = bookingStep1BaseSchema
   .merge(
@@ -162,13 +183,20 @@ export const completeBookingSchema = bookingStep1BaseSchema
       contact_number: z
         .string()
         .refine((val) => val === "" || philippinePhoneRegex.test(val), messages.phone),
-      is_walk_in: z.boolean(),
+      booking_source: z.enum(STAFF_BOOKING_SOURCES),
+      payout: payoutSchema,
+      airbnb_confirmation_code: confirmationCodeSchema,
     })
   )
-  .merge(bookingStep3Schema)
+  .merge(bookingStep3Schema.partial({ payment_method: true }))
   .refine((data) => data.check_out > data.check_in, {
     message: messages.endAfterStart,
     path: ["check_out"],
+  })
+  .refine(hasPayoutIfAirbnb, payoutRequiredIssue)
+  .refine((data) => data.booking_source === "Airbnb" || data.payment_method, {
+    message: "Select a payment method",
+    path: ["payment_method"],
   });
 
 // ============================================

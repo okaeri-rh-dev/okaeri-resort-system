@@ -1,9 +1,9 @@
 import { expect, test } from "@playwright/test";
 
-import { ROUTES, TEST_USERS } from "./fixtures/test-data";
+import { loginAsAdmin, loginAsStaff } from "./fixtures/auth";
+import { ROUTES } from "./fixtures/test-data";
 import { BookingsTablePage } from "./pages/BookingsTablePage";
 import { DashboardPage } from "./pages/DashboardPage";
-import { LoginPage } from "./pages/LoginPage";
 
 /**
  * Admin Booking Management Tests
@@ -17,13 +17,6 @@ import { LoginPage } from "./pages/LoginPage";
  * Note: Most tests require authentication. They will be skipped
  * if test credentials are not configured.
  */
-
-// Helper to login before tests
-async function loginAsAdmin(page: import("@playwright/test").Page) {
-  const loginPage = new LoginPage(page);
-  await loginPage.goto();
-  await loginPage.loginAndWaitForDashboard(TEST_USERS.admin.email, TEST_USERS.admin.password);
-}
 
 test.describe("Admin Bookings Management", () => {
   // Skip all tests in this describe block if no credentials
@@ -126,18 +119,17 @@ test.describe("Admin Bookings Management", () => {
     test("search filters table results", async ({ page }) => {
       const bookingsTable = new BookingsTablePage(page);
       await bookingsTable.goto();
+      const bookingRows = bookingsTable.tableBodyRows.or(bookingsTable.bookingCards);
+      const initialRowCount = await bookingRows.count();
 
-      // Get initial row count
-      const initialCount = await bookingsTable.getRowCount();
-
-      // Search for something specific
       await bookingsTable.search("nonexistent-booking-xyz-999");
 
-      // Should show fewer results or empty state
-      const filteredCount = await bookingsTable.getRowCount();
-      const hasEmptyState = await bookingsTable.emptyState.isVisible().catch(() => false);
+      await expect(bookingsTable.noMatchesState).toBeVisible();
+      expect(await bookingsTable.getRowCount()).toBe(0);
 
-      expect(filteredCount < initialCount || hasEmptyState).toBeTruthy();
+      await bookingsTable.clearFiltersButton.click();
+      await expect(bookingsTable.searchInput).toHaveValue("");
+      await expect(bookingRows).toHaveCount(initialRowCount);
     });
 
     test("can clear search", async ({ page }) => {
@@ -199,7 +191,12 @@ test.describe("Admin Bookings Management", () => {
       await bookingsTable.clickBookingRow(refs[0]);
 
       // Verify detail page has guest info section
-      await expect(page.getByText(/guest|name|email|phone/i).first()).toBeVisible();
+      await expect(
+        page
+          .getByRole("main")
+          .getByText(/guest|name|email|phone/i)
+          .first()
+      ).toBeVisible();
     });
   });
 
@@ -262,7 +259,12 @@ test.describe("Bookings Queue (Payment Verification)", () => {
     await page.goto(ROUTES.admin.bookingsQueue);
 
     // Page should load (may show empty state)
-    await expect(page.getByText(/queue|pending|payment/i).first()).toBeVisible();
+    await expect(
+      page
+        .getByRole("main")
+        .getByText(/queue|pending|payment/i)
+        .first()
+    ).toBeVisible();
   });
 
   test("queue shows pending bookings awaiting verification", async ({ page }) => {
@@ -317,7 +319,12 @@ test.describe("Unit Assignment", () => {
 
     // Should either show unit assignment form or redirect/error
     // depending on booking status
-    await expect(page.getByText(/assign|units|cabin|error|not found/i).first()).toBeVisible();
+    await expect(
+      page
+        .getByRole("main")
+        .getByText(/assign|units|cabin|error|not found/i)
+        .first()
+    ).toBeVisible();
   });
 });
 
@@ -327,9 +334,7 @@ test.describe("Role-Based Access", () => {
       test.skip();
     }
 
-    const loginPage = new LoginPage(page);
-    await loginPage.goto();
-    await loginPage.loginAndWaitForDashboard(TEST_USERS.staff.email, TEST_USERS.staff.password);
+    await loginAsStaff(page);
 
     // Navigate to bookings
     await page.goto(ROUTES.admin.bookings);
@@ -343,9 +348,7 @@ test.describe("Role-Based Access", () => {
       test.skip();
     }
 
-    const loginPage = new LoginPage(page);
-    await loginPage.goto();
-    await loginPage.loginAndWaitForDashboard(TEST_USERS.admin.email, TEST_USERS.admin.password);
+    await loginAsAdmin(page);
 
     // Navigate to bookings
     const bookingsTable = new BookingsTablePage(page);
@@ -379,7 +382,10 @@ test.describe("Responsive Design", () => {
     const bookingsTable = new BookingsTablePage(page);
     await bookingsTable.goto();
 
-    await bookingsTable.expectBookingListVisible();
+    await expect(bookingsTable.table).toBeHidden();
+    await expect(
+      bookingsTable.bookingCards.or(bookingsTable.noBookingsState).first()
+    ).toBeVisible();
   });
 
   test("search works on mobile", async ({ page }) => {

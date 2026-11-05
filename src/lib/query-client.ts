@@ -1,4 +1,5 @@
 import { QueryClient } from "@tanstack/react-query";
+import { isNotFound } from "@tanstack/react-router";
 
 /**
  * Shared QueryClient instance used by both TanStack Router (route loaders)
@@ -19,6 +20,8 @@ export const queryClient = new QueryClient({
 
       // Retry configuration
       retry: (failureCount, error) => {
+        if (isNotFound(error)) return false;
+
         // Don't retry on 4xx errors
         if (error instanceof Error) {
           const message = error.message.toLowerCase();

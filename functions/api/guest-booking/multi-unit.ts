@@ -1,6 +1,6 @@
-import type { PagesFunction } from "@cloudflare/workers-types";
 import { createClient } from "@supabase/supabase-js";
 
+import { isBlockedNightError } from "@/lib/bookings/availability";
 import { generateGuestBookingReference } from "@/lib/bookings/reference";
 import { toStayInstants } from "@/lib/bookings/stay";
 import { checkKVRateLimit } from "@/lib/kv-rate-limit";
@@ -10,11 +10,17 @@ import type { Database, Json } from "@/types/database.types";
 import {
   ERROR_CODES,
   multiUnitBookingSchema,
-  type MultiUnitBookingResponse,
+  type CreatedMultiUnitBookingResponse,
+  type DuplicateMultiUnitBookingResponse,
 } from "@/types/guest-booking-multi-unit";
 
 import { toGuestBookingData } from "../../lib/guest-booking-data";
-import { calculateBookingPrice } from "../../lib/pricing";
+import {
+  calculateBookingPrice,
+  fetchActiveSeasons,
+  loadPricingConfig,
+  toCentavo,
+} from "../../lib/pricing";
 
 /**
  * POST /api/guest-booking/multi-unit
@@ -34,9 +40,10 @@ import { calculateBookingPrice } from "../../lib/pricing";
  */
 
 // Environment type for Cloudflare Pages
-// Subset of the jsonb built by create_guest_booking (turnstile variant, 20251110171900)
+// Subset of the jsonb built by create_guest_booking (20261030400000)
 interface CreateGuestBookingResult {
   booking: { booking_id: string; booking_reference: string };
+  is_duplicate?: boolean;
 }
 
 function isCreateGuestBookingResult(result: Json): result is Json & CreateGuestBookingResult {
@@ -55,39 +62,13 @@ interface Env {
   SUPABASE_URL: string;
   SUPABASE_SERVICE_ROLE_KEY: string;
   TURNSTILE_SECRET_KEY: string;
-  ALLOWED_ORIGINS?: string;
   RATE_LIMIT_KV: KVNamespace;
   ENVIRONMENT?: string;
 }
 
-// CORS helper
-function getCorsHeaders(origin?: string | null, allowedOriginsStr?: string) {
-  const allowedOrigins = allowedOriginsStr
-    ? allowedOriginsStr.split(",")
-    : ["http://localhost:5173", "https://okaeri-resort.pages.dev"];
-
-  const isAllowed = origin && allowedOrigins.includes(origin);
-
-  return {
-    "Access-Control-Allow-Origin": isAllowed ? origin : allowedOrigins[0],
-    "Access-Control-Allow-Methods": "POST, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type, X-Idempotency-Key",
-  };
-}
-
-// Handle OPTIONS preflight
-export const onRequestOptions: PagesFunction<Env> = async (context) => {
-  const corsHeaders = getCorsHeaders(
-    context.request.headers.get("Origin"),
-    context.env.ALLOWED_ORIGINS
-  );
-  return new Response(null, { headers: corsHeaders });
-};
-
 // Handle POST request
-export const onRequestPost: PagesFunction<Env> = async (context) => {
+export const onRequestPost = async (context: { request: Request; env: Env }) => {
   const { request, env } = context;
-  const corsHeaders = getCorsHeaders(request.headers.get("Origin"), env.ALLOWED_ORIGINS);
 
   try {
     // 1. Parse and validate request
@@ -102,7 +83,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
           error_code: ERROR_CODES.VALIDATION_ERROR,
           details: validation.error.flatten(),
         },
-        { status: 400, headers: corsHeaders }
+        { status: 400 }
       );
     }
 
@@ -125,7 +106,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
           error: "Security verification failed",
           error_code: ERROR_CODES.TURNSTILE_VERIFICATION_FAILED,
         },
-        { status: 403, headers: corsHeaders }
+        { status: 403 }
       );
     }
 
@@ -147,7 +128,6 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
         {
           status: 429,
           headers: {
-            ...corsHeaders,
             "X-RateLimit-Limit": "5",
             "X-RateLimit-Remaining": rateLimit.remaining.toString(),
             "X-RateLimit-Reset": rateLimit.retryAfter.toString(),
@@ -178,35 +158,17 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
 
     if (existing && existing.bookings) {
       // Return existing booking (duplicate detected)
-      return Response.json(
-        {
-          success: true,
-          booking: existing.bookings,
-          message: "Booking already created (duplicate detected)",
-          is_duplicate: true,
-        },
-        { status: 200, headers: corsHeaders }
-      );
+      const duplicateResponse: DuplicateMultiUnitBookingResponse = {
+        success: true,
+        booking: existing.bookings,
+        message: "Booking already created (duplicate detected)",
+        is_duplicate: true,
+      };
+      return Response.json(duplicateResponse, { status: 200 });
     }
 
     // 5. Fetch pricing configuration and validate capacity
-    const { data: config, error: configError } = await supabase
-      .from("pricing_config")
-      .select("*")
-      .eq("id", "default")
-      .single();
-
-    if (configError || !config) {
-      console.error("[PRICING_CONFIG] Error:", configError);
-      return Response.json(
-        {
-          success: false,
-          error: "Configuration not found. Please contact support.",
-          error_code: ERROR_CODES.INTERNAL_ERROR,
-        },
-        { status: 500, headers: corsHeaders }
-      );
-    }
+    const config = await loadPricingConfig(supabase);
 
     // Validation 1: Guest capacity per unit (physical limit)
     const maxCapacity = config.max_capacity_per_unit;
@@ -219,7 +181,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
             error: `Maximum ${maxCapacity} guests per unit`,
             error_code: ERROR_CODES.CAPACITY_EXCEEDED,
           },
-          { status: 400, headers: corsHeaders }
+          { status: 400 }
         );
       }
     }
@@ -227,8 +189,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     // Validation 2: Booking size vs system capacity
     const { count: systemUnitCount } = await supabase
       .from("units")
-      .select("*", { count: "exact", head: true })
-      .eq("unit_status", "Available");
+      .select("*", { count: "exact", head: true });
 
     if (data.unit_requests.length > (systemUnitCount || 0)) {
       return Response.json(
@@ -237,12 +198,12 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
           error: `Maximum ${systemUnitCount} units available in system`,
           error_code: ERROR_CODES.UNIT_LIMIT_EXCEEDED,
         },
-        { status: 400, headers: corsHeaders }
+        { status: 400 }
       );
     }
 
-    // Note: We do NOT validate availability (whether units are currently booked)
-    // Admin handles availability during unit assignment
+    // Bookings are not checked here: staff assign cabins later. create_guest_booking
+    // refuses nights with fewer unblocked cabins than requested.
 
     // 6. Calculate pricing using Workers pricing library
     // Calculate for each unit and aggregate
@@ -277,31 +238,29 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
 
     try {
       // Calculate pricing for each unit separately
-      const unitPricingResults = await Promise.all(
-        data.unit_requests.map((unitRequest) =>
-          calculateBookingPrice(supabase, {
-            checkIn,
-            checkOut,
-            guestCount: unitRequest.guests_per_unit,
-          })
-        )
+      const seasons = await fetchActiveSeasons(supabase);
+      const unitPricingResults = data.unit_requests.map((unitRequest) =>
+        calculateBookingPrice({
+          checkIn,
+          checkOut,
+          guestCount: unitRequest.guests_per_unit,
+          config,
+          seasons,
+        })
       );
+
+      const sumOf = (amountOf: (unitPricing: (typeof unitPricingResults)[number]) => number) =>
+        toCentavo(unitPricingResults.reduce((sum, p) => sum + amountOf(p), 0));
 
       // Aggregate pricing across all units
       const aggregatedPricing = {
         nights: unitPricingResults[0]?.nights || 0,
-        base_total: unitPricingResults.reduce((sum, p) => sum + p.subtotal, 0),
-        weekend_surcharge: unitPricingResults.reduce((sum, p) => {
-          // Calculate weekend surcharge from nightly breakdown
-          const weekendTotal = p.nightlyBreakdown
-            .filter((n) => n.isWeekend)
-            .reduce((s, n) => s + (n.finalRate - n.baseRate), 0);
-          return sum + weekendTotal;
-        }, 0),
-        extra_person_fees: unitPricingResults.reduce((sum, p) => sum + p.extraPersonTotal, 0),
-        subtotal: unitPricingResults.reduce((sum, p) => sum + p.subtotal + p.extraPersonTotal, 0),
-        total: unitPricingResults.reduce((sum, p) => sum + p.total, 0),
-        downpayment_required: unitPricingResults.reduce((sum, p) => sum + p.downpayment, 0),
+        base_total: sumOf((p) => p.subtotal),
+        weekend_surcharge: sumOf((p) => p.weekendSurcharge),
+        extra_person_fees: sumOf((p) => p.extraPersonTotal),
+        subtotal: sumOf((p) => p.subtotal + p.extraPersonTotal),
+        total: sumOf((p) => p.total),
+        downpayment_required: sumOf((p) => p.downpayment),
         currency: unitPricingResults[0]?.currency || "PHP",
         // Discounts not implemented in pricing lib - will return null
         discount: null as { percent: number; amount: number; rule_name: string } | null,
@@ -323,9 +282,8 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
             success: false,
             error: "Pricing calculation failed",
             error_code: ERROR_CODES.DATABASE_ERROR,
-            details: "Invalid total amount calculated",
           },
-          { status: 500, headers: corsHeaders }
+          { status: 500 }
         );
       }
 
@@ -337,9 +295,8 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
           success: false,
           error: "Pricing calculation failed",
           error_code: ERROR_CODES.DATABASE_ERROR,
-          details: pricingError instanceof Error ? pricingError.message : "Unknown pricing error",
         },
-        { status: 500, headers: corsHeaders }
+        { status: 500 }
       );
     }
 
@@ -374,6 +331,17 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       p_guest_data: null, // Guest data is included in p_booking_data for simplified interface
     });
 
+    if (isBlockedNightError(createError)) {
+      return Response.json(
+        {
+          success: false,
+          error: "These dates are unavailable. Please choose other dates.",
+          error_code: ERROR_CODES.DATES_UNAVAILABLE,
+        },
+        { status: 409 }
+      );
+    }
+
     if (createError || !result) {
       // ============================================================
       // BUG-003 FIX: Improved error handling for guest booking creation
@@ -400,7 +368,6 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       });
 
       // Parse database error for specific error codes
-      const errorMessage = createError?.message || "Unknown database error";
       const errorCode = createError?.code;
 
       // Determine appropriate error response based on PostgreSQL error code
@@ -417,10 +384,6 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       } else if (errorCode === "23502") {
         // Not null violation - missing required field
         userMessage = "Missing required booking information.";
-        console.error("[BOOKING] Missing field:", errorMessage);
-      } else if (errorCode === "P0001") {
-        // Raised exception from PL/pgSQL
-        userMessage = errorMessage.replace("Booking creation failed: ", "");
       }
 
       return Response.json(
@@ -428,15 +391,9 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
           success: false,
           error: userMessage,
           error_code: errorType,
-          details: {
-            message: errorMessage,
-            code: errorCode,
-            hint: createError?.hint,
-            // Include booking reference for support inquiries
-            booking_reference: bookingReference,
-          },
+          booking_reference: bookingReference,
         },
-        { status: 500, headers: corsHeaders }
+        { status: 500 }
       );
     }
 
@@ -444,9 +401,20 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       throw new Error("create_guest_booking returned an unexpected result");
     }
 
+    // A concurrent submit with the same key got past step 4 first
+    if (result.is_duplicate === true) {
+      const duplicateResponse: DuplicateMultiUnitBookingResponse = {
+        success: true,
+        booking: result.booking,
+        message: "Booking already created (duplicate detected)",
+        is_duplicate: true,
+      };
+      return Response.json(duplicateResponse, { status: 200 });
+    }
+
     // 9. Build response
     const { booking } = result;
-    const response: MultiUnitBookingResponse = {
+    const response: CreatedMultiUnitBookingResponse = {
       success: true,
       booking: {
         booking_id: booking.booking_id,
@@ -479,7 +447,6 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
 
     return Response.json(response, {
       status: 201,
-      headers: corsHeaders,
     });
   } catch (error: unknown) {
     // BUG-003 FIX: Improved error handling for unexpected errors
@@ -497,11 +464,8 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
         success: false,
         error: "Your booking was not saved. Please try again later.",
         error_code: ERROR_CODES.INTERNAL_ERROR,
-        details: {
-          message: errorMessage,
-        },
       },
-      { status: 500, headers: corsHeaders }
+      { status: 500 }
     );
   }
 };

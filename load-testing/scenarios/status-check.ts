@@ -1,27 +1,27 @@
 /**
  * Status Check Load Test Scenario
  *
- * Tests the GET /api/guest-booking/status endpoint under load.
+ * Tests the POST /api/guest-booking/status endpoint under load.
  * This endpoint is called frequently by guests checking their booking status.
  *
  * Target: P95 < 200ms, Error Rate < 1%
  */
 
-import http from "k6/http";
 import { check, sleep } from "k6";
-import { Rate, Trend } from "k6/metrics";
+import http from "k6/http";
+import { Counter, Rate, Trend } from "k6/metrics";
 
 import { getEnvironment } from "../config/environments.js";
 import { endpointThresholds } from "../config/thresholds.js";
+import { getStatusLookups, type StatusLookup } from "../utils/data-generators.js";
 
 // Custom metrics
 const statusSuccessRate = new Rate("status_success_rate");
 const statusDuration = new Trend("status_duration", true);
+const statusRateLimited = new Counter("status_rate_limited");
 
 // Environment configuration
 const env = getEnvironment();
-
-// Note: bookingIds is managed via setup() and passed to default function
 
 // Test options
 export const options = {
@@ -47,43 +47,37 @@ export const options = {
   },
 };
 
-// Setup function - create some test bookings to check status
 export function setup() {
-  // In a real scenario, you would either:
-  // 1. Create bookings in setup and return their IDs
-  // 2. Use pre-existing booking IDs from environment
-  // 3. Create bookings as part of the test flow
-
-  const testBookingIds = __ENV.TEST_BOOKING_IDS?.split(",") || [
-    "00000000-0000-0000-0000-000000000001", // Placeholder
-    "00000000-0000-0000-0000-000000000002",
-    "00000000-0000-0000-0000-000000000003",
-  ];
-
-  console.log(`Using ${testBookingIds.length} booking IDs for status checks`);
-  return { bookingIds: testBookingIds };
+  const lookups = getStatusLookups();
+  console.log(`Using ${lookups.length} reference/email pairs for status checks`);
+  return { lookups };
 }
 
-export default function (data: { bookingIds: string[] }) {
-  // Pick a random booking ID
-  const bookingId = data.bookingIds[Math.floor(Math.random() * data.bookingIds.length)];
+export default function (data: { lookups: StatusLookup[] }) {
+  const lookup = data.lookups[Math.floor(Math.random() * data.lookups.length)];
 
   const startTime = Date.now();
 
-  const response = http.get(`${env.baseUrl}/api/guest-booking/status?booking_id=${bookingId}`, {
+  // 429 is the endpoint's own rate limiter (20/hour per client), so it is an expected result.
+  const response = http.post(`${env.baseUrl}/api/guest-booking/status`, JSON.stringify(lookup), {
+    headers: { "Content-Type": "application/json" },
     tags: { endpoint: "status" },
+    responseCallback: http.expectedStatuses(200, 429),
   });
 
   const duration = Date.now() - startTime;
   statusDuration.add(duration);
 
-  // Check response
+  const rateLimited = response.status === 429;
+  statusRateLimited.add(rateLimited ? 1 : 0);
+
   const success = check(response, {
-    "status is 200": (r) => r.status === 200,
+    "status is 200 or 429": (r) => r.status === 200 || r.status === 429,
     "has booking status": (r) => {
+      if (r.status === 429) return true;
       try {
         const body = JSON.parse(r.body as string);
-        return !!body.booking?.status;
+        return !!body.status;
       } catch {
         return false;
       }
@@ -93,8 +87,7 @@ export default function (data: { bookingIds: string[] }) {
 
   statusSuccessRate.add(success);
 
-  // Handle rate limiting
-  if (response.status === 429) {
+  if (rateLimited) {
     const retryAfter = parseInt(response.headers["Retry-After"] || "60");
     console.log(`Rate limited on status check. Waiting ${retryAfter}s.`);
     sleep(Math.min(retryAfter, 30));
@@ -119,7 +112,7 @@ function generateTextSummary(data: Record<string, unknown>): string {
 ╔═══════════════════════════════════════════════════════════════╗
 ║              STATUS CHECK LOAD TEST RESULTS                   ║
 ╠═══════════════════════════════════════════════════════════════╣
-║ Endpoint: GET /api/guest-booking/status                       ║
+║ Endpoint: POST /api/guest-booking/status                      ║
 ║ Target: P95 < 200ms, Error Rate < 1%                          ║
 ╠═══════════════════════════════════════════════════════════════╣
 ║ Response Time:                                                ║
@@ -129,6 +122,7 @@ function generateTextSummary(data: Record<string, unknown>): string {
 ║   - P99: ${formatMs(metrics.http_req_duration?.values?.["p(99)"])}                                       ║
 ╠═══════════════════════════════════════════════════════════════╣
 ║ Success Rate: ${formatPercent(metrics.status_success_rate?.values?.rate)}                              ║
+║ Rate Limited (429): ${metrics.status_rate_limited?.values?.count || 0}                                     ║
 ║ Total Requests: ${metrics.http_reqs?.values?.count || 0}                                      ║
 ║ RPS: ${formatRps(metrics.http_reqs?.values?.rate)}                                              ║
 ╚═══════════════════════════════════════════════════════════════╝

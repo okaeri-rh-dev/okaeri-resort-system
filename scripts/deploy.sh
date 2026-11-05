@@ -204,7 +204,6 @@ log_info "Checking Cloudflare secrets configuration..."
 REQUIRED_SECRETS=(
   "SUPABASE_SERVICE_ROLE_KEY"
   "TURNSTILE_SECRET_KEY"
-  "RESEND_API_KEY"
 )
 
 echo ""

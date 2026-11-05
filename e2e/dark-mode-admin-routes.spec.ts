@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 
 import { loginAsAdmin } from "./fixtures/auth";
 import { COMPACT, EXPANDED, expectReadable, useDarkTheme } from "./fixtures/contrast";
@@ -6,11 +6,12 @@ import { COMPACT, EXPANDED, expectReadable, useDarkTheme } from "./fixtures/cont
 /**
  * Dark mode is readable on the markup the admin route files draw themselves (#104): the
  * detail and edit routes' load-failure screen and the list routes' page headers. Needs the
- * seeded admin. A nonexistent id makes each detail loader throw, so the route's own
- * errorComponent renders regardless of what the shared database holds.
+ * seeded admin. Failing the detail table fetches makes each detail loader throw, so the route's
+ * own errorComponent renders regardless of what the shared database holds.
  */
 
 const MISSING_ID = "00000000-0000-4000-8000-00000000dead";
+const RAW_DB_ERROR = "forced detail failure";
 // The query client retries a failed detail fetch before the errorComponent shows.
 const ERROR_SCREEN_WAIT = { timeout: 30_000 };
 
@@ -27,6 +28,13 @@ const DETAIL_ROUTES = [
   { path: `/admin/units/${MISSING_ID}/edit`, heading: "Failed to Load Cabin Editor" },
 ];
 
+// postgrest-js retries a network error itself, so a 500 reaches the errorComponent sooner.
+function failDetailFetches(page: Page) {
+  return page.route(/\/rest\/v1\/(bookings|guests|expenses|payments|units)\?/, (route) =>
+    route.fulfill({ status: 500, json: { code: "XX000", message: RAW_DB_ERROR } })
+  );
+}
+
 test.describe("Dark mode admin routes", () => {
   test.beforeEach(async ({ page }) => {
     await useDarkTheme(page);
@@ -36,12 +44,15 @@ test.describe("Dark mode admin routes", () => {
     test.slow();
     await page.setViewportSize(EXPANDED);
     await loginAsAdmin(page);
+    await failDetailFetches(page);
 
     for (const { path, heading } of DETAIL_ROUTES) {
       await page.goto(path);
       await expect(page.getByRole("heading", { name: heading, exact: true })).toBeVisible(
         ERROR_SCREEN_WAIT
       );
+      await expect(page.getByText(/^Could not load this .+\. Try again\.$/)).toBeVisible();
+      await expect(page.getByText(RAW_DB_ERROR)).toHaveCount(0);
       await expect(page.getByRole("button", { name: "Go Back" })).toBeVisible();
       await expectReadable(page);
     }
@@ -50,6 +61,7 @@ test.describe("Dark mode admin routes", () => {
   test("detail route load failure reads in dark on a phone", async ({ page }) => {
     await page.setViewportSize(COMPACT);
     await loginAsAdmin(page);
+    await failDetailFetches(page);
     await page.goto(`/admin/guests/${MISSING_ID}`);
     await expect(page.getByRole("heading", { name: "Failed to Load Guest" })).toBeVisible(
       ERROR_SCREEN_WAIT

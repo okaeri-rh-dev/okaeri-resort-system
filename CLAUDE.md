@@ -8,9 +8,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
   1. Run with an explicit long timeout (`timeout: 600000`), or
   2. Run with `run_in_background: true` and monitor until it exits.
 - After every push, verify it landed before reporting success: `git fetch origin && git rev-parse HEAD origin/main` — the two hashes must match. A started hook is not a completed push.
-- `main` needs green CI (Lint, Type-check, Unit tests, Knip) to merge, and direct pushes to it are rejected. Merge PRs with `gh pr merge --auto --merge`; it waits for the required checks.
+- `main` needs green CI (Lint, Type-check, Unit tests, Knip, e2e) to merge, and direct pushes to it are rejected. Merge PRs with `gh pr merge --auto --merge`; it waits for the required checks.
 - If the hook fails or hangs on pre-existing/unrelated failures: run `npm run verify` directly; if it passes, ASK the user before `git push --no-verify`. Never use `--no-verify` on your own.
-- DB tests (need `supabase start`) and Playwright E2E are not part of the hook; they run in CI (`.github/workflows/infra-health.yml`) and explicitly when relevant.
+- DB tests (need `supabase start`) and Playwright E2E are not part of the hook; they run in the `e2e` job of `.github/workflows/infra-health.yml` on every PR that changes app, DB or test files (`e2e-scope` decides; a skipped job passes the check), and again on push to main. The job takes about 25 minutes.
 
 ## Deployment Secrets & 401 Debugging
 
@@ -28,6 +28,11 @@ VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
 ## Testing Notes (non-obvious only)
 
 - Database and performance tests require a local Supabase instance: run `supabase start` first. These tests use `@vitest-environment node` (bypasses CORS) with `beforeEach` cleanup; `TEST_SUPABASE_URL` / `TEST_SUPABASE_SERVICE_ROLE_KEY` default to the local instance in `vitest.config.ts`.
+- Vitest global setup holds a machine-wide lock on the local Supabase stack for the whole run (it can restart the stack, and DB test cleanup deletes every booking), so a second run from any checkout or worktree logs "Waiting for vitest run …" and starts when the first ends. Watch mode (`npm test`) holds the lock until the watcher closes. Non-DB runs set `SKIP_DB_SETUP=1` (pre-push does) to skip the lock.
+- Run `npm run worktree:setup` once in every new worktree (it runs `supabase link`, so a person runs or approves it). Without the gitignored `supabase/.temp/` it writes, `supabase db reset` fails with `42P10` and `supabase db push` fails with `DbConfigIpv6Error`. A prod `supabase db push` runs from a checkout that has the migration: the main checkout may be on another branch.
+- Apply a new migration to the local DB with `supabase migration up --local`, never `psql -f`: `psql` writes no `schema_migrations` row, and the gap makes later `migration up` runs fail with `MigrationMissingRemoteError` (issue 243).
+- Scripts read the local stack with `supabase status -o env` (never the human output), and DB types come from `npm run gen:types` (`supabase gen types --local` exits 1 on CLI v2.122.1).
+- When `prod-drift` (CLI `latest`) is green on a newer CLI, bump the `setup-cli` pin in the `e2e` job of `infra-health.yml` by hand, and commit `npm run gen:types` output from that CLI (the blocking Type drift step checks it).
 
 ## Phase Suffixes
 
@@ -45,10 +50,7 @@ Rules:
 
 Current entries:
 
-- **Supabase CLI output parsing** — helper scripts that regex `supabase status` human output break on CLI upgrades (bit household-hub at v2.105.0). Any new script must use `supabase status -o env` (machine-readable) instead. Known-good CLI version at last check: v2.101.0.
-- **Vitest global setup stops Supabase** — `src/test/global-setup.ts` runs `supabase stop` then `supabase start` when its DB check fails, so parallel vitest runs (subagents, worktrees, other sessions) race and leave the shared stack down. Workaround: non-DB runs set `SKIP_DB_SETUP=1` (pre-push does) to skip it; otherwise run one vitest at a time; afterwards check `curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:54321/rest/v1/` is 200, else `supabase start` from the main checkout.
-- **A fresh worktree has no `supabase/.temp/`** (gitignored), so (a) `supabase db reset` runs every storage migration, which drops the `(bucket_id, name)` unique index that the pinned storage-api still upserts on (`StorageApiError: database error, code: 42P10`), and (b) the worktree is not linked: `supabase db push` fails with `DbConfigIpv6Error`. Workaround: copy `storage-migration`, `storage-version`, `postgres-version`, `rest-version`, `gotrue-version`, `project-ref`, `pooler-url` and `linked-project.json` from the main checkout's `supabase/.temp/` into the worktree (not `start-secrets`), then reset or push again. A prod `supabase db push` runs from a checkout that has the migration: the main checkout may be on another branch.
-- **`supabase gen types --local` fails password auth** (CLI v2.109.1: `password authentication failed for user "postgres"`; v2.119.0 exits 1 with no message). Workaround: `npm run gen:types`, which passes `--db-url` from `supabase status -o env`.
+None.
 
 ## Important Notes
 

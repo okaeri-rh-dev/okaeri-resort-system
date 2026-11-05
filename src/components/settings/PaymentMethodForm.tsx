@@ -22,6 +22,7 @@ import {
   useUploadQrCode,
 } from "@/hooks/usePaymentMethods";
 import { sanitizeFormData } from "@/lib/security/sanitize";
+import { typeError } from "@/lib/validation/type-error";
 import type { PaymentMethodConfig, PaymentMethodType } from "@/types";
 
 import { ActiveSwitchField } from "./ActiveSwitchField";
@@ -41,18 +42,9 @@ const ICON_OPTIONS = [
   { value: "Banknote", label: "Cash/Banknote" },
 ];
 
-const ICON_COLORS = [
-  { value: "text-blue-600", label: "Blue" },
-  { value: "text-blue-800", label: "Dark Blue" },
-  { value: "text-green-600", label: "Green" },
-  { value: "text-purple-600", label: "Purple" },
-  { value: "text-amber-600", label: "Amber" },
-  { value: "text-gray-600", label: "Gray" },
-];
-
 const paymentMethodSchema = z.object({
   method_type: z.enum(["e-wallet", "bank-transfer", "cash", "other"], {
-    required_error: "Please select a method type",
+    error: typeError("Please select a method type"),
   }),
   provider_name: z.string().min(1, "Provider name is required").max(100, "Provider name too long"),
   display_name: z.string().min(1, "Display name is required").max(150, "Display name too long"),
@@ -60,7 +52,6 @@ const paymentMethodSchema = z.object({
   account_number: z.string().max(100, "Account number too long").optional().or(z.literal("")),
   bank_name: z.string().max(100, "Bank name too long").optional().or(z.literal("")),
   icon_name: z.string().min(1, "Icon is required"),
-  icon_color: z.string().min(1, "Icon color is required"),
   display_order: z.number().int().min(0).max(999),
   instructions: z.string().max(500, "Instructions too long").optional().or(z.literal("")),
   is_active: z.boolean(),
@@ -78,6 +69,7 @@ export function PaymentMethodForm({ method, onSuccess, onCancel }: PaymentMethod
   const isEditMode = !!method;
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [qrPreview, setQrPreview] = useState<string | null>(method?.qr_code_url || null);
+  const [qrStoragePath, setQrStoragePath] = useState(method?.qr_code_storage_path || null);
 
   const createMethod = useCreatePaymentMethod();
   const updateMethod = useUpdatePaymentMethod();
@@ -96,7 +88,6 @@ export function PaymentMethodForm({ method, onSuccess, onCancel }: PaymentMethod
       account_number: method?.account_number || "",
       bank_name: method?.bank_name || "",
       icon_name: method?.icon_name || "CreditCard",
-      icon_color: method?.icon_color || "text-gray-600",
       display_order: method?.display_order ?? 0,
       instructions: method?.instructions || "",
       is_active: method?.is_active ?? true,
@@ -108,7 +99,7 @@ export function PaymentMethodForm({ method, onSuccess, onCancel }: PaymentMethod
   const onSubmit = async (data: PaymentMethodFormData) => {
     // Sanitize text fields
     const sanitizedData = sanitizeFormData(data, {
-      skipFields: ["method_type", "display_order", "is_active", "icon_name", "icon_color"],
+      skipFields: ["method_type", "display_order", "is_active", "icon_name"],
     });
 
     const payload = {
@@ -119,7 +110,6 @@ export function PaymentMethodForm({ method, onSuccess, onCancel }: PaymentMethod
       account_number: sanitizedData.account_number?.trim() || null,
       bank_name: sanitizedData.bank_name?.trim() || null,
       icon_name: sanitizedData.icon_name,
-      icon_color: sanitizedData.icon_color,
       display_order: sanitizedData.display_order,
       instructions: sanitizedData.instructions?.trim() || null,
       is_active: sanitizedData.is_active,
@@ -144,17 +134,20 @@ export function PaymentMethodForm({ method, onSuccess, onCancel }: PaymentMethod
     reader.readAsDataURL(file);
 
     try {
-      await uploadQr.mutateAsync({ id: method.id, file });
+      const updated = await uploadQr.mutateAsync({ id: method.id, file });
+      setQrStoragePath(updated.qr_code_storage_path);
     } catch {
-      // Revert preview on failure
-      setQrPreview(method?.qr_code_url || null);
+      // Upload is only offered with no QR code shown, so a failure goes back to none
+      reader.abort();
+      setQrPreview(null);
     }
   };
 
   const handleQrDelete = async () => {
-    if (!method?.id || !method.qr_code_storage_path) return;
-    await deleteQr.mutateAsync({ id: method.id, storagePath: method.qr_code_storage_path });
+    if (!method?.id || !qrStoragePath) return;
+    await deleteQr.mutateAsync({ id: method.id, storagePath: qrStoragePath });
     setQrPreview(null);
+    setQrStoragePath(null);
   };
 
   const isLoading = createMethod.isPending || updateMethod.isPending;
@@ -215,23 +208,11 @@ export function PaymentMethodForm({ method, onSuccess, onCancel }: PaymentMethod
           </FormField>
         )}
 
-        <div className="grid grid-cols-1 gap-6 @lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-6 @lg:grid-cols-2">
           <FormField control={form.control} name="icon_name" label="Icon">
             {({ value, onChange, ...field }) => (
               <SelectControl {...field} value={value} onValueChange={onChange}>
                 {ICON_OPTIONS.map((opt) => (
-                  <SelectItem key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </SelectItem>
-                ))}
-              </SelectControl>
-            )}
-          </FormField>
-
-          <FormField control={form.control} name="icon_color" label="Icon Color">
-            {({ value, onChange, ...field }) => (
-              <SelectControl {...field} value={value} onValueChange={onChange}>
-                {ICON_COLORS.map((opt) => (
                   <SelectItem key={opt.value} value={opt.value}>
                     {opt.label}
                   </SelectItem>

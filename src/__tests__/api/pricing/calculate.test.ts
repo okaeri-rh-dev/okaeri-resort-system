@@ -1,17 +1,18 @@
+import { createClient } from "@supabase/supabase-js";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { toStayInstants } from "@/lib/bookings/stay";
+
 import { onRequest } from "../../../../functions/api/pricing/calculate";
+import { calculateBookingPrice, fetchActiveSeasons } from "../../../../functions/lib/pricing";
 import type { PricingCalculationResponse } from "../types/responses";
 
 // Mock environment
 const mockEnv = {
   SUPABASE_URL: "https://test.supabase.co",
   SUPABASE_SERVICE_ROLE_KEY: "test-key",
-  KV_RATE_LIMIT: {
-    get: vi.fn(),
-    put: vi.fn(),
-  } as any,
-  KV_PRICING_CACHE: {
+  ENVIRONMENT: "production",
+  RATE_LIMIT_KV: {
     get: vi.fn(),
     put: vi.fn(),
   } as any,
@@ -57,47 +58,23 @@ vi.mock("@supabase/supabase-js", () => ({
         };
       }
       if (table === "seasonal_rates") {
+        // One season covering the whole year doubles every night
+        const seasons = {
+          data: [
+            {
+              name: "Christmas & New Year",
+              start_date: "01-01",
+              end_date: "12-31",
+              multiplier: 2.0,
+              priority: 20,
+            },
+          ],
+          error: null,
+        };
         return {
           select: vi.fn().mockReturnThis(),
           eq: vi.fn().mockReturnThis(),
-          lte: vi.fn().mockReturnThis(),
-          gte: vi.fn().mockReturnThis(),
-          order: vi.fn().mockReturnThis(),
-          single: vi.fn().mockResolvedValue({
-            data: {
-              season_id: "christmas_new_year",
-              name: "Christmas & New Year",
-              start_date: "12-20",
-              end_date: "01-02",
-              multiplier: 2.0,
-              priority: 20,
-              is_active: true,
-            },
-            error: null,
-          }),
-          then: vi.fn().mockResolvedValue({
-            data: [
-              {
-                season_id: "christmas_new_year",
-                name: "Christmas & New Year",
-                start_date: "12-20",
-                end_date: "01-02",
-                multiplier: 2.0,
-                priority: 20,
-                is_active: true,
-              },
-              {
-                season_id: "peak_summer",
-                name: "Peak Summer Season",
-                start_date: "03-01",
-                end_date: "05-31",
-                multiplier: 1.5,
-                priority: 10,
-                is_active: true,
-              },
-            ],
-            error: null,
-          }),
+          then: (resolve: (value: unknown) => void) => resolve(seasons),
         };
       }
       return {
@@ -109,6 +86,29 @@ vi.mock("@supabase/supabase-js", () => ({
   })),
 }));
 
+// The booking endpoint prices each cabin like this and stores the sum
+const priceAsBookingEndpoint = async (
+  checkInDay: string,
+  checkOutDay: string,
+  guestCount: number
+) => {
+  const stay = toStayInstants(checkInDay, checkOutDay);
+  return calculateBookingPrice({
+    checkIn: new Date(stay.check_in),
+    checkOut: new Date(stay.check_out),
+    guestCount,
+    config: {
+      base_rate: 3000,
+      weekend_rate: 3500,
+      extra_person_rate: 500,
+      base_occupancy: 2,
+      downpayment_percent: 50,
+      currency: "PHP",
+    },
+    seasons: await fetchActiveSeasons(createClient("", "")),
+  });
+};
+
 describe("Pricing Calculate API", () => {
   let mockRequest: any;
 
@@ -116,26 +116,10 @@ describe("Pricing Calculate API", () => {
     vi.clearAllMocks();
 
     // Reset rate limit mock
-    mockEnv.KV_RATE_LIMIT.get.mockResolvedValue(null);
-    mockEnv.KV_RATE_LIMIT.put.mockResolvedValue(undefined);
+    mockEnv.RATE_LIMIT_KV.get.mockResolvedValue(null);
+    mockEnv.RATE_LIMIT_KV.put.mockResolvedValue(undefined);
 
     // Reset cache mock
-    mockEnv.KV_PRICING_CACHE.get.mockResolvedValue(null);
-    mockEnv.KV_PRICING_CACHE.put.mockResolvedValue(undefined);
-  });
-
-  it("should handle CORS preflight requests", async () => {
-    mockRequest = {
-      method: "OPTIONS",
-      headers: new Map(),
-      json: vi.fn(),
-    };
-
-    const response = await onRequest({ request: mockRequest, env: mockEnv });
-
-    expect(response.status).toBe(200);
-    expect(response.headers.get("Access-Control-Allow-Origin")).toBe("*");
-    expect(response.headers.get("Access-Control-Allow-Methods")).toBe("POST, OPTIONS");
   });
 
   it("should reject non-POST methods", async () => {
@@ -228,17 +212,13 @@ describe("Pricing Calculate API", () => {
   });
 
   it("should calculate pricing with custom parameters", async () => {
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    const dayAfter = new Date();
-    dayAfter.setDate(dayAfter.getDate() + 4);
-
     mockRequest = {
       method: "POST",
       headers: new Map(),
       json: vi.fn().mockResolvedValue({
-        check_in: tomorrow.toISOString().split("T")[0],
-        check_out: dayAfter.toISOString().split("T")[0],
+        // Thu, Fri and Sat nights
+        check_in: "2099-01-08",
+        check_out: "2099-01-11",
         guest_count: 2,
         custom_pricing: {
           base_rate: 2500,
@@ -255,16 +235,12 @@ describe("Pricing Calculate API", () => {
     expect(response.status).toBe(200);
     expect(data.success).toBe(true);
     expect(data.pricing).toBeDefined();
-    expect(data.pricing.total).toBe(20000); // No extra persons
+    expect(data.pricing.total).toBe(17000); // (₱2,500 + ₱3,000 × 2) doubled, no extra persons
     expect(data.notice).toContain("Seasonal rates applied");
   });
 
   it("should handle rate limiting", async () => {
-    // Mock rate limit exceeded
-    mockEnv.KV_RATE_LIMIT.get.mockResolvedValue({
-      count: 10,
-      resetAt: Date.now() + 60000,
-    });
+    mockEnv.RATE_LIMIT_KV.get.mockResolvedValue("10");
 
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
@@ -287,45 +263,6 @@ describe("Pricing Calculate API", () => {
 
     expect(response.status).toBe(429);
     expect(data.error).toBe("RATE_LIMIT_EXCEEDED");
-  });
-
-  it("should use cache when available", async () => {
-    const cachedData = {
-      pricing: {
-        total: 15000,
-        downpayment: 7500,
-        nights: 3,
-        currency: "PHP",
-      },
-      notice: "Cached seasonal rates",
-      calculated_at: new Date().toISOString(),
-    };
-
-    mockEnv.KV_PRICING_CACHE.get.mockResolvedValue(cachedData);
-
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    const dayAfter = new Date();
-    dayAfter.setDate(dayAfter.getDate() + 4);
-
-    mockRequest = {
-      method: "POST",
-      headers: new Map(),
-      json: vi.fn().mockResolvedValue({
-        check_in: tomorrow.toISOString().split("T")[0],
-        check_out: dayAfter.toISOString().split("T")[0],
-        guest_count: 4,
-        unit_id: "550e8400-e29b-41d4-a716-446655440001",
-      }),
-    };
-
-    const response = await onRequest({ request: mockRequest, env: mockEnv });
-    const data = (await response.json()) as PricingCalculationResponse;
-
-    expect(response.status).toBe(200);
-    expect(data.success).toBe(true);
-    expect(data.cached).toBe(true);
-    expect(data.pricing.total).toBe(15000);
   });
 
   it("should handle multi-unit pricing requests", async () => {
@@ -356,6 +293,74 @@ describe("Pricing Calculate API", () => {
     expect(data.pricing.total).toBe(43000); // 20000 + 23000 (2 extra persons × 500 × 3 nights)
   });
 
+  it("prices guest cabin requests one by one, as the booking endpoint stores them", async () => {
+    mockRequest = {
+      method: "POST",
+      headers: new Map(),
+      json: vi.fn().mockResolvedValue({
+        // One weeknight (Tue), outside every season
+        check_in: "2027-06-08",
+        check_out: "2027-06-09",
+        unit_requests: [{ guest_count: 2 }, { guest_count: 2 }],
+      }),
+    };
+
+    const response = await onRequest({ request: mockRequest, env: mockEnv });
+    const data = (await response.json()) as PricingCalculationResponse;
+
+    const cabin = await priceAsBookingEndpoint("2027-06-08", "2027-06-09", 2);
+
+    // The mock season doubles each night: 2 cabins × ₱3,000 × 2, not one 4-guest cabin (₱7,000)
+    expect(data.pricing.total).toBe(12000);
+    expect(data.pricing.total).toBe(2 * cabin.total);
+    expect(data.pricing.downpayment).toBe(2 * cabin.downpayment);
+  });
+
+  it("prices a Fri–Sun stay as Manila nights, like the booking endpoint, west of UTC", async () => {
+    vi.stubEnv("TZ", "America/Sao_Paulo");
+    try {
+      mockRequest = {
+        method: "POST",
+        headers: new Map(),
+        json: vi.fn().mockResolvedValue({
+          // Fri 2027-06-04 to Sun 2027-06-06
+          check_in: "2027-06-04",
+          check_out: "2027-06-06",
+          guest_count: 2,
+        }),
+      };
+
+      const response = await onRequest({ request: mockRequest, env: mockEnv });
+      const data = (await response.json()) as PricingCalculationResponse;
+
+      const booked = await priceAsBookingEndpoint("2027-06-04", "2027-06-06", 2);
+
+      expect(data.pricing.nights).toBe(2);
+      expect(data.pricing.nightlyBreakdown?.filter((night) => night.isWeekend)).toHaveLength(2);
+      // Two weekend nights at ₱3,500, doubled by the mock season
+      expect(data.pricing.total).toBe(14000);
+      expect(data.pricing.total).toBe(booked.total);
+    } finally {
+      vi.unstubAllEnvs();
+    }
+  });
+
+  it("rejects a stay date that is not a YYYY-MM-DD day", async () => {
+    mockRequest = {
+      method: "POST",
+      headers: new Map(),
+      json: vi.fn().mockResolvedValue({
+        check_in: "2027-06-04T00:00:00Z",
+        check_out: "2027-06-06",
+        guest_count: 2,
+      }),
+    };
+
+    const response = await onRequest({ request: mockRequest, env: mockEnv });
+
+    expect(response.status).toBe(400);
+  });
+
   it("should validate date ranges", async () => {
     mockRequest = {
       method: "POST",
@@ -375,7 +380,8 @@ describe("Pricing Calculate API", () => {
     expect(data.error).toBe("VALIDATION_ERROR");
   });
 
-  it("should include auth token for higher rate limits", async () => {
+  it("allows a signed-in caller past the guest limit", async () => {
+    mockEnv.RATE_LIMIT_KV.get.mockResolvedValue("10");
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
     const dayAfter = new Date();
@@ -383,7 +389,10 @@ describe("Pricing Calculate API", () => {
 
     mockRequest = {
       method: "POST",
-      headers: new Map([["Authorization", "Bearer test-token"]]),
+      headers: new Headers({
+        Authorization: "Bearer test-token",
+        "CF-Connecting-IP": "192.168.1.1",
+      }),
       json: vi.fn().mockResolvedValue({
         check_in: tomorrow.toISOString().split("T")[0],
         check_out: dayAfter.toISOString().split("T")[0],
@@ -393,16 +402,34 @@ describe("Pricing Calculate API", () => {
     };
 
     const response = await onRequest({ request: mockRequest, env: mockEnv });
-    const data = (await response.json()) as PricingCalculationResponse;
 
     expect(response.status).toBe(200);
-    expect(data.success).toBe(true);
+  });
 
-    // Verify higher rate limit was applied (60 instead of 10)
-    expect(mockEnv.KV_RATE_LIMIT.put).toHaveBeenCalledWith(
-      expect.stringContaining("rate_limit:pricing:test-token"),
-      expect.any(String),
-      expect.any(Object)
-    );
+  it("keys the limit by client IP, never by the token", async () => {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const dayAfter = new Date();
+    dayAfter.setDate(dayAfter.getDate() + 4);
+
+    mockRequest = {
+      method: "POST",
+      headers: new Headers({
+        Authorization: "Bearer test-token",
+        "CF-Connecting-IP": "192.168.1.1",
+      }),
+      json: vi.fn().mockResolvedValue({
+        check_in: tomorrow.toISOString().split("T")[0],
+        check_out: dayAfter.toISOString().split("T")[0],
+        guest_count: 4,
+        unit_id: "550e8400-e29b-41d4-a716-446655440001",
+      }),
+    };
+
+    await onRequest({ request: mockRequest, env: mockEnv });
+
+    const [key] = mockEnv.RATE_LIMIT_KV.put.mock.calls[0];
+    expect(key).toContain("pricing:192.168.1.1");
+    expect(key).not.toContain("test-token");
   });
 });

@@ -90,8 +90,6 @@ test.describe("Dark mode documents", () => {
     await expect(visible(page, "text=Unit Price")).toBeVisible();
     await expectReadable(page, "main");
 
-    // Leaving the Edit tab unmounts the form, which syncs to the preview 300ms after the last edit
-    await page.waitForTimeout(500);
     await page.getByRole("tab", { name: "Preview" }).click();
     await expect(
       page.getByRole("cell", { name: "Cabin stay, 2 nights" }).locator("visible=true")

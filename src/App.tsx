@@ -13,20 +13,6 @@ import { initializeTheme } from "@/stores/useUIStore";
 
 import "@/styles/calendar.css";
 
-// Custom event type for auth state changes
-interface AuthStateChangeEvent extends CustomEvent {
-  detail: {
-    isAuthenticated: boolean;
-  };
-}
-
-// Extend WindowEventMap to include custom events
-declare global {
-  interface WindowEventMap {
-    authStateChange: AuthStateChangeEvent;
-  }
-}
-
 // Create the router instance
 const router = createRouter({
   routeTree,
@@ -85,26 +71,25 @@ function App() {
     const { startCleanupTimer, stopCleanupTimer } = useBookingStore.getState();
     startCleanupTimer();
 
-    // Listen for auth state changes
-    const handleAuthChange = (event: AuthStateChangeEvent) => {
-      const newAuthState = event.detail.isAuthenticated;
+    // Token refreshes are skipped so they do not clear the role cache
+    const {
+      data: { subscription },
+    } = auth.onAuthStateChange((event, session) => {
+      if (event !== "SIGNED_IN" && event !== "SIGNED_OUT") return;
+
+      const newAuthState = !!session;
       setIsAuthenticated(newAuthState);
       clearRoleCache();
-
-      // Update router context
       router.update({
         context: {
           queryClient,
           isAuthenticated: newAuthState,
         },
       });
-    };
-
-    // Listen for custom auth events (if auth library emits them)
-    window.addEventListener("authStateChange", handleAuthChange);
+    });
 
     return () => {
-      window.removeEventListener("authStateChange", handleAuthChange);
+      subscription.unsubscribe();
       // Cleanup the optimistic bookings timer
       stopCleanupTimer();
     };

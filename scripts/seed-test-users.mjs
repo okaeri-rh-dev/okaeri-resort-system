@@ -2,8 +2,8 @@
 /**
  * Seed E2E Test Users
  *
- * Creates the three test users that the Playwright e2e suite relies on
- * (admin, owner, staff) and assigns them their corresponding app_roles.
+ * Creates the test users that the Playwright e2e suite relies on
+ * (admin, owner, staff, logout) and assigns them their corresponding app_roles.
  * Idempotent: existing users/roles are detected and left intact.
  *
  * Reads credentials from .env.test (TEST_*_EMAIL / TEST_*_PASSWORD) and
@@ -85,6 +85,8 @@ const USERS = [
     email: process.env.TEST_STAFF_EMAIL || envTest.TEST_STAFF_EMAIL,
     password: process.env.TEST_STAFF_PASSWORD || envTest.TEST_STAFF_PASSWORD,
   },
+  // Signing out revokes every session of the user, so the logout tests get a user no saved session uses.
+  { label: "logout", role: "staff", email: "logout@okaeri.test", password: "test-password" },
 ];
 
 const missing = USERS.filter((u) => !u.email || !u.password);

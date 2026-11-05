@@ -13,7 +13,9 @@ function BookingsTableComponent({ className }: BookingsTableProps) {
     bookings,
     totalCount,
     filteredCount,
+    hasActiveFilters,
     isLoading,
+    isPlaceholderData,
     error,
     filters,
     setFilters,
@@ -48,6 +50,7 @@ function BookingsTableComponent({ className }: BookingsTableProps) {
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
         resetFilters={resetFilters}
+        hasActiveFilters={hasActiveFilters}
         onExport={handleExport}
         resultCount={filteredCount}
         totalCount={totalCount}
@@ -56,6 +59,7 @@ function BookingsTableComponent({ className }: BookingsTableProps) {
       <DataTable
         table={table}
         label="Bookings"
+        isStale={isPlaceholderData}
         renderCard={(row) => (
           <BookingCard
             booking={row.original}
@@ -65,23 +69,20 @@ function BookingsTableComponent({ className }: BookingsTableProps) {
           />
         )}
         emptyState={
-          <TableEmptyState
-            variant={totalCount === 0 ? "no-data" : "no-results"}
-            title={totalCount === 0 ? "No bookings yet" : "No bookings found"}
-            description={
-              totalCount === 0
-                ? "Get started by creating your first booking."
-                : "No bookings match your current filters. Try adjusting your search."
-            }
-            action={
-              totalCount === 0
-                ? undefined
-                : {
-                    label: "Clear Filters",
-                    onClick: resetFilters,
-                  }
-            }
-          />
+          hasActiveFilters ? (
+            <TableEmptyState
+              variant="no-results"
+              title="No bookings found"
+              description="No bookings match your current filters. Try adjusting your search."
+              action={{ label: "Clear Filters", onClick: resetFilters }}
+            />
+          ) : (
+            <TableEmptyState
+              variant="no-data"
+              title="No bookings yet"
+              description="Get started by creating your first booking."
+            />
+          )
         }
       />
 

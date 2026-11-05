@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { typeError } from "./type-error";
+
 /**
  * Pricing Configuration Validation Schema
  *
@@ -18,59 +20,48 @@ import { z } from "zod";
 export const pricingConfigSchema = z
   .object({
     base_rate: z
-      .number({
-        required_error: "Base rate is required",
-        invalid_type_error: "Base rate must be a number",
-      })
+      .number({ error: typeError("Base rate is required", "Base rate must be a number") })
       .positive("Base rate must be positive")
       .min(500, "Base rate seems too low (minimum ₱500)")
       .max(100000, "Base rate seems too high (maximum ₱100,000)"),
 
     weekend_rate: z
-      .number({
-        required_error: "Weekend rate is required",
-        invalid_type_error: "Weekend rate must be a number",
-      })
+      .number({ error: typeError("Weekend rate is required", "Weekend rate must be a number") })
       .positive("Weekend rate must be positive")
       .min(500, "Weekend rate seems too low (minimum ₱500)")
       .max(100000, "Weekend rate seems too high (maximum ₱100,000)"),
 
     extra_person_rate: z
       .number({
-        required_error: "Extra person rate is required",
-        invalid_type_error: "Extra person rate must be a number",
+        error: typeError("Extra person rate is required", "Extra person rate must be a number"),
       })
       .nonnegative("Extra person rate cannot be negative")
       .max(10000, "Extra person rate seems too high (maximum ₱10,000)"),
 
     base_occupancy: z
-      .number({
-        required_error: "Base occupancy is required",
-        invalid_type_error: "Base occupancy must be a number",
-      })
+      .number({ error: typeError("Base occupancy is required", "Base occupancy must be a number") })
       .int("Base occupancy must be a whole number")
       .min(1, "Base occupancy must be at least 1 guest")
       .max(20, "Base occupancy seems too high (maximum 20 guests)"),
 
     max_capacity_per_unit: z
-      .number({
-        required_error: "Max capacity is required",
-        invalid_type_error: "Max capacity must be a number",
-      })
+      .number({ error: typeError("Max capacity is required", "Max capacity must be a number") })
       .int("Max capacity must be a whole number")
       .min(1, "Max capacity must be at least 1 guest")
       .max(50, "Max capacity seems too high (maximum 50 guests per unit)"),
 
     downpayment_percent: z
       .number({
-        required_error: "Downpayment percentage is required",
-        invalid_type_error: "Downpayment percentage must be a number",
+        error: typeError(
+          "Downpayment percentage is required",
+          "Downpayment percentage must be a number"
+        ),
       })
       .min(0, "Downpayment percentage cannot be negative")
       .max(100, "Downpayment percentage cannot exceed 100%"),
 
     currency: z.literal("PHP", {
-      errorMap: () => ({ message: "Currency must be PHP for Philippine resort" }),
+      error: "Currency must be PHP for Philippine resort",
     }),
   })
   .refine((data) => data.max_capacity_per_unit >= data.base_occupancy, {

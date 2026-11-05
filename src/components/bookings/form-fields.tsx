@@ -1,44 +1,89 @@
-import { useId, type ReactNode } from "react";
+import type { Control, FieldPath, FieldValues } from "react-hook-form";
 
-import { Controller, type Control, type FieldPath, type FieldValues } from "react-hook-form";
+import { FormField, Input, SelectControl, SelectItem } from "@/components/patterns";
+import { STAFF_BOOKING_SOURCES, type BookingSource } from "@/lib/bookings";
 
-import { Checkbox, Label } from "@/components/patterns";
-
-interface WalkInFieldProps<TFieldValues extends FieldValues & { is_walk_in?: boolean }> {
+interface BookingSourceFieldProps<
+  TFieldValues extends FieldValues & { booking_source?: BookingSource },
+> {
   control: Control<TFieldValues>;
-  description: ReactNode;
+  /** Website bookings keep their source, so the picker shows it locked. */
+  isWebsite?: boolean;
 }
 
-/** The "Walk-in booking" checkbox, with its label and help beside it. */
-export function WalkInField<TFieldValues extends FieldValues & { is_walk_in?: boolean }>({
-  control,
-  description,
-}: WalkInFieldProps<TFieldValues>) {
-  const id = useId();
-  const descriptionId = `${id}-description`;
-
+/** The booking source picker: Walk-in, Direct or Airbnb. */
+export function BookingSourceField<
+  TFieldValues extends FieldValues & { booking_source?: BookingSource },
+>({ control, isWebsite = false }: BookingSourceFieldProps<TFieldValues>) {
   return (
-    <Controller
+    <FormField
       control={control}
-      name={"is_walk_in" as FieldPath<TFieldValues>}
-      render={({ field }) => (
-        <div className="bg-muted/40 flex items-start gap-3 rounded-md border p-4">
-          <Checkbox
-            id={id}
-            checked={field.value ?? false}
-            onCheckedChange={(checked) => field.onChange(checked === true)}
-            onBlur={field.onBlur}
-            aria-describedby={descriptionId}
-            className="mt-1"
-          />
-          <div className="space-y-1 leading-none">
-            <Label htmlFor={id}>Walk-in booking</Label>
-            <p id={descriptionId} className="text-muted-foreground text-sm">
-              {description}
-            </p>
-          </div>
-        </div>
+      name={"booking_source" as FieldPath<TFieldValues>}
+      label="Booking source"
+      description={isWebsite ? "Booked on the website. This cannot change." : undefined}
+    >
+      {({ value, onChange, ...field }) => (
+        <SelectControl {...field} value={value} onValueChange={onChange} disabled={isWebsite}>
+          {isWebsite && <SelectItem value="Website">Website</SelectItem>}
+          {STAFF_BOOKING_SOURCES.map((source) => (
+            <SelectItem key={source} value={source}>
+              {source}
+            </SelectItem>
+          ))}
+        </SelectControl>
       )}
-    />
+    </FormField>
+  );
+}
+
+export function ConfirmationCodeField<
+  TFieldValues extends FieldValues & { airbnb_confirmation_code?: string },
+>({ control }: { control: Control<TFieldValues> }) {
+  return (
+    <FormField
+      control={control}
+      name={"airbnb_confirmation_code" as FieldPath<TFieldValues>}
+      label="Airbnb confirmation code"
+      description="Optional. For example HMABC123."
+    >
+      {(field) => (
+        <Input
+          autoComplete="off"
+          autoCapitalize="characters"
+          {...field}
+          value={field.value ?? ""}
+        />
+      )}
+    </FormField>
+  );
+}
+
+/** An Airbnb booking's total: the payout staff type in (ADR 0006). */
+export function PayoutField<TFieldValues extends FieldValues & { payout?: number }>({
+  control,
+}: {
+  control: Control<TFieldValues>;
+}) {
+  return (
+    <FormField
+      control={control}
+      name={"payout" as FieldPath<TFieldValues>}
+      label="Payout"
+      description="₱ What Airbnb pays the resort. The booking is recorded as fully paid."
+    >
+      {(field) => (
+        <Input
+          type="number"
+          inputMode="decimal"
+          step="0.01"
+          min={0}
+          {...field}
+          value={field.value ?? ""}
+          onChange={(e) =>
+            field.onChange(e.target.value === "" ? undefined : Number(e.target.value))
+          }
+        />
+      )}
+    </FormField>
   );
 }

@@ -12,6 +12,7 @@ import { ArrowLeft } from "lucide-react";
 import { PaymentProofViewer } from "@/components/admin/PaymentProofViewer";
 import { Button, Card, CardContent, CardHeader, CardTitle } from "@/components/patterns";
 import { useAuthToken } from "@/hooks/useAuthToken";
+import { requireManager } from "@/lib/route-guards";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { adminBookingDetailQuery } from "@/stores/useBookingStore";
 import type { PaymentStatus } from "@/types";
@@ -32,6 +33,9 @@ interface BookingDetail {
 }
 
 export const Route = createFileRoute("/admin/verify-payment/$bookingId")({
+  beforeLoad: async () => {
+    await requireManager();
+  },
   component: PaymentVerificationPage,
 });
 

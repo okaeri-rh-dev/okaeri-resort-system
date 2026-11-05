@@ -12,8 +12,20 @@
 import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
 
+import { BLOCKED_UNIT_MESSAGE, BlockedUnitError } from "@/lib/bookings/availability";
+import {
+  DuplicateConfirmationCodeError,
+  storedConfirmationCode,
+} from "@/lib/bookings/confirmation-code";
 import { createBooking, type PricedUnit } from "@/lib/bookings/create";
+import { STAFF_BOOKING_SOURCES } from "@/lib/bookings/source";
 import { isManilaDay, toStayInstants } from "@/lib/bookings/stay";
+import {
+  confirmationCodeSchema,
+  hasPayoutIfAirbnb,
+  payoutRequiredIssue,
+  payoutSchema,
+} from "@/lib/validations";
 import type { Database } from "@/types/database.types";
 
 import {
@@ -59,18 +71,18 @@ const multiUnitBookingSchema = z
           (val) => val === "" || /^[+]?[0-9\s\-()]{10,20}$/.test(val),
           "Invalid contact number"
         ),
-      guest_id: z.string().uuid().optional(),
+      guest_id: z.guid().optional(),
     }),
     check_in: manilaDay,
     check_out: manilaDay,
     units: z
       .array(
         z.object({
-          unit_id: z.string().uuid(),
+          unit_id: z.guid(),
           num_guests: z.number().int().min(1).max(20),
           guest_assignment: z
             .object({
-              guest_ids: z.array(z.string().uuid()),
+              guest_ids: z.array(z.guid()),
               guest_names: z.array(z.string()).optional(),
             })
             .optional(),
@@ -88,13 +100,18 @@ const multiUnitBookingSchema = z
       .optional(),
     special_requests: z.string().max(1000).optional(),
     internal_notes: z.string().max(1000).optional(),
+    booking_source: z.enum(STAFF_BOOKING_SOURCES).optional(),
+    // Clients from before booking_source send only this flag.
     is_walk_in: z.boolean().optional().default(false),
     source: z.enum(["web", "mobile", "admin"]).optional(),
+    payout: payoutSchema,
+    airbnb_confirmation_code: confirmationCodeSchema,
   })
   .refine((data) => data.check_out > data.check_in, {
     message: "Check-out must be after check-in",
     path: ["check_out"],
-  });
+  })
+  .refine(hasPayoutIfAirbnb, payoutRequiredIssue);
 
 type MultiUnitBookingRequest = z.infer<typeof multiUnitBookingSchema>;
 
@@ -105,18 +122,10 @@ export const onRequestPost = async (context: {
   request: Request;
   env: Env;
   data: AuthenticatedData;
-  waitUntil: (promise: Promise<unknown>) => void;
 }): Promise<Response> => {
-  const { request, env, waitUntil } = context;
+  const { request, env } = context;
   const authenticatedUser = context.data.user;
   const startTime = Date.now();
-
-  // CORS headers
-  const corsHeaders = {
-    "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Methods": "POST, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Idempotency-Key",
-  };
 
   try {
     try {
@@ -133,7 +142,7 @@ export const onRequestPost = async (context: {
         },
         {
           status: unauthenticated ? 401 : 403,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json" },
         }
       );
     }
@@ -150,14 +159,14 @@ export const onRequestPost = async (context: {
             code: "VALIDATION_ERROR",
             message: "Invalid request data",
             details: {
-              validation_errors: validationResult.error.errors.map((err) => ({
+              validation_errors: validationResult.error.issues.map((err) => ({
                 field: err.path.join("."),
                 message: err.message,
               })),
             },
           },
         },
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 400, headers: { "Content-Type": "application/json" } }
       );
     }
 
@@ -167,13 +176,16 @@ export const onRequestPost = async (context: {
     const idempotencyKey = request.headers.get("Idempotency-Key");
 
     if (idempotencyKey) {
-      const cached = await env.RATE_LIMIT_KV.get(`idempotency:${idempotencyKey}`);
+      // A missed replay is safe: the database rejects a second booking of the same cabins and dates
+      const cached = await env.RATE_LIMIT_KV.get(`idempotency:${idempotencyKey}`).catch((error) => {
+        console.error("Idempotency KV read failed:", error);
+        return null;
+      });
       if (cached) {
         // Return cached result (200, not 201)
         return Response.json(JSON.parse(cached), {
           status: 200,
           headers: {
-            ...corsHeaders,
             "Content-Type": "application/json",
             "X-Idempotency-Replay": "true",
           },
@@ -208,19 +220,22 @@ export const onRequestPost = async (context: {
 
     const bookable = new Set(availabilityCheck.filter((u) => u.is_available).map((u) => u.unit_id));
     const unavailableUnits = requestedUnitIds.filter((unitId) => !bookable.has(unitId));
+    const isBlocked = availabilityCheck.some((u) => u.reason === "Blocked");
     if (unavailableUnits.length > 0) {
       return Response.json(
         {
           success: false,
           error: {
-            code: "UNIT_UNAVAILABLE",
-            message: "One or more units are not available for the selected dates",
+            code: isBlocked ? "UNIT_BLOCKED" : "UNIT_UNAVAILABLE",
+            message: isBlocked
+              ? BLOCKED_UNIT_MESSAGE
+              : "One or more units are not available for the selected dates",
             details: {
               unavailable_units: unavailableUnits,
             },
           },
         },
-        { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 409, headers: { "Content-Type": "application/json" } }
       );
     }
 
@@ -240,20 +255,9 @@ export const onRequestPost = async (context: {
     // Log audit event (Phase 4.5: Compliance requirement)
     await logBookingCreated(supabase, booking, userId, request);
 
-    // ✅ Invalidate availability cache for booked units (Phase 4.5)
-    // Use waitUntil to not block the response
-    const cacheKeys = sanitizedData.units.map(
-      (unit) => `availability:${unit.unit_id}:${sanitizedData.check_in}:${sanitizedData.check_out}`
-    );
-
-    waitUntil(
-      Promise.all(cacheKeys.map((key) => env.RATE_LIMIT_KV.delete(key))).catch((error) => {
-        console.error("Cache invalidation failed:", error);
-      })
-    );
-
     // Cache result for idempotency (24 hours)
     if (idempotencyKey) {
+      // The booking already exists, so a failed cache write must not turn into an error
       await env.RATE_LIMIT_KV.put(
         `idempotency:${idempotencyKey}`,
         JSON.stringify({
@@ -265,7 +269,9 @@ export const onRequestPost = async (context: {
           },
         }),
         { expirationTtl: 86400 } // 24 hours
-      );
+      ).catch((error) => {
+        console.error("Idempotency KV write failed:", error);
+      });
     }
 
     const processingTime = Date.now() - startTime;
@@ -282,13 +288,26 @@ export const onRequestPost = async (context: {
       {
         status: 201,
         headers: {
-          ...corsHeaders,
           "Content-Type": "application/json",
           "X-Processing-Time": `${processingTime}ms`,
         },
       }
     );
   } catch (error) {
+    if (error instanceof BlockedUnitError) {
+      return Response.json(
+        { success: false, error: { code: "UNIT_BLOCKED", message: error.message } },
+        { status: 409, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
+    if (error instanceof DuplicateConfirmationCodeError) {
+      return Response.json(
+        { success: false, error: { code: "DUPLICATE_CONFIRMATION_CODE", message: error.message } },
+        { status: 409, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
     if (error instanceof UnpricedBookingError) {
       return Response.json(
         {
@@ -299,7 +318,7 @@ export const onRequestPost = async (context: {
             details: { server_total: error.serverTotal },
           },
         },
-        { status: 422, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 422, headers: { "Content-Type": "application/json" } }
       );
     }
 
@@ -314,7 +333,7 @@ export const onRequestPost = async (context: {
           details: process.env.NODE_ENV === "development" ? { error: String(error) } : undefined,
         },
       },
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { status: 500, headers: { "Content-Type": "application/json" } }
     );
   }
 };
@@ -334,7 +353,7 @@ async function checkMultiUnitAvailability(
   unitIds: string[],
   checkIn: string,
   checkOut: string
-): Promise<Array<{ unit_id: string; is_available: boolean }>> {
+) {
   const supabase = createClient<Database>(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, {
     auth: {
       autoRefreshToken: false,
@@ -349,7 +368,7 @@ async function checkMultiUnitAvailability(
   });
 
   if (error) throw error;
-  return data as Array<{ unit_id: string; is_available: boolean }>;
+  return data;
 }
 
 /**
@@ -444,7 +463,10 @@ async function createMultiUnitBooking(
 
   if (serverTotal <= 0) throw new UnpricedBookingError(serverTotal);
 
-  const units: PricedUnit[] = unitsWithPricing;
+  const units: PricedUnit[] =
+    data.booking_source === "Airbnb" && data.payout !== undefined
+      ? scaleToPayout(unitsWithPricing, data.payout)
+      : unitsWithPricing;
 
   return createBooking(supabase, {
     guest: {
@@ -459,6 +481,40 @@ async function createMultiUnitBooking(
     payment_method: data.payment?.method ?? null,
     special_requests: data.special_requests ?? null,
     internal_notes: data.internal_notes ?? null,
-    is_walk_in: data.is_walk_in,
+    booking_source: data.booking_source ?? (data.is_walk_in ? "Walk-in" : "Direct"),
+    airbnb_confirmation_code: storedConfirmationCode(data),
+  });
+}
+
+/**
+ * Splits the payout across cabins in proportion to their engine subtotals, as
+ * set_booking_total does: shares round down to centavos and the largest cabin takes
+ * the remainder, so the subtotals sum exactly to the payout.
+ */
+function scaleToPayout(units: PricedUnit[], payout: number): PricedUnit[] {
+  const toCentavos = (amount: number) => Math.round(amount * 100);
+  const payoutCentavos = toCentavos(payout);
+  const engineCentavos = units.reduce((sum, unit) => sum + toCentavos(unit.subtotal), 0);
+  const largest = units.reduce(
+    (max, unit, i) => (unit.subtotal >= units[max].subtotal ? i : max),
+    0
+  );
+
+  const shares = units.map((unit) =>
+    Math.floor((payoutCentavos * toCentavos(unit.subtotal)) / engineCentavos)
+  );
+  shares[largest] += payoutCentavos - shares.reduce((sum, share) => sum + share, 0);
+
+  return units.map((unit, i) => {
+    const ratio = shares[i] / toCentavos(unit.subtotal);
+    const weekend = Math.floor(toCentavos(unit.weekend_surcharge) * ratio);
+    const extra = Math.floor(toCentavos(unit.extra_person_charge) * ratio);
+    return {
+      ...unit,
+      subtotal: shares[i] / 100,
+      weekend_surcharge: weekend / 100,
+      extra_person_charge: extra / 100,
+      unit_price: (shares[i] - weekend - extra) / 100,
+    };
   });
 }

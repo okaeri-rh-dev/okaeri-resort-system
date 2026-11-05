@@ -1,3 +1,5 @@
+import { useMemo } from "react";
+
 import {
   getCoreRowModel,
   getExpandedRowModel,
@@ -38,13 +40,14 @@ function StayCard({ row }: { row: Row<StayRow> }) {
   );
 }
 
-function StaysTable({ rows = stays }: { rows?: StayRow[] }) {
+function StaysTable({ rows = stays, isStale }: { rows?: StayRow[]; isStale?: boolean }) {
   const table = useReactTable({ data: rows, columns, getCoreRowModel: getCoreRowModel() });
 
   return (
     <DataTable
       table={table}
       label="Stays"
+      isStale={isStale}
       renderCard={(row) => <StayCard row={row} />}
       emptyState={<p>No stays yet</p>}
     />
@@ -148,6 +151,20 @@ describe("DataTable", () => {
     expect(screen.queryByRole("listitem")).not.toBeInTheDocument();
   });
 
+  it.each([
+    { form: "table", width: 840, rows: stays, content: "Maria Santos" },
+    { form: "cards", width: 390, rows: stays, content: "Maria Santos" },
+    { form: "empty cards", width: 390, rows: [], content: "No stays yet" },
+  ])("marks stale rows busy until new ones arrive as $form", ({ width, rows, content }) => {
+    const { rerender } = render(<StaysTable rows={rows} isStale />);
+    ResizeObserverStub.resizeAllTo(width);
+
+    expect(screen.getByText(content).closest("[aria-busy]")).toHaveAttribute("aria-busy", "true");
+
+    rerender(<StaysTable rows={rows} />);
+    expect(screen.getByText(content).closest("[aria-busy]")).toBeNull();
+  });
+
   it("keeps the column headers above the empty state in table form", () => {
     render(<StaysTable rows={[]} />);
     ResizeObserverStub.resizeAllTo(840);
@@ -183,6 +200,95 @@ describe("DataTable", () => {
       "Jose Rizal₱1,200.50",
     ]);
     expect(within(rows[2]).getByRole("cell")).toHaveAttribute("colspan", "2");
+  });
+});
+
+type NotedStayRow = StayRow & { note: string };
+
+const notedColumns: ColumnDef<NotedStayRow>[] = [
+  ...(columns as ColumnDef<NotedStayRow>[]),
+  { accessorKey: "note", header: "Note", meta: { priority: "low" } },
+];
+
+function NotedStaysTable() {
+  const rows = useMemo(() => stays.map((stay) => ({ ...stay, note: "Late arrival" })), []);
+  const table = useReactTable({
+    data: rows,
+    columns: notedColumns,
+    getCoreRowModel: getCoreRowModel(),
+  });
+
+  return <DataTable table={table} label="Stays" renderCard={() => null} />;
+}
+
+// jsdom has no layout, so each column takes this many pixels and the scroller overflows the pane.
+const FAKE_COLUMN_WIDTH = 300;
+
+function stubTableLayout(getPaneWidth: () => number) {
+  vi.spyOn(HTMLElement.prototype, "clientWidth", "get").mockImplementation(getPaneWidth);
+  vi.spyOn(HTMLElement.prototype, "scrollWidth", "get").mockImplementation(function (
+    this: HTMLElement
+  ) {
+    const columnCount = this.querySelectorAll("th").length;
+    return Math.max(getPaneWidth(), columnCount * FAKE_COLUMN_WIDTH);
+  });
+}
+
+describe("DataTable low-priority columns", () => {
+  let paneWidth = 0;
+
+  function resizePane(width: number) {
+    paneWidth = width;
+    ResizeObserverStub.resizeAllTo(width);
+  }
+
+  beforeEach(() => {
+    ResizeObserverStub.instances = [];
+    vi.stubGlobal("ResizeObserver", ResizeObserverStub);
+    stubTableLayout(() => paneWidth);
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+  });
+
+  it("shows every column when the full table fits its pane", () => {
+    render(<NotedStaysTable />);
+    resizePane(1200);
+
+    expect(screen.getByRole("columnheader", { name: "Note" })).toBeVisible();
+    expect(screen.getAllByRole("cell", { name: "Late arrival" })).toHaveLength(2);
+  });
+
+  it("hides low-priority columns when the full table is wider than its pane", () => {
+    render(<NotedStaysTable />);
+    resizePane(899);
+
+    expect(screen.queryByRole("columnheader", { name: "Note" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("cell", { name: "Late arrival" })).not.toBeInTheDocument();
+    expect(screen.getByRole("columnheader", { name: "Balance" })).toBeVisible();
+  });
+
+  it("shows them again once the pane is as wide as the full table, without flicker at the edge", () => {
+    render(<NotedStaysTable />);
+    resizePane(899);
+    resizePane(899.5);
+    expect(screen.queryByRole("columnheader", { name: "Note" })).not.toBeInTheDocument();
+
+    resizePane(900);
+    expect(screen.getByRole("columnheader", { name: "Note" })).toBeVisible();
+
+    resizePane(899);
+    expect(screen.queryByRole("columnheader", { name: "Note" })).not.toBeInTheDocument();
+  });
+
+  it("still renders cards below 600px", () => {
+    render(<NotedStaysTable />);
+    resizePane(390);
+
+    expect(screen.queryByRole("table")).not.toBeInTheDocument();
+    expect(screen.getByRole("list", { name: "Stays" })).toBeInTheDocument();
   });
 });
 

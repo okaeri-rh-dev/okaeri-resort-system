@@ -11,8 +11,9 @@ import { create } from "zustand";
 import { devtools, persist } from "zustand/middleware";
 
 import { getAccessToken } from "@/hooks/useAuthToken";
-import { useDebouncedValue } from "@/hooks/useDebouncedValue";
+import { SEARCH_DEBOUNCE_MS, useDebouncedValue } from "@/hooks/useDebouncedValue";
 import {
+  BOOKING_SEARCH_COLUMNS,
   cancelBooking,
   dayAfter,
   filterDay,
@@ -23,6 +24,7 @@ import {
 } from "@/lib/bookings";
 import { requestBooking } from "@/lib/bookings/request";
 import { adaptBookingFromDB } from "@/lib/database-adapters";
+import { throwDetailLoadError } from "@/lib/detail-load-error";
 import { formatCurrency } from "@/lib/formatters";
 import { recordProofPayment } from "@/lib/payments";
 import {
@@ -33,6 +35,7 @@ import {
   afterBookingUpdate,
 } from "@/lib/query-invalidation";
 import { bookingKeys } from "@/lib/query-keys";
+import { ilikeAnyFilter } from "@/lib/search-filter";
 import { db, handleSupabaseError, supabase } from "@/lib/supabase";
 import type { Booking, BookingFilters, BookingStatus, TableState } from "@/types";
 
@@ -248,7 +251,7 @@ export const bookingDetailQuery = (bookingId: string) =>
     queryKey: bookingKeys.detail(bookingId),
     queryFn: async () => {
       const { data, error } = await db.bookings.byId(bookingId);
-      if (error) throw new Error(`Failed to load booking: ${handleSupabaseError(error)}`);
+      if (error) throwDetailLoadError(error, "booking");
       return data;
     },
     staleTime: 30000,
@@ -287,11 +290,6 @@ const cachedBooking = (queryClient: QueryClient, bookingId: string): Booking | u
 };
 
 // Fetch all bookings with filters
-const BOOKING_SEARCH_COLUMNS = ["guest_name", "booking_reference", "email", "contact_number"];
-
-export const bookingSearchFilter = (searchQuery: string) =>
-  BOOKING_SEARCH_COLUMNS.map((column) => `${column}.ilike.%${searchQuery}%`).join(",");
-
 const bookingListQuery = ({
   filters,
   searchQuery,
@@ -325,7 +323,8 @@ const bookingListQuery = ({
           *,
           unit:units(*)
         ),
-        guest:guests(*)
+        guest:guests(*),
+        payments(amount, status)
       `);
 
       // Apply filters
@@ -348,7 +347,7 @@ const bookingListQuery = ({
         query = query.lt("check_in", manilaDayStart(dayAfter(filterDay(filters.date_to))));
       }
       if (searchQuery) {
-        query = query.or(bookingSearchFilter(searchQuery));
+        query = query.or(ilikeAnyFilter(BOOKING_SEARCH_COLUMNS, searchQuery));
       }
 
       // Apply sorting
@@ -383,8 +382,6 @@ const bookingListQuery = ({
     // Removed refetchInterval - manual refresh preferred for dashboard
   });
 
-const SEARCH_DEBOUNCE_MS = 300;
-
 export const useBookings = () => {
   const { filters, searchQuery, sortBy, sortOrder } = useBookingStore();
   const debouncedSearchQuery = useDebouncedValue(searchQuery, SEARCH_DEBOUNCE_MS);
@@ -394,6 +391,10 @@ export const useBookings = () => {
     placeholderData: keepPreviousData,
   });
 };
+
+/** Every booking, whatever the Bookings page filters are. */
+export const useAllBookings = () =>
+  useQuery(bookingListQuery({ filters: {}, searchQuery: "", sortBy: "date", sortOrder: "desc" }));
 
 // Fetch single booking
 

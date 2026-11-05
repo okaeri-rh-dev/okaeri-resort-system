@@ -38,16 +38,20 @@ Rationale: [Component layer boundaries](https://github.com/okaeri-rh-dev/okaeri-
 Breakpoints use the window size class names (`medium:`, `expanded:`, `large:`, `xlarge:`), with compact as the unprefixed base ([ADR 0004](docs/adr/0004-m3-named-breakpoints.md)). Admin supports compact to xlarge. Guest and public pages support compact to expanded, then stay centred at their max width.
 
 - **Window queries live in shells.** Breakpoint prefixes set nav form, pane count and margins. Inside a pane, adapt with `@container`.
-- **`DataTable` owns table ↔ card.** It switches to cards when its pane is narrower than ~600px. Product code passes a card renderer and never branches on width.
+- **`DataTable` owns table ↔ card.** It switches to cards when its pane is narrower than ~600px. Product code passes a card renderer and never branches on width. In table form, columns with `meta: { priority: "low" }` all hide together while the full table is wider than its pane, so a pinned column never covers data; product code only sets the flag.
 
 Navigation per class:
 
-| Surface | Compact                                                                                                                        | Medium, expanded                     | Large, xlarge             |
-| ------- | ------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------ | ------------------------- |
-| Admin   | Bottom bar: Dashboard, Bookings, Booking Queue, Payments, More (opens the modal rail). Roles with ≤5 destinations get no More. | Collapsed rail; groups open a flyout | Expanded rail with labels |
-| Guest   | Top bar with a menu sheet                                                                                                      | Top bar with inline links            | (centred at max width)    |
+| Surface | Compact                                                                                                                        | Medium, expanded                     | Large, xlarge                     |
+| ------- | ------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------ | --------------------------------- |
+| Admin   | Bottom bar: Dashboard, Bookings, Booking Queue, Payments, More (opens the menu sheet). Roles with ≤5 destinations get no More. | Collapsed rail; groups open a flyout | Expanded rail with group headings |
+| Guest   | Top bar with a menu sheet                                                                                                      | Top bar with inline links            | (centred at max width)            |
+
+Admin destinations sit in four groups under Dashboard, which has no heading: **Bookings** (Bookings, Booking Queue, Payments, Guests), **Cabins** (Cabins, Availability, Blocked dates), **Money** (Expenses, Accounts, Transfers, Documents) and **Admin** (Settings, Audit Trail, User Roles). Headings in the expanded rail and the menu sheets are always open. A role sees only the groups that hold an item it can open, and a one-item group keeps its heading. The bottom bar shows no headings. Rationale: [Side-menu grouping](https://github.com/okaeri-rh-dev/okaeri-resort-system/issues/155).
 
 The rail and the menu sheets scroll as one column when the window is short.
+
+A page's own fixed bottom bar on admin sits at `bottom-(--admin-bottom-bar-height)` on compact and `medium:bottom-0` from medium, starting beside the rail (`medium:left-20`, or hidden from expanded). The shell measures that height, safe area included, and sets it on the document root on compact only, so the page bar adds the safe area only from medium. Toasts on compact sit above it too.
 
 Theme control per nav form. It is never in the account menu. The choice is a pill of three segments, Light / Dark / Auto; the dark mode switch is one tap between light and dark.
 
@@ -82,7 +86,7 @@ Colour comes only from semantic tokens ([ADR 0003](docs/adr/0003-semantic-only-c
 - **Status is a tinted pill**: `bg-success text-success-foreground` and likewise for `warning`, `info` and `danger`. Neutral uses `muted`. Status always carries a text label.
 - **`danger` and `destructive` are different roles.** `danger` is the tinted pill (Cancelled). `destructive` is the solid fill for an irreversible action button.
 - **`brand`** (sand) marks identity: the logo, the active nav item, the calendar ramp. **`primary`** (timber) is for interaction: buttons, links, focus rings, downpayment emphasis.
-- **Availability** uses `availability-high`, `-medium` and `-low` for 3, 2 and 1 cabins left. Booked days are `muted` with a hatch. The "3 left" / "Full" text carries the meaning, and colour backs it up.
+- **Availability** uses `availability-high`, `-medium` and `-low` for 3, 2 and 1 cabins left. Booked days are `muted` with a hatch. The "3 left" / "Full" text carries the meaning, and colour backs it up. On the admin Availability timeline, the hatch marks blocked nights and bookings use the `info` tint; a legend names both.
 - **The admin sidebar** uses the `sidebar-*` tokens in both themes. It isn't a dark-mode island.
 - Overlays use `bg-overlay`; cards use `shadow-card`, floating surfaces `shadow-popover`.
 
@@ -144,7 +148,7 @@ These checks can't be automated; check each one in the diff. Source for the rest
 5. Long user content (guest names, notes, references) wraps or truncates: `min-w-0`, `truncate`, `break-words`.
 6. Filters, tabs, pagination and open panels live in the URL (route `validateSearch`).
 7. Destructive actions confirm through `AlertDialog` or offer undo. Booking and payment state updates after the server confirms, never optimistically.
-8. Submit stays enabled until submission starts, then shows a spinner and keeps its label while in flight.
+8. Submit stays enabled until submission starts, then shows a spinner and keeps its label while in flight. The exception is a refusal the form already shows, such as bookings on the nights of a block: submit stays disabled and the form says why.
 9. Errors sit next to their field, and submit focuses the first one.
 10. Inputs set the right `type`, `inputMode` and `autoComplete`. Emails, codes and booking references turn `spellCheck` off.
 11. Long or multi-step forms warn about unsaved changes (`useBlocker`).

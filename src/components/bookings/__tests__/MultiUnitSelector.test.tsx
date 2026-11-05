@@ -2,7 +2,7 @@
  * @vitest-environment jsdom
  */
 
-import { render, screen, within } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { axe } from "vitest-axe";
@@ -28,7 +28,6 @@ const mockUnits: Unit[] = [
     base_rate: 3000,
     weekend_rate: 3500,
     extra_person_rate: 500,
-    unit_status: "Available",
     amenities: null,
     created_at: null,
     updated_at: null,
@@ -43,7 +42,6 @@ const mockUnits: Unit[] = [
     base_rate: 5000,
     weekend_rate: 6000,
     extra_person_rate: 800,
-    unit_status: "Available",
     amenities: null,
     created_at: null,
     updated_at: null,
@@ -58,7 +56,6 @@ const mockUnits: Unit[] = [
     base_rate: 2000,
     weekend_rate: 2200,
     extra_person_rate: 400,
-    unit_status: "Occupied",
     amenities: null,
     created_at: null,
     updated_at: null,
@@ -73,7 +70,6 @@ const mockUnits: Unit[] = [
     base_rate: 2800,
     weekend_rate: 3200,
     extra_person_rate: 450,
-    unit_status: "Available",
     amenities: null,
     created_at: null,
     updated_at: null,
@@ -346,20 +342,6 @@ describe("MultiUnitSelector", () => {
       addButtons.forEach((button) => {
         expect(button).toBeDisabled();
       });
-    });
-
-    it("disables Add button for unavailable units", () => {
-      render(<MultiUnitSelector {...defaultProps} />);
-
-      // Find the Occupied unit card
-      const occupiedCard = screen
-        .getByText("Standard Cabin")
-        .closest('[role="article"]') as HTMLElement;
-      const addButton = within(occupiedCard).getByRole("button", {
-        name: /add.*to booking/i,
-      });
-
-      expect(addButton).toBeDisabled();
     });
   });
 

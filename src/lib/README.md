@@ -136,7 +136,7 @@ import {
 // Validate booking data
 const result = bookingSchema.safeParse(formData)
 if (!result.success) {
-  console.error(result.error.errors)
+  console.error(result.error.issues)
 }
 
 // Custom date validation

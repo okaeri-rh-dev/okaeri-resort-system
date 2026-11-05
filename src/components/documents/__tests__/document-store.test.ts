@@ -17,16 +17,19 @@ import { DEFAULT_LETTERHEAD } from "@/components/documents/constants";
 import type { DocumentLineItem } from "@/components/documents/types";
 import { useDocumentStore } from "@/stores/useDocumentStore";
 
+const NO_CONTACTS = { phone: "", email: "" };
+const CHANNEL_CONTACTS = { phone: "+63 917 123 4567", email: "stay@okaeri-resort.example" };
+
 describe("useDocumentStore", () => {
   beforeEach(() => {
     // Reset store state before each test
     const { result } = renderHook(() => useDocumentStore());
     act(() => {
       result.current.resetForm();
-      result.current.resetLetterhead();
+      result.current.resetLetterhead(NO_CONTACTS);
     });
     // Reset counter by directly accessing the store
-    useDocumentStore.setState({ documentCounter: 0 });
+    useDocumentStore.setState({ documentCounter: 0, contactDefaultsApplied: false });
     vi.clearAllMocks();
   });
 
@@ -107,9 +110,51 @@ describe("useDocumentStore", () => {
       expect(result.current.letterhead.resort_name).toBe("Changed");
 
       act(() => {
-        result.current.resetLetterhead();
+        result.current.resetLetterhead(NO_CONTACTS);
       });
       expect(result.current.letterhead.resort_name).toBe(DEFAULT_LETTERHEAD.resort_name);
+    });
+
+    it("resets phone and email to the given contact defaults", () => {
+      const { result } = renderHook(() => useDocumentStore());
+
+      act(() => {
+        result.current.updateLetterhead({ phone: "+63 917 555 0101", email: "old@example.com" });
+        result.current.resetLetterhead(CHANNEL_CONTACTS);
+      });
+
+      expect(result.current.letterhead.phone).toBe("+63 917 123 4567");
+      expect(result.current.letterhead.email).toBe("stay@okaeri-resort.example");
+      expect(result.current.contactDefaultsApplied).toBe(true);
+    });
+
+    it("waits for a mobile or email channel before using up the one fill", () => {
+      const { result } = renderHook(() => useDocumentStore());
+
+      act(() => {
+        result.current.applyContactDefaults(NO_CONTACTS);
+        result.current.applyContactDefaults(CHANNEL_CONTACTS);
+      });
+
+      expect(result.current.letterhead.phone).toBe("+63 917 123 4567");
+      expect(result.current.letterhead.email).toBe("stay@okaeri-resort.example");
+    });
+
+    it("fills empty phone and email from contact defaults once", () => {
+      const { result } = renderHook(() => useDocumentStore());
+
+      act(() => {
+        result.current.updateLetterhead({ email: "frontdoor@okaeri-resort.example" });
+        result.current.applyContactDefaults(CHANNEL_CONTACTS);
+      });
+      expect(result.current.letterhead.phone).toBe("+63 917 123 4567");
+      expect(result.current.letterhead.email).toBe("frontdoor@okaeri-resort.example");
+
+      act(() => {
+        result.current.updateLetterhead({ phone: "" });
+        result.current.applyContactDefaults(CHANNEL_CONTACTS);
+      });
+      expect(result.current.letterhead.phone).toBe("");
     });
 
     it("should store logo as base64", () => {
@@ -499,6 +544,74 @@ describe("useDocumentStore", () => {
         result.current.setIsGenerating(false);
       });
       expect(result.current.isGenerating).toBe(false);
+    });
+  });
+
+  // ============================================
+  // SAVED LETTERHEAD MIGRATION
+  // ============================================
+
+  describe("Saved letterhead migration", () => {
+    const placeholderLetterhead = {
+      resort_name: "Okaeri Resort",
+      tagline: "Your Home Away From Home",
+      address_line_1: "123 Resort Road",
+      city: "Nasugbu",
+      province: "Batangas",
+      zip_code: "4231",
+      phone: "0917 000 0000",
+      email: "info@okaeriresort.com",
+      website: "www.okaeriresort.com",
+    };
+
+    async function rehydrateFromVersion0(letterhead: Record<string, string>) {
+      localStorage.setItem(
+        "document-storage",
+        JSON.stringify({ state: { letterhead, documentCounter: 7 }, version: 0 })
+      );
+      await useDocumentStore.persist.rehydrate();
+      return useDocumentStore.getState();
+    }
+
+    afterEach(() => localStorage.removeItem("document-storage"));
+
+    it("replaces the old placeholders with the real address and blank contacts", async () => {
+      const state = await rehydrateFromVersion0(placeholderLetterhead);
+
+      expect(state.letterhead).toEqual({
+        resort_name: "Okaeri Resort",
+        tagline: "Your Home Away From Home",
+        address_line_1: "Amita St., Brgy. Taboc",
+        address_line_2: "M8QQ+HF",
+        city: "San Juan",
+        province: "La Union",
+        zip_code: "2514",
+        phone: "",
+        email: "",
+        website: "",
+      });
+      expect(state.documentCounter).toBe(7);
+      expect(state.contactDefaultsApplied).toBe(false);
+    });
+
+    it("keeps values that staff changed", async () => {
+      const customLetterhead = {
+        ...placeholderLetterhead,
+        address_line_1: "Purok 3, Barangay Urbiztondo",
+        city: "San Juan",
+        province: "La Union",
+        zip_code: "2514",
+        phone: "+63 917 555 0101",
+        email: "frontdoor@okaeri-resort.example",
+        website: "okaeri-resort.example",
+      };
+
+      const state = await rehydrateFromVersion0(customLetterhead);
+
+      expect(state.letterhead).toEqual({
+        ...customLetterhead,
+        address_line_2: undefined,
+      });
     });
   });
 });

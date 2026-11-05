@@ -19,6 +19,7 @@ export type DbBookingUnit = Tables<"booking_units"> & {
 export type DbBooking = Tables<"bookings"> & {
   booking_units?: DbBookingUnit[];
   guest?: DbGuest | null;
+  payments?: Pick<Tables<"payments">, "amount" | "status">[];
 };
 
 // ============================================
@@ -52,7 +53,6 @@ export function adaptUnitFromDB(dbUnit: DbUnit): Unit {
     base_rate: dbUnit.base_rate,
     weekend_rate: dbUnit.weekend_rate,
     extra_person_rate: dbUnit.extra_person_rate,
-    unit_status: dbUnit.unit_status,
     amenities,
     created_at: dbUnit.created_at,
     updated_at: dbUnit.updated_at,
@@ -133,12 +133,17 @@ export function adaptBookingFromDB(dbBooking: DbBooking): Booking {
     special_requests: dbBooking.special_requests,
     internal_notes: dbBooking.internal_notes,
     is_multi_unit: dbBooking.is_multi_unit,
+    booking_source: dbBooking.booking_source,
+    airbnb_confirmation_code: dbBooking.airbnb_confirmation_code,
     is_walk_in: dbBooking.is_walk_in,
+    is_guest_booking: dbBooking.is_guest_booking,
+    unit_assignment_status: dbBooking.unit_assignment_status,
     unit_count: dbBooking.unit_count,
     created_at: dbBooking.created_at,
     updated_at: dbBooking.updated_at,
     // Convert related entities (NEW: junction table pattern)
     booking_units: dbBooking.booking_units?.map(adaptBookingUnitFromDB) || [],
     guest: dbBooking.guest ? adaptGuestFromDB(dbBooking.guest) : null,
+    payments: dbBooking.payments,
   };
 }

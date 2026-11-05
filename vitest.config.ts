@@ -97,6 +97,12 @@ export default defineConfig(({ mode }) => {
       // 2. Local: Run unit tests separately with --grep to exclude database tests
       //    Example: npm run test:unit (excludes database tests)
       fileParallelism: false,
+
+      // Node 25+ exposes a built-in localStorage that is undefined without
+      // --localstorage-file and shadows happy-dom's Storage.
+      poolOptions: {
+        forks: { execArgv: ["--no-experimental-webstorage"] },
+      },
     },
 
     // Resolve configuration for tests

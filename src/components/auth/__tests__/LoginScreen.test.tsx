@@ -4,22 +4,9 @@ import { describe, expect, it, vi } from "vitest";
 import { LoginScreen } from "@/components/auth/LoginScreen";
 
 // LoginForm renders TanStack Router <Link> elements (Forgot password / Create one),
-// which need a router context. Mock Link with a plain anchor — the established
-// pattern for component tests in this repo (see RelatedEntityLink.test.tsx).
-vi.mock("@tanstack/react-router", () => ({
-  Link: ({
-    to,
-    children,
-    className,
-  }: {
-    to: string;
-    children: React.ReactNode;
-    className?: string;
-  }) => (
-    <a href={to} className={className} data-testid="router-link">
-      {children}
-    </a>
-  ),
+// which need a router context.
+vi.mock("@tanstack/react-router", async () => ({
+  Link: (await import("@/test/router-link-stub")).RouterLinkStub,
 }));
 
 describe("LoginScreen", () => {

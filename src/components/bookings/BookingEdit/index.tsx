@@ -1,5 +1,7 @@
 // src/components/bookings/BookingEdit/index.tsx
 
+import { useMemo } from "react";
+
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useLoaderData, useNavigate, useParams } from "@tanstack/react-router";
 import { parseISO } from "date-fns";
@@ -21,12 +23,14 @@ import {
   SelectItem,
   Textarea,
 } from "@/components/patterns";
-import { manilaDayOf } from "@/lib/bookings";
+import { useUserRole } from "@/hooks";
+import { useMultiUnitAvailability } from "@/hooks/useMultiUnitBookingQueries";
+import { manilaDayOf, pickedDay, unavailableReason, unitNotFreeMessage } from "@/lib/bookings";
 import { bookingEditSchema, type BookingEditInput } from "@/lib/validation/entity-schemas";
 import { useUpdateBooking } from "@/stores/useBookingStore";
 import type { Booking, Unit } from "@/types/entity-detail.types";
 
-import { WalkInField } from "../form-fields";
+import { BookingSourceField, ConfirmationCodeField } from "../form-fields";
 import { toBookingUpdate } from "./to-booking-update";
 
 export interface BookingEditPageProps {
@@ -38,6 +42,7 @@ export function BookingEditPage() {
   const { bookingId } = useParams({ from: "/admin/bookings/$bookingId/edit" });
   const { booking, units } = useLoaderData({ from: "/admin/bookings/$bookingId/edit" });
   const navigate = useNavigate();
+  const { isManager } = useUserRole();
 
   // Initialize form with default values from booking
   // NOTE: Single-unit editing only - extracts first unit from booking_units array
@@ -55,17 +60,41 @@ export function BookingEditPage() {
       payment_method:
         (booking.payment_method as "Cash" | "GCash" | "BankTransfer" | "Card") || "Cash",
       special_requests: booking.special_requests || "",
-      is_walk_in: booking.is_walk_in ?? false,
+      booking_source: booking.booking_source,
+      airbnb_confirmation_code: booking.airbnb_confirmation_code ?? "",
+      total_amount: booking.total_amount,
     },
   });
+
+  const checkIn = form.watch("check_in");
+  const checkOut = form.watch("check_out");
+  const checkInDay = checkIn ? pickedDay(checkIn) : "";
+  const checkOutDay = checkOut && checkIn && checkOut > checkIn ? pickedDay(checkOut) : "";
+  const unitIds = useMemo(() => units?.map((unit) => unit.unit_id) ?? [], [units]);
+  const { data: availability, isFetching: isCheckingAvailability } = useMultiUnitAvailability(
+    unitIds,
+    checkInDay,
+    checkOutDay,
+    { excludeBookingId: bookingId }
+  );
 
   // Setup mutation with navigation on success
   const updateBooking = useUpdateBooking();
 
   // Form submission handler
   const onSubmit: SubmitHandler<BookingEditInput> = (data) => {
+    if (checkInDay && checkOutDay && isCheckingAvailability) {
+      form.setError("unit_id", { message: "Still checking availability…" });
+      return;
+    }
+    const reason = unavailableReason(availability, data.unit_id);
+    if (reason) {
+      form.setError("unit_id", { message: unitNotFreeMessage(reason) });
+      return;
+    }
+
     updateBooking.mutate(
-      { bookingId, changes: toBookingUpdate(data) },
+      { bookingId, changes: toBookingUpdate(data, booking.total_amount) },
       {
         onSuccess: () => void navigate({ to: "/admin/bookings/$bookingId", params: { bookingId } }),
       }
@@ -99,10 +128,14 @@ export function BookingEditPage() {
               <CardTitle className="text-lg">Guest Information</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <WalkInField
+              <BookingSourceField
                 control={form.control}
-                description="Check this if the guest arrived on-site without a prior reservation. Reporting flag only."
+                isWebsite={booking.booking_source === "Website"}
               />
+
+              {form.watch("booking_source") === "Airbnb" && (
+                <ConfirmationCodeField control={form.control} />
+              )}
 
               <FormField control={form.control} name="guest_name" label="Guest Name">
                 {(field) => <Input placeholder="Enter guest name" autoComplete="off" {...field} />}
@@ -178,16 +211,28 @@ export function BookingEditPage() {
                     onValueChange={field.onChange}
                     placeholder="Select a cabin"
                   >
-                    {units?.map((unit) => (
-                      <SelectItem key={unit.unit_id} value={unit.unit_id}>
-                        <div className="flex flex-col">
-                          <span className="font-medium">{unit.unit_name}</span>
-                          <span className="text-muted-foreground text-xs">
-                            {unit.unit_type} • Max {unit.max_occupancy} guests
-                          </span>
-                        </div>
-                      </SelectItem>
-                    ))}
+                    {units?.map((unit) => {
+                      const reason = unavailableReason(availability, unit.unit_id);
+                      return (
+                        <SelectItem
+                          key={unit.unit_id}
+                          value={unit.unit_id}
+                          disabled={reason !== null}
+                        >
+                          <div className="flex w-full items-center justify-between">
+                            <div className="flex flex-col">
+                              <span className="font-medium">{unit.unit_name}</span>
+                              <span className="text-muted-foreground text-xs">
+                                {unit.unit_type} • Max {unit.max_occupancy} guests
+                              </span>
+                            </div>
+                            {reason && (
+                              <span className="text-muted-foreground ml-2 text-xs">{reason}</span>
+                            )}
+                          </div>
+                        </SelectItem>
+                      );
+                    })}
                   </SelectControl>
                 )}
               </FormField>
@@ -231,6 +276,32 @@ export function BookingEditPage() {
                       <SelectItem value="BankTransfer">Bank Transfer</SelectItem>
                       <SelectItem value="Card">Credit Card</SelectItem>
                     </SelectControl>
+                  )}
+                </FormField>
+
+                <FormField
+                  control={form.control}
+                  name="total_amount"
+                  label="Total"
+                  description={
+                    isManager
+                      ? "₱ Split across the cabins in proportion"
+                      : "Only a manager can change the total"
+                  }
+                >
+                  {(field) => (
+                    <Input
+                      type="number"
+                      inputMode="decimal"
+                      step="0.01"
+                      min={0}
+                      readOnly={!isManager}
+                      {...field}
+                      value={field.value ?? ""}
+                      onChange={(e) =>
+                        field.onChange(e.target.value === "" ? undefined : Number(e.target.value))
+                      }
+                    />
                   )}
                 </FormField>
               </div>

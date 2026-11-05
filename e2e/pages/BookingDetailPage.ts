@@ -429,13 +429,6 @@ export class BookingDetailPage {
   }
 
   /**
-   * Verify edit button is NOT visible (for unauthorized users)
-   */
-  async expectEditButtonHidden(): Promise<void> {
-    await expect(this.editButton).not.toBeVisible();
-  }
-
-  /**
    * Verify cancel button is visible
    */
   async expectCancelButtonVisible(): Promise<void> {

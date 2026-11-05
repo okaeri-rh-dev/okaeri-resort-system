@@ -1,16 +1,7 @@
 import { Download, X } from "lucide-react";
 
 import { Button } from "@/components/patterns";
-import { useInstallPromptStore } from "@/stores/useInstallPromptStore";
-
-function isIosSafari(): boolean {
-  if (typeof window === "undefined") return false;
-  const ua = window.navigator.userAgent;
-  const iOS = /iPad|iPhone|iPod/.test(ua);
-  const webkit = /WebKit/.test(ua);
-  const notChrome = !/CriOS|FxiOS|EdgiOS/.test(ua);
-  return iOS && webkit && notChrome;
-}
+import { useCanShowInstallBanner, useInstallPromptStore } from "@/stores/useInstallPromptStore";
 
 export function InstallBanner() {
   const installPromptEvent = useInstallPromptStore((s) => s.installPromptEvent);
@@ -18,13 +9,12 @@ export function InstallBanner() {
   const triggerInstall = useInstallPromptStore((s) => s.triggerInstall);
   const snoozeForDays = useInstallPromptStore((s) => s.snoozeForDays);
   const dismissPermanently = useInstallPromptStore((s) => s.dismissPermanently);
+  const canShowInstallBanner = useCanShowInstallBanner();
 
-  if (dismissalState !== "visible") return null;
+  if (dismissalState !== "visible" || !canShowInstallBanner) return null;
 
   const hasNativePrompt = installPromptEvent !== null;
-  const ios = !hasNativePrompt && isIosSafari();
-
-  if (!hasNativePrompt && !ios) return null;
+  const showIosSteps = !hasNativePrompt;
 
   return (
     <div
@@ -35,7 +25,7 @@ export function InstallBanner() {
       <Download className="text-primary h-5 w-5 flex-shrink-0" aria-hidden="true" />
       <div className="flex-1 text-sm">
         <p className="font-medium">Install Okaeri for quick access</p>
-        {ios ? (
+        {showIosSteps ? (
           <p className="text-muted-foreground medium:text-sm text-xs">
             Tap the <span aria-label="Share">Share</span> button in Safari, then choose "Add to Home
             Screen".

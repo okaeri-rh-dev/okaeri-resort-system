@@ -33,6 +33,7 @@ export { toast } from "sonner";
 // Patterns
 export { StatusBadge, type StatusBadgeProps } from "./StatusBadge";
 export type { StatusTone } from "./status-tone-classes";
+export { staleProps } from "./stale-props";
 export { Callout, type CalloutProps } from "./Callout";
 export { Form, FormField, type FormFieldProps } from "./FormField";
 export { SelectControl, type SelectControlProps } from "./SelectControl";
@@ -69,5 +70,6 @@ export {
   type ShellAction,
   type ShellBrand,
   type ShellDestination,
+  type ShellGroup,
 } from "./AppShell";
 export type { ShellTheme, ThemeSetting } from "./ThemeControls";

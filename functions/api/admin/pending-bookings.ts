@@ -22,16 +22,6 @@ interface Env {
 }
 
 // ============================================
-// CORS Headers
-// ============================================
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization",
-};
-
-// ============================================
 // Main Handler
 // ============================================
 
@@ -41,16 +31,11 @@ export async function onRequest(context: {
 }): Promise<Response> {
   const { request, env } = context;
 
-  // Handle CORS preflight
-  if (request.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
-  }
-
   // Only accept GET requests
   if (request.method !== "GET") {
     return new Response(JSON.stringify({ error: "Method not allowed" }), {
       status: 405,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json" },
     });
   }
 
@@ -62,7 +47,7 @@ export async function onRequest(context: {
     if (!authHeader?.startsWith("Bearer ")) {
       return new Response(JSON.stringify({ error: "Unauthorized - Missing or invalid token" }), {
         status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json" },
       });
     }
 
@@ -84,7 +69,7 @@ export async function onRequest(context: {
     if (authError || !user) {
       return new Response(JSON.stringify({ error: "Unauthorized - Invalid token" }), {
         status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json" },
       });
     }
 
@@ -141,7 +126,7 @@ export async function onRequest(context: {
         }),
         {
           status: isMigrationError ? 503 : 500, // 503 Service Unavailable for migration issues
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json" },
         }
       );
     }
@@ -190,7 +175,7 @@ export async function onRequest(context: {
       }),
       {
         status: 200,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json" },
       }
     );
   } catch (error) {
@@ -202,7 +187,7 @@ export async function onRequest(context: {
       }),
       {
         status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json" },
       }
     );
   }

@@ -47,7 +47,7 @@ export const useBookingsTable = () => {
   const cancelBooking = useCancelBooking();
 
   // Data
-  const { data: bookings = [], isLoading, error } = useBookings();
+  const { data: bookings = [], isLoading, isPlaceholderData, error } = useBookings();
 
   // Payment upload handler
   const handleUploadPayment = useCallback(
@@ -93,6 +93,7 @@ export const useBookingsTable = () => {
           booking.guest_name?.toLowerCase().includes(query) ||
           booking.email?.toLowerCase().includes(query) ||
           booking.booking_reference?.toLowerCase().includes(query) ||
+          booking.airbnb_confirmation_code?.toLowerCase().includes(query) ||
           booking.contact_number?.includes(query)
       );
     }
@@ -107,9 +108,8 @@ export const useBookingsTable = () => {
       filtered = filtered.filter((b) => b.payment_status === filters.payment_status);
     }
 
-    // Apply walk-in filter
-    if (filters.is_walk_in !== undefined) {
-      filtered = filtered.filter((b) => (b.is_walk_in ?? false) === filters.is_walk_in);
+    if (filters.booking_source) {
+      filtered = filtered.filter((b) => b.booking_source === filters.booking_source);
     }
 
     // Apply date range filter
@@ -124,6 +124,9 @@ export const useBookingsTable = () => {
 
     return filtered;
   }, [bookings, searchQuery, filters]);
+
+  const hasActiveFilters =
+    searchQuery !== "" || Object.values(filters).some((value) => value !== undefined);
 
   // Create table instance
   const table = useReactTable({
@@ -156,7 +159,9 @@ export const useBookingsTable = () => {
     bookings: filteredBookings,
     totalCount: bookings.length,
     filteredCount: filteredBookings.length,
+    hasActiveFilters,
     isLoading,
+    isPlaceholderData,
     error,
     filters,
     setFilters,

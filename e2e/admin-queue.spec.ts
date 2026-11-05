@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 
+import { E2E_REF } from "../scripts/e2e/fixtures";
 import { loginAsAdmin } from "./fixtures/auth";
 import { BOOKING_DATES, calculateUrgencyScore, getUrgencyLevel } from "./fixtures/booking-data";
 import { TIMEOUTS, VIEWPORTS } from "./fixtures/test-data";
@@ -364,11 +365,11 @@ test.describe("Admin Booking Queue", () => {
       }
 
       // Check for review payment buttons
-      const reviewButtons = await queuePage.reviewPaymentButtons.all();
+      const reviewLinks = await queuePage.reviewPaymentLinks.all();
 
       // If there are pending bookings, some should have review buttons
-      if (reviewButtons.length > 0) {
-        await expect(reviewButtons[0]).toBeVisible();
+      if (reviewLinks.length > 0) {
+        await expect(reviewLinks[0]).toBeVisible();
       }
     });
 
@@ -382,47 +383,32 @@ test.describe("Admin Booking Queue", () => {
       }
 
       // Check for assign units buttons
-      const assignButtons = await queuePage.assignUnitsButtons.all();
+      const assignLinks = await queuePage.assignUnitsLinks.all();
 
       // Assign buttons should be visible for bookings with verified payment
       // but no units assigned yet
-      if (assignButtons.length > 0) {
-        await expect(assignButtons[0]).toBeVisible();
+      if (assignLinks.length > 0) {
+        await expect(assignLinks[0]).toBeVisible();
       }
     });
 
-    test("clicking action button navigates correctly", async ({ page }) => {
-      const queuePage = new AdminQueuePage(page);
-      await queuePage.goto();
+    for (const { reference, action, url } of [
+      { reference: E2E_REF.QUEUE, action: "Review Payment", url: /verify-payment/ },
+      { reference: E2E_REF.QUEUE_PAID, action: "Assign Cabins", url: /assign-units/ },
+    ]) {
+      test(`clicking ${action} navigates without a full reload`, async ({ page }) => {
+        const queuePage = new AdminQueuePage(page);
+        await queuePage.goto();
 
-      if (await queuePage.emptyState.isVisible()) {
-        test.skip();
-        return;
-      }
+        // A full reload would clear this marker
+        await page.evaluate(() => Object.assign(window, { queueNavMarker: true }));
 
-      // Try review payment action
-      const reviewButtons = await queuePage.reviewPaymentButtons.all();
-      if (reviewButtons.length > 0) {
-        await reviewButtons[0].click();
-        await expect(page).toHaveURL(/verify-payment|payment/);
-        return;
-      }
-
-      // Try assign units action
-      const assignButtons = await queuePage.assignUnitsButtons.all();
-      if (assignButtons.length > 0) {
-        await assignButtons[0].click();
-        await expect(page).toHaveURL(/assign-units/);
-        return;
-      }
-
-      // Try view details action
-      const viewButtons = await queuePage.viewDetailsButtons.all();
-      if (viewButtons.length > 0) {
-        await viewButtons[0].click();
-        await expect(page).toHaveURL(/bookings\//);
-      }
-    });
+        const row = page.getByRole("row").filter({ hasText: reference });
+        await row.getByRole("link", { name: action }).click();
+        await expect(page).toHaveURL(url);
+        expect(await page.evaluate(() => "queueNavMarker" in window)).toBe(true);
+      });
+    }
   });
 
   test.describe("Clear Filters", () => {
@@ -518,9 +504,9 @@ test.describe("Admin Booking Queue", () => {
           }
 
           // Check if action buttons have adequate touch target
-          const reviewButtons = await queuePage.reviewPaymentButtons.all();
-          if (reviewButtons.length > 0) {
-            const buttonBox = await reviewButtons[0].boundingBox();
+          const reviewLinks = await queuePage.reviewPaymentLinks.all();
+          if (reviewLinks.length > 0) {
+            const buttonBox = await reviewLinks[0].boundingBox();
             expect(buttonBox?.height).toBeGreaterThanOrEqual(44);
           }
         });

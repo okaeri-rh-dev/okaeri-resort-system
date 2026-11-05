@@ -13,19 +13,20 @@
  * @see vault note [[02-api-specification]]
  */
 
-import type { Request as CloudflareRequest } from "@cloudflare/workers-types";
 import { createClient } from "@supabase/supabase-js";
 
+import { checkKVRateLimit, getClientIp } from "@/lib/kv-rate-limit";
 import type { Database } from "@/types/database.types";
 
 interface Env {
   SUPABASE_URL: string;
   SUPABASE_SERVICE_ROLE_KEY: string;
+  RATE_LIMIT_KV: KVNamespace;
+  ENVIRONMENT?: string;
 }
 
 interface UploadUrlRequest {
   booking_reference: string;
-  file_name: string;
   file_type: string;
   file_size: number;
 }
@@ -38,26 +39,20 @@ interface UploadUrlResponse {
   error?: string;
 }
 
-/**
- * CORS headers for cross-origin requests
- */
-const CORS_HEADERS = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization",
+const JSON_HEADERS = {
   "Content-Type": "application/json",
 };
 
 /**
- * Allowed file types for payment proof uploads
- * Matches magic number validation in client
+ * Allowed file types for payment proof uploads, with the extension each is stored under
+ * Matches magic number validation in client and the payment-proofs bucket's allowed_mime_types
  */
-const ALLOWED_FILE_TYPES = [
-  "image/jpeg",
-  "image/jpg", // Some browsers report JPEG as 'image/jpg'
-  "image/png",
-  "application/pdf",
-];
+const FILE_EXTENSIONS = new Map([
+  ["image/jpeg", "jpg"],
+  ["image/jpg", "jpg"], // Some browsers report JPEG as 'image/jpg'
+  ["image/png", "png"],
+  ["application/pdf", "pdf"],
+]);
 
 /**
  * Maximum file size in bytes (5MB)
@@ -65,24 +60,18 @@ const ALLOWED_FILE_TYPES = [
  */
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 
+// The guest form uploads before the booking exists: TEMP- plus the first 8 hex digits of its idempotency key
+const TEMP_REFERENCE_PATTERN = /^TEMP-[0-9a-f]{8}$/;
+
 /**
  * Signed URL expiry time in seconds (5 minutes)
  */
 const SIGNED_URL_EXPIRY = 300;
 
-export async function onRequest(context: {
-  request: CloudflareRequest;
-  env: Env;
-}): Promise<Response> {
-  const { request, env } = context;
+const UPLOAD_FAILED_MESSAGE = "Could not prepare the upload. Please try again.";
 
-  // Handle CORS preflight
-  if (request.method === "OPTIONS") {
-    return new Response(null, {
-      status: 204,
-      headers: CORS_HEADERS,
-    });
-  }
+export async function onRequest(context: { request: Request; env: Env }): Promise<Response> {
+  const { request, env } = context;
 
   // Only accept POST requests
   if (request.method !== "POST") {
@@ -93,7 +82,25 @@ export async function onRequest(context: {
       } as UploadUrlResponse),
       {
         status: 405,
-        headers: CORS_HEADERS,
+        headers: JSON_HEADERS,
+      }
+    );
+  }
+
+  const rateLimit = await checkKVRateLimit(
+    env.RATE_LIMIT_KV,
+    `upload-url:${getClientIp(request)}`,
+    { limit: 10, windowSeconds: 3600, environment: env.ENVIRONMENT }
+  );
+  if (!rateLimit.allowed) {
+    return new Response(
+      JSON.stringify({
+        success: false,
+        error: "Too many uploads. Please try again later.",
+      } as UploadUrlResponse),
+      {
+        status: 429,
+        headers: { ...JSON_HEADERS, "Retry-After": String(rateLimit.retryAfter) },
       }
     );
   }
@@ -101,32 +108,46 @@ export async function onRequest(context: {
   try {
     // Parse request body
     const body = (await request.json()) as UploadUrlRequest;
-    const { booking_reference, file_name, file_type, file_size } = body;
+    const { booking_reference, file_type, file_size } = body;
 
     // Validate required fields
-    if (!booking_reference || !file_name || !file_type || file_size === undefined) {
+    if (!booking_reference || !file_type || file_size === undefined) {
       return new Response(
         JSON.stringify({
           success: false,
-          error: "Missing required fields: booking_reference, file_name, file_type, file_size",
+          error: "Missing required fields: booking_reference, file_type, file_size",
         } as UploadUrlResponse),
         {
           status: 400,
-          headers: CORS_HEADERS,
+          headers: JSON_HEADERS,
+        }
+      );
+    }
+
+    if (!TEMP_REFERENCE_PATTERN.test(booking_reference)) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: "Invalid booking reference",
+        } as UploadUrlResponse),
+        {
+          status: 400,
+          headers: JSON_HEADERS,
         }
       );
     }
 
     // Validate file type
-    if (!ALLOWED_FILE_TYPES.includes(file_type)) {
+    const fileExtension = FILE_EXTENSIONS.get(file_type);
+    if (!fileExtension) {
       return new Response(
         JSON.stringify({
           success: false,
-          error: `Invalid file type. Allowed types: ${ALLOWED_FILE_TYPES.join(", ")}`,
+          error: `Invalid file type. Allowed types: ${[...FILE_EXTENSIONS.keys()].join(", ")}`,
         } as UploadUrlResponse),
         {
           status: 400,
-          headers: CORS_HEADERS,
+          headers: JSON_HEADERS,
         }
       );
     }
@@ -141,7 +162,7 @@ export async function onRequest(context: {
         } as UploadUrlResponse),
         {
           status: 400,
-          headers: CORS_HEADERS,
+          headers: JSON_HEADERS,
         }
       );
     }
@@ -156,7 +177,6 @@ export async function onRequest(context: {
 
     // Generate unique file path within the bucket
     // Format: {booking_reference}_{timestamp}.{extension}
-    const fileExtension = file_name.split(".").pop() || "jpg";
     const timestamp = Date.now();
     const uniqueFileName = `${booking_reference}_${timestamp}.${fileExtension}`;
     const filePath = uniqueFileName;
@@ -174,11 +194,11 @@ export async function onRequest(context: {
       return new Response(
         JSON.stringify({
           success: false,
-          error: `Storage error: ${error.message || "Failed to generate upload URL"}`,
+          error: UPLOAD_FAILED_MESSAGE,
         } as UploadUrlResponse),
         {
           status: 500,
-          headers: CORS_HEADERS,
+          headers: JSON_HEADERS,
         }
       );
     }
@@ -193,20 +213,19 @@ export async function onRequest(context: {
       } as UploadUrlResponse),
       {
         status: 200,
-        headers: CORS_HEADERS,
+        headers: JSON_HEADERS,
       }
     );
   } catch (error) {
     console.error("[UPLOAD_URL] Unexpected error:", error);
-    const errorMessage = error instanceof Error ? error.message : "Unknown error";
     return new Response(
       JSON.stringify({
         success: false,
-        error: `Server error: ${errorMessage}`,
+        error: UPLOAD_FAILED_MESSAGE,
       } as UploadUrlResponse),
       {
         status: 500,
-        headers: CORS_HEADERS,
+        headers: JSON_HEADERS,
       }
     );
   }

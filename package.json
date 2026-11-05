@@ -56,7 +56,16 @@
     "test:watch": "vitest watch",
     "type-check": "tsc --noEmit && tsc --noEmit -p functions/tsconfig.json && tsc --noEmit -p tsconfig.e2e.json && tsc --noEmit -p tsconfig.tests.json",
     "verify": "npm run type-check && npm run lint && npm run test:run",
-    "verify:fix": "npm run lint:fix && npm run format"
+    "verify:fix": "npm run lint:fix && npm run format",
+    "worktree:setup": "sh scripts/worktree-setup.sh"
+  },
+  "allowScripts": {
+    "@swc/core": true,
+    "canvas": true,
+    "esbuild": true,
+    "fsevents": true,
+    "msw": true,
+    "workerd": true
   },
   "dependencies": {
     "@fontsource-variable/bricolage-grotesque": "^5.3.0",
@@ -103,7 +112,7 @@
     "tailwind-merge": "^3.7.0",
     "tailwindcss": "^4.3.3",
     "ulid": "^3.0.2",
-    "zod": "^3.25.76",
+    "zod": "^4.6.7",
     "zustand": "^5.0.15"
   },
   "devDependencies": {
@@ -120,7 +129,7 @@
     "@testing-library/user-event": "^14.6.7",
     "@types/culori": "^4.0.1",
     "@types/jest-axe": "^3.5.9",
-    "@types/node": "^22.10.9",
+    "@types/node": "^26.6.6",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "^5.2.0",
@@ -135,7 +144,6 @@
     "eslint-plugin-jsx-a11y": "^6.10.2",
     "eslint-plugin-react-hooks": "^6.1.1",
     "eslint-plugin-react-refresh": "^0.4.26",
-    "fast-check": "^4.10.2",
     "globals": "^16.3.0",
     "happy-dom": "^20.14.6",
     "husky": "^9.1.7",

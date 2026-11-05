@@ -40,6 +40,13 @@ export function isPhoneKind(kind: ContactChannelKind): boolean {
   return PHONE_KINDS.has(kind);
 }
 
+export function firstChannelOfKind<Channel extends ContactChannelValue>(
+  channels: readonly Channel[],
+  kind: ContactChannelKind
+): Channel | undefined {
+  return channels.find((channel) => channel.kind === kind);
+}
+
 function formatPhilippinePhone(e164: string): string {
   const match = /^\+63(\d{3})(\d{3})(\d{4})$/.exec(e164);
   return match ? `+63 ${match[1]} ${match[2]} ${match[3]}` : e164;

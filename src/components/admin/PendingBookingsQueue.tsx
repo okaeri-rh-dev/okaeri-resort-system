@@ -14,6 +14,7 @@
 import { useMemo, useState } from "react";
 
 import { queryOptions, useQuery } from "@tanstack/react-query";
+import { Link } from "@tanstack/react-router";
 import { getCoreRowModel, useReactTable, type ColumnDef } from "@tanstack/react-table";
 import { Search, SlidersHorizontal } from "lucide-react";
 
@@ -98,23 +99,19 @@ function GuestName({ booking }: { booking: PendingBooking }) {
 }
 
 function QueueAction({ booking }: { booking: PendingBooking }) {
-  const paymentReceived = isPaymentReceived(booking.payment_status);
+  const params = { bookingId: booking.booking_id };
 
   return (
-    <Button
-      size="sm"
-      title={
-        paymentReceived
-          ? "Proceed to assign specific units for this booking"
-          : "Review payment proof and verify or reject payment"
-      }
-      onClick={() => {
-        window.location.href = paymentReceived
-          ? `/admin/bookings/${booking.booking_id}/assign-units`
-          : `/admin/verify-payment/${booking.booking_id}`;
-      }}
-    >
-      {paymentReceived ? "Assign Cabins" : "Review Payment"}
+    <Button size="sm" asChild>
+      {isPaymentReceived(booking.payment_status) ? (
+        <Link to="/admin/bookings/$bookingId/assign-units" params={params}>
+          Assign Cabins
+        </Link>
+      ) : (
+        <Link to="/admin/verify-payment/$bookingId" params={params}>
+          Review Payment
+        </Link>
+      )}
     </Button>
   );
 }
@@ -134,7 +131,11 @@ const columns: ColumnDef<PendingBooking>[] = [
       <span className="whitespace-nowrap">{formatDate(new Date(row.original.check_in_date))}</span>
     ),
   },
-  { accessorKey: "requested_unit_count", header: "Cabins", meta: { align: "center" } },
+  {
+    accessorKey: "requested_unit_count",
+    header: "Cabins",
+    meta: { align: "center", priority: "low" },
+  },
   {
     accessorKey: "total_amount",
     header: "Amount",
@@ -149,6 +150,7 @@ const columns: ColumnDef<PendingBooking>[] = [
     cell: ({ row }) => (
       <StatusBadge {...statusBadgeProps(row.original.payment_status, "Pending")} />
     ),
+    meta: { priority: "low" },
   },
   {
     accessorKey: "created_at",
@@ -355,13 +357,12 @@ export function PendingBookingsQueue() {
         {/* Filter Controls */}
         <div className="flex flex-col gap-4 @xl:flex-row">
           {/* Search */}
-          <div className="relative flex-1">
-            <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
+          <div className="flex-1">
             <Input
+              startIcon={<Search className="h-4 w-4" aria-hidden="true" />}
               placeholder="Search by reference or guest name..."
               value={filters.searchQuery}
               onChange={(e) => setFilters({ ...filters, searchQuery: e.target.value })}
-              className="pl-10"
             />
           </div>
 

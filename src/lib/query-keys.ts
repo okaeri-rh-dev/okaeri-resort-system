@@ -1,5 +1,7 @@
 // src/lib/query-keys.ts
 
+import type { ManilaDay } from "@/lib/bookings/stay";
+import type { BlockNights } from "@/lib/supabase";
 import type { AuditFilters, EntityType } from "@/types/entity-detail.types";
 
 export const guestKeys = {
@@ -42,6 +44,8 @@ export const unitKeys = {
   unfiltered: () => [...unitKeys.all, "unfiltered"] as const,
   details: () => [...unitKeys.all, "detail"] as const,
   detail: (unitId: string) => [...unitKeys.details(), unitId] as const,
+  allStates: () => [...unitKeys.all, "states"] as const,
+  states: (date: ManilaDay) => [...unitKeys.allStates(), date] as const,
 };
 
 export const bookingKeys = {
@@ -141,16 +145,24 @@ export const availabilityKeys = {
   calendar: {
     all: ["availability-calendar"] as const,
     byUnit: (unitId: string) => [...availabilityKeys.calendar.all, unitId] as const,
+    stays: (firstNight: string, lastNight: string) =>
+      [...availabilityKeys.calendar.all, "stays", firstNight, lastNight] as const,
   },
   multiUnit: {
     all: ["multi-unit-availability"] as const,
     search: (checkIn: string, checkOut: string, filters: object) =>
       [...availabilityKeys.multiUnit.all, checkIn, checkOut, filters] as const,
-    units: (unitIds: string[], checkIn: string, checkOut: string) =>
-      [...availabilityKeys.multiUnit.all, unitIds, checkIn, checkOut] as const,
+    units: (unitIds: string[], checkIn: string, checkOut: string, excludeBookingId?: string) =>
+      [...availabilityKeys.multiUnit.all, unitIds, checkIn, checkOut, excludeBookingId] as const,
   },
   blackouts: {
     all: ["unit-blackouts"] as const,
+    list: (includePast: boolean) =>
+      [...availabilityKeys.blackouts.all, "list", { includePast }] as const,
+    inNights: (firstNight: string, lastNight: string) =>
+      [...availabilityKeys.blackouts.all, "nights", firstNight, lastNight] as const,
+    conflicts: (nights: BlockNights) =>
+      [...availabilityKeys.blackouts.all, "conflicts", nights] as const,
     byUnit: (unitId: string) => [...availabilityKeys.blackouts.all, unitId] as const,
     range: (unitId: string, startDate?: string, endDate?: string) =>
       [...availabilityKeys.blackouts.byUnit(unitId), startDate, endDate] as const,

@@ -252,7 +252,7 @@ const unitTypes = {
     <UnitPrice amount={unit.base_price} />
     <UnitCapacity max={unit.max_occupancy} />
   </UnitInfo>
-  <UnitStatus status={unit.status} />
+  <StatusBadge {...statusBadgeProps(cabinStates.get(unit.unit_id)?.state, 'Free')} />
   <UnitActions unit={unit} />
 </UnitCard>
 ```

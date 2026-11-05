@@ -18,6 +18,9 @@ export interface LetterheadConfig {
   tin?: string;
 }
 
+/** The letterhead fields that default to the resort's visible Contact channels. */
+export type LetterheadContacts = Pick<LetterheadConfig, "phone" | "email">;
+
 export interface DocumentRecipient {
   name: string;
   email?: string;

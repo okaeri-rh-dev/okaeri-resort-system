@@ -7,6 +7,7 @@
  * - Checked-out bookings: 90 days after check-out date
  * - Cancelled bookings: 30 days after cancellation (updated_at)
  * Both live in the cleanup_expired_payment_proofs SQL function.
+ * - Guest uploads (TEMP-) that nothing references: 30 days after upload (sweepOrphanedPaymentProofs)
  *
  * Free Tier Impact:
  * - Reduces Supabase Storage usage (1GB free limit)
@@ -18,11 +19,12 @@
  * Retry Strategy: 3 attempts with exponential backoff (1min, 2min, 3min)
  */
 
-import { createClient } from "@supabase/supabase-js";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 import type { Database } from "@/types/database.types";
 
-import { createLogger } from "../lib/logger";
+import { createLogger, type Logger } from "../lib/logger";
+import { sweepOrphanedPaymentProofs } from "../lib/orphaned-payment-proofs";
 import { deletePaymentProofFiles } from "../lib/payment-proof-storage";
 
 interface Env {
@@ -36,26 +38,52 @@ interface Env {
  * Called by Cloudflare Pages cron trigger at 3:00 AM UTC every Sunday
  *
  * @param env - Environment variables (Supabase credentials)
- * @returns The number of files deleted from storage; throws on failure after retries
+ * @returns The number of expired and orphaned files deleted from storage. Throws when the
+ * expired cleanup fails; a failed orphan sweep is returned as orphanSweepError so the expired
+ * count is still reported.
  */
-export async function cleanupPaymentProofs(env: Env): Promise<{ deletedCount: number }> {
-  const MAX_RETRIES = 3;
-  const RETRY_DELAY_MS = 2000; // 2 seconds base delay (fits within Cloudflare 30s Worker limit)
-  const ALERT_THRESHOLD_COUNT = 50; // Alert if >50 files deleted
+export async function cleanupPaymentProofs(env: Env): Promise<{
+  deletedCount: number;
+  orphanDeletedCount: number;
+  orphanSweepError: string | null;
+}> {
   const logger = createLogger(env);
 
   logger.info("[CRON] Starting payment proof cleanup");
 
+  const supabase = createClient<Database>(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+    },
+  });
+
+  const deletedCount = await cleanupExpiredPaymentProofs(supabase, logger);
+
+  try {
+    const orphanSweep = await sweepOrphanedPaymentProofs(supabase, logger, new Date());
+    logger.info(
+      `[CRON] Orphaned payment proof sweep completed: ${orphanSweep.deleted.length} files deleted, ` +
+        `${orphanSweep.failed.length} failed`
+    );
+    return { deletedCount, orphanDeletedCount: orphanSweep.deleted.length, orphanSweepError: null };
+  } catch (error) {
+    logger.error("[ERROR] Orphaned payment proof sweep failed", error);
+    const orphanSweepError = error instanceof Error ? error.message : String(error);
+    return { deletedCount, orphanDeletedCount: 0, orphanSweepError };
+  }
+}
+
+async function cleanupExpiredPaymentProofs(
+  supabase: SupabaseClient<Database>,
+  logger: Logger
+): Promise<number> {
+  const MAX_RETRIES = 3;
+  const RETRY_DELAY_MS = 2000; // 2 seconds base delay (fits within Cloudflare 30s Worker limit)
+  const ALERT_THRESHOLD_COUNT = 50; // Alert if >50 files deleted
+
   for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
     try {
-      // Create Supabase admin client with service role key
-      const supabase = createClient<Database>(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false,
-        },
-      });
-
       // Clears the expired references and returns each file's path in the bucket
       const { data, error } = await supabase.rpc("cleanup_expired_payment_proofs");
 
@@ -86,7 +114,7 @@ export async function cleanupPaymentProofs(env: Env): Promise<{ deletedCount: nu
 
       logger.info(`[CRON] Payment proof cleanup completed: ${deleted.length} files deleted`);
 
-      return { deletedCount: deleted.length };
+      return deleted.length;
     } catch (error) {
       logger.error(
         `[ERROR] Payment proof cleanup failed (attempt ${attempt}/${MAX_RETRIES})`,

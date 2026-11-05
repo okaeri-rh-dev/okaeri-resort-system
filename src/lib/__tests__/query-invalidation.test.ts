@@ -1,8 +1,12 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { queryClient } from "@/lib/query-client";
-import { afterBookingPaymentChange, afterExpenseChange } from "@/lib/query-invalidation";
-import { accountKeys, expenseKeys } from "@/lib/query-keys";
+import {
+  afterBookingPaymentChange,
+  afterExpenseChange,
+  invalidateAvailability,
+} from "@/lib/query-invalidation";
+import { accountKeys, expenseKeys, unitKeys } from "@/lib/query-keys";
 
 const invalidatedKeys = () => {
   const spy = vi.spyOn(queryClient, "invalidateQueries");
@@ -25,5 +29,11 @@ describe("query invalidation", () => {
     afterExpenseChange();
     expect(keys()).toContainEqual(expenseKeys.all);
     expect(keys()).toContainEqual(accountKeys.all);
+  });
+
+  it("refreshes each cabin's state tonight after a booking or block change", () => {
+    const keys = invalidatedKeys();
+    invalidateAvailability();
+    expect(keys()).toContainEqual(unitKeys.allStates());
   });
 });

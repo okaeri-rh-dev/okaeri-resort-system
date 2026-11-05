@@ -4,13 +4,13 @@
  * Simulates realistic production traffic with a mix of:
  * - 10% Guest Bookings (write-heavy)
  * - 60% Availability Checks (read-heavy)
- * - 30% Status Checks (read-heavy)
+ * - 30% Status Checks (POST /api/guest-booking/status, read-heavy)
  *
  * This distribution mirrors expected production traffic patterns.
  */
 
-import http from "k6/http";
 import { check, group, sleep } from "k6";
+import http from "k6/http";
 import { Counter, Rate, Trend } from "k6/metrics";
 
 import { getEnvironment } from "../config/environments.js";
@@ -20,6 +20,8 @@ import {
   generateGuestBookingData,
   generateIdempotencyKey,
   getRandomUnitId,
+  getStatusLookups,
+  type StatusLookup,
 } from "../utils/data-generators.js";
 
 // Custom metrics
@@ -30,6 +32,7 @@ const overallSuccessRate = new Rate("overall_success_rate");
 const bookingDuration = new Trend("booking_duration", true);
 const availabilityDuration = new Trend("availability_duration", true);
 const statusDuration = new Trend("status_duration", true);
+const statusRateLimited = new Counter("status_rate_limited");
 
 // Environment configuration
 const env = getEnvironment();
@@ -77,17 +80,12 @@ export const options = {
   },
 };
 
-// Track created bookings for status checks
-const createdBookingIds: string[] = [];
-
 export function setup() {
-  // Prepare test data
-  const testBookingIds = __ENV.TEST_BOOKING_IDS?.split(",") || [];
   console.log(`Starting mixed workload test against ${env.name} (${env.baseUrl})`);
-  return { existingBookingIds: testBookingIds };
+  return { statusLookups: getStatusLookups() };
 }
 
-export default function (data: { existingBookingIds: string[] }) {
+export default function (data: { statusLookups: StatusLookup[] }) {
   // Randomly select operation based on traffic weights
   const rand = Math.random();
 
@@ -96,7 +94,7 @@ export default function (data: { existingBookingIds: string[] }) {
   } else if (rand < TRAFFIC_WEIGHTS.booking + TRAFFIC_WEIGHTS.availability) {
     doAvailabilityCheck();
   } else {
-    doStatusCheck(data.existingBookingIds);
+    doStatusCheck(data.statusLookups);
   }
 }
 
@@ -124,11 +122,7 @@ function doGuestBooking() {
       "booking: has booking_id": (r) => {
         try {
           const body = JSON.parse(r.body as string);
-          if (body.booking?.booking_id) {
-            createdBookingIds.push(body.booking.booking_id);
-            return true;
-          }
-          return false;
+          return !!body.booking?.booking_id;
         } catch {
           return false;
         }
@@ -190,35 +184,31 @@ function doAvailabilityCheck() {
 /**
  * Status Check operation (30% of traffic)
  */
-function doStatusCheck(existingBookingIds: string[]) {
+function doStatusCheck(lookups: StatusLookup[]) {
   group("Status Check", () => {
     statusRequests.add(1);
 
-    // Use created booking IDs or existing ones
-    const allBookingIds = [...createdBookingIds, ...existingBookingIds];
+    const lookup = lookups[Math.floor(Math.random() * lookups.length)];
 
-    if (allBookingIds.length === 0) {
-      // No booking IDs available, skip this iteration
-      console.log("No booking IDs available for status check");
-      return;
-    }
-
-    const bookingId = allBookingIds[Math.floor(Math.random() * allBookingIds.length)];
-
-    const response = http.get(`${env.baseUrl}/api/guest-booking/status?booking_id=${bookingId}`, {
+    // 429 is the endpoint's own rate limiter (20/hour per client), so it is an expected result.
+    const response = http.post(`${env.baseUrl}/api/guest-booking/status`, JSON.stringify(lookup), {
+      headers: { "Content-Type": "application/json" },
       tags: { endpoint: "status", operation: "status" },
+      responseCallback: http.expectedStatuses(200, 429),
     });
 
     statusDuration.add(response.timings.duration);
 
+    const rateLimited = response.status === 429;
+    statusRateLimited.add(rateLimited ? 1 : 0);
+
     const success = check(response, {
-      "status: status 200 or 404": (r) => r.status === 200 || r.status === 404,
+      "status: status 200 or 429": (r) => r.status === 200 || r.status === 429,
     });
 
     overallSuccessRate.add(success);
 
-    // Rate limited? Back off
-    if (response.status === 429) {
+    if (rateLimited) {
       sleep(5);
     }
   });
@@ -257,8 +247,9 @@ function generateTextSummary(data: Record<string, unknown>): string {
 ║   - Requests: ${metrics.availability_requests?.values?.count || 0}                                       ║
 ║   - P95: ${formatMs(metrics.availability_duration?.values?.["p(95)"])}                                       ║
 ╠═══════════════════════════════════════════════════════════════╣
-║ STATUS ENDPOINT (Target P95 < 200ms)                          ║
+║ STATUS ENDPOINT (POST, Target P95 < 200ms)                    ║
 ║   - Requests: ${metrics.status_requests?.values?.count || 0}                                       ║
+║   - Rate Limited (429): ${metrics.status_rate_limited?.values?.count || 0}                               ║
 ║   - P95: ${formatMs(metrics.status_duration?.values?.["p(95)"])}                                       ║
 ╚═══════════════════════════════════════════════════════════════╝
 `;

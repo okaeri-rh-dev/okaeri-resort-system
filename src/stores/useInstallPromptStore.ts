@@ -68,3 +68,18 @@ export const useInstallPromptStore = create<InstallPromptState>((set, get) => ({
     set({ dismissalState: "visible" });
   },
 }));
+
+function isIosSafari(): boolean {
+  if (typeof window === "undefined") return false;
+  const ua = window.navigator.userAgent;
+  const iOS = /iPad|iPhone|iPod/.test(ua);
+  const webkit = /WebKit/.test(ua);
+  const notChrome = !/CriOS|FxiOS|EdgiOS/.test(ua);
+  return iOS && webkit && notChrome;
+}
+
+/** True when the install banner has something to offer: a native install prompt or iOS Safari's Add to Home Screen. */
+export function useCanShowInstallBanner(): boolean {
+  const hasNativePrompt = useInstallPromptStore((s) => s.installPromptEvent !== null);
+  return hasNativePrompt || isIosSafari();
+}

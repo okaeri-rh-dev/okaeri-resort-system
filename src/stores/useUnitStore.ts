@@ -2,10 +2,12 @@ import { queryOptions, useMutation, useQuery, useQueryClient } from "@tanstack/r
 import { create } from "zustand";
 import { devtools, persist } from "zustand/middleware";
 
+import type { ManilaDay } from "@/lib/bookings/stay";
+import { throwDetailLoadError } from "@/lib/detail-load-error";
 import { unitKeys } from "@/lib/query-keys";
 import { db, handleSupabaseError, supabase } from "@/lib/supabase";
-import type { Unit, UnitFilters, UnitStatus } from "@/types";
-import type { TablesUpdate } from "@/types/database.types";
+import { toManilaDateString } from "@/lib/timezone";
+import type { CabinNight, CabinState, Unit, UnitFilters } from "@/types";
 
 // ============================================
 // ZUSTAND STORE
@@ -101,7 +103,7 @@ export const unitDetailQuery = (unitId: string) =>
     queryKey: unitKeys.detail(unitId),
     queryFn: async () => {
       const { data, error } = await db.units.byId(unitId);
-      if (error) throw new Error(`Failed to load unit: ${handleSupabaseError(error)}`);
+      if (error) throwDetailLoadError(error, "cabin");
       return { ...data, amenities: data.amenities as string[] | null };
     },
     staleTime: 30000,
@@ -130,9 +132,6 @@ const unitListQuery = (filters: UnitStore["filters"]) =>
       let query = supabase.from("units").select("*");
 
       // Apply filters
-      if (filters.status) {
-        query = query.eq("unit_status", filters.status);
-      }
       if (filters.type) {
         query = query.eq("unit_type", filters.type);
       }
@@ -327,24 +326,24 @@ export const useDeleteUnit = () => {
 //   });
 // };
 
-// Batch update units status
-export const useBatchUpdateUnitsStatus = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async ({ unitIds, status }: { unitIds: string[]; status: UnitStatus }) => {
-      const { error } = await supabase
-        .from("units")
-        .update({
-          unit_status: status,
-          updated_at: new Date().toISOString(),
-        } satisfies TablesUpdate<"units">)
-        .in("unit_id", unitIds);
-
+// Each cabin's state on one night, keyed by unit id
+const cabinStatesQuery = (date: ManilaDay) =>
+  queryOptions({
+    queryKey: unitKeys.states(date),
+    queryFn: async () => {
+      const { data, error } = await db.units.statesOn(date);
       if (error) throw new Error(handleSupabaseError(error));
+      return new Map<string, CabinNight>(
+        data.map((row) => [
+          row.unit_id,
+          // The RPC returns only Blocked, Booked or Free; the generated type says string
+          { state: row.state as CabinState, blockReason: row.block_reason },
+        ])
+      );
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: unitKeys.all });
-    },
+    staleTime: 30000,
+    refetchInterval: 60000,
   });
-};
+
+export const useCabinStatesTonight = () =>
+  useQuery(cabinStatesQuery(toManilaDateString(new Date())));

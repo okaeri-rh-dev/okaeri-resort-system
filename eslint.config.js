@@ -1,6 +1,8 @@
 import js from "@eslint/js";
 import pluginQuery from "@tanstack/eslint-plugin-query";
 import betterTailwind from "eslint-plugin-better-tailwindcss";
+import { getDefaultSelectors } from "eslint-plugin-better-tailwindcss/defaults";
+import { MatcherType, SelectorKind } from "eslint-plugin-better-tailwindcss/types";
 import jsxA11y from "eslint-plugin-jsx-a11y";
 import reactHooks from "eslint-plugin-react-hooks";
 import reactRefresh from "eslint-plugin-react-refresh";
@@ -428,7 +430,28 @@ export default tseslint.config([
     files: ["src/**/*.{ts,tsx}"],
     plugins: { "better-tailwindcss": betterTailwind, design: designPlugin, "jsx-a11y": jsxA11y },
     settings: {
-      "better-tailwindcss": { entryPoint: "src/index.css" },
+      "better-tailwindcss": {
+        entryPoint: "src/index.css",
+        // Class maps: classNames props, *ClassNames variables and sonner's toastOptions.classNames
+        selectors: [
+          ...getDefaultSelectors(),
+          {
+            kind: SelectorKind.Attribute,
+            name: "^classNames$",
+            match: [{ type: MatcherType.ObjectValue }],
+          },
+          {
+            kind: SelectorKind.Attribute,
+            name: "^toastOptions$",
+            match: [{ type: MatcherType.ObjectValue, path: "^classNames\\..+$" }],
+          },
+          {
+            kind: SelectorKind.Variable,
+            name: "^.+ClassNames$",
+            match: [{ type: MatcherType.ObjectValue }],
+          },
+        ],
+      },
       "jsx-a11y": { components: { Button: "button", Label: "label", Link: "a" } },
     },
     rules: {

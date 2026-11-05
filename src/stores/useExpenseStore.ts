@@ -1,9 +1,18 @@
-import { queryOptions, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  keepPreviousData,
+  queryOptions,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { create } from "zustand";
 import { devtools, persist } from "zustand/middleware";
 
+import { SEARCH_DEBOUNCE_MS, useDebouncedValue } from "@/hooks/useDebouncedValue";
+import { throwDetailLoadError } from "@/lib/detail-load-error";
 import { afterExpenseChange } from "@/lib/query-invalidation";
 import { expenseKeys } from "@/lib/query-keys";
+import { ilikeAnyFilter } from "@/lib/search-filter";
 import { uploadReceipt } from "@/lib/storage-security";
 import { db, handleSupabaseError, supabase } from "@/lib/supabase";
 import { toISODateString } from "@/lib/timezone";
@@ -118,7 +127,7 @@ export const expenseDetailQuery = (expenseId: string) =>
     queryKey: expenseKeys.detail(expenseId),
     queryFn: async () => {
       const { data, error } = await db.expenses.byId(expenseId);
-      if (error) throw new Error(`Failed to load expense: ${handleSupabaseError(error)}`);
+      if (error) throwDetailLoadError(error, "expense");
       return { ...data, date: data.expense_date };
     },
     staleTime: 30000,
@@ -155,11 +164,7 @@ const expenseListQuery = ({
 
       // Apply search
       if (searchQuery) {
-        query = query.or(`
-          description.ilike.%${searchQuery}%,
-          category.ilike.%${searchQuery}%,
-          notes.ilike.%${searchQuery}%
-        `);
+        query = query.or(ilikeAnyFilter(["description", "category", "notes"], searchQuery));
       }
 
       // Apply sorting
@@ -188,14 +193,18 @@ const expenseListQuery = ({
         updated_at: expense.updated_at || "",
       })) as Expense[];
     },
+    placeholderData: keepPreviousData,
     staleTime: 60000, // 1 minute
     refetchOnWindowFocus: true,
   });
 
 export const useExpenses = () => {
   const { filters, searchQuery, sortBy, sortOrder } = useExpenseStore();
+  const debouncedSearchQuery = useDebouncedValue(searchQuery, SEARCH_DEBOUNCE_MS);
 
-  return useQuery(expenseListQuery({ filters, searchQuery, sortBy, sortOrder }));
+  return useQuery(
+    expenseListQuery({ filters, searchQuery: debouncedSearchQuery, sortBy, sortOrder })
+  );
 };
 
 // Fetch single expense

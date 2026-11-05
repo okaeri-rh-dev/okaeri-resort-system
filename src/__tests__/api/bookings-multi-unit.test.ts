@@ -164,6 +164,25 @@ describe("POST /api/bookings/multi-unit", () => {
     expect(data2.data.booking_id).toBe(data1.data.booking_id);
   });
 
+  it("still returns the created booking when KV is down", async () => {
+    const { onRequestPost } = await import("../../../functions/api/bookings/multi-unit");
+    vi.mocked(mockEnv.RATE_LIMIT_KV.get).mockRejectedValue(new Error("KV unavailable"));
+    vi.mocked(mockEnv.RATE_LIMIT_KV.put).mockRejectedValue(
+      new Error("KV put() limit exceeded for the day.")
+    );
+    vi.spyOn(console, "error").mockImplementation(() => {});
+
+    const request = createStaffRequest({
+      method: "POST",
+      headers: { "Idempotency-Key": generateIdempotencyKey() },
+      body: JSON.stringify(validBookingData),
+    });
+
+    const response = await onRequestPost(createStaffContext(request) as never);
+
+    expect(response.status).toBe(201);
+  });
+
   it("should include processing time header", async () => {
     const { onRequestPost } = await import("../../../functions/api/bookings/multi-unit");
     const request = createStaffRequest({
@@ -176,20 +195,6 @@ describe("POST /api/bookings/multi-unit", () => {
 
     expect(response.headers.has("X-Processing-Time")).toBe(true);
     expect(response.headers.get("X-Processing-Time")).toMatch(/\d+ms/);
-  });
-
-  it("should include CORS headers in response", async () => {
-    const { onRequestPost } = await import("../../../functions/api/bookings/multi-unit");
-    const request = createStaffRequest({
-      method: "POST",
-      body: JSON.stringify(validBookingData),
-    });
-
-    const context = createStaffContext(request);
-    const response = await onRequestPost(context as never);
-
-    expect(response.headers.get("Access-Control-Allow-Origin")).toBeDefined();
-    expect(response.headers.get("Access-Control-Allow-Methods")).toContain("POST");
   });
 
   it("should return booking with units array", async () => {
@@ -418,6 +423,26 @@ describe("POST /api/bookings/multi-unit", () => {
     expect(response.status).toBe(409);
   });
 
+  it("should return 409 with the form's Blocked message when a unit is blocked", async () => {
+    const response = await postWith(
+      createBookingMocks({
+        units: testUnits,
+        availabilityResults: [
+          { unit_id: testUnits[0].unit_id, is_available: false, reason: "Blocked" },
+          { unit_id: testUnits[1].unit_id, is_available: true, reason: null },
+        ],
+      }),
+      validBookingData
+    );
+
+    expect(response.status).toBe(409);
+    const data = (await response.json()) as BusinessErrorResponse;
+    expect(data.error).toMatchObject({
+      code: "UNIT_BLOCKED",
+      message: "This unit is not free for these days (Blocked)",
+    });
+  });
+
   it("should check availability on the 14:00 / 12:00 Manila instants", async () => {
     const mockClient = createBookingMocks({ units: testUnits });
     await postWith(mockClient, validBookingData);
@@ -439,6 +464,84 @@ describe("POST /api/bookings/multi-unit", () => {
         p_booking_data: expect.objectContaining({ payment_method: "GCash" }),
       })
     );
+  });
+
+  it.each([
+    [{ booking_source: "Airbnb", payout: 5000 }, "Airbnb"],
+    [{ is_walk_in: true }, "Walk-in"],
+    [{}, "Direct"],
+  ])("should store the booking source from %o as %s", async (fields, source) => {
+    const mockClient = createBookingMocks({ units: testUnits });
+    await postWith(mockClient, { ...validBookingData, ...fields });
+    expect(mockClient.rpc).toHaveBeenCalledWith(
+      "create_multi_unit_booking",
+      expect.objectContaining({
+        p_booking_data: expect.objectContaining({ booking_source: source }),
+      })
+    );
+  });
+
+  it.each([
+    [
+      { booking_source: "Airbnb", payout: 5000, airbnb_confirmation_code: " hmabc123 " },
+      "HMABC123",
+    ],
+    [{ booking_source: "Airbnb", payout: 5000, airbnb_confirmation_code: "" }, null],
+    [{ booking_source: "Direct", airbnb_confirmation_code: "HMABC123" }, null],
+  ])("should store the confirmation code from %o as %s", async (fields, code) => {
+    const mockClient = createBookingMocks({ units: testUnits });
+    await postWith(mockClient, { ...validBookingData, ...fields });
+    expect(mockClient.rpc).toHaveBeenCalledWith(
+      "create_multi_unit_booking",
+      expect.objectContaining({
+        p_booking_data: expect.objectContaining({ airbnb_confirmation_code: code }),
+      })
+    );
+  });
+
+  it("should split an Airbnb payout across cabins in proportion to the engine price", async () => {
+    const createdSubtotals = async (body: unknown) => {
+      const mockClient = createBookingMocks({ units: testUnits });
+      await postWith(mockClient, body);
+      const [, params] = mockClient.rpc.mock.calls.find(
+        ([name]) => name === "create_multi_unit_booking"
+      )!;
+      return (params as { p_units: { subtotal: number }[] }).p_units.map((u) => u.subtotal);
+    };
+    const engine = await createdSubtotals(validBookingData);
+    const airbnb = await createdSubtotals({
+      ...validBookingData,
+      booking_source: "Airbnb",
+      payout: 10000.01,
+    });
+
+    const engineTotal = engine[0] + engine[1];
+    expect(engine[0]).not.toBe(engine[1]);
+    expect(Math.round(airbnb[0] * 100) + Math.round(airbnb[1] * 100)).toBe(1000001);
+    airbnb.forEach((subtotal, i) => {
+      expect(Math.abs(subtotal - (10000.01 * engine[i]) / engineTotal)).toBeLessThanOrEqual(0.01);
+      expect(Math.round(subtotal * 100)).toBeCloseTo(subtotal * 100, 6);
+    });
+  });
+
+  it.each([{}, { payout: 0 }, { payout: -5 }, { payout: 100_000_000 }])(
+    "should return 400 for an Airbnb booking with payout %o",
+    async (fields) => {
+      const response = await postWith(createBookingMocks({ units: testUnits }), {
+        ...validBookingData,
+        booking_source: "Airbnb",
+        ...fields,
+      });
+      expect(response.status).toBe(400);
+    }
+  );
+
+  it("should return 400 when staff send the Website source", async () => {
+    const response = await postWith(createBookingMocks({ units: testUnits }), {
+      ...validBookingData,
+      booking_source: "Website",
+    });
+    expect(response.status).toBe(400);
   });
 
   it("should return 422 instead of trusting the client total when the server prices at zero", async () => {

@@ -88,4 +88,5 @@ export {
   generateTestJWT,
   generateExpiredJWT,
   generateIdempotencyKey,
+  queryChain,
 } from "./utils/test-helpers";

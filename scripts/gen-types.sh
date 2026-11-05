@@ -1,8 +1,8 @@
 #!/bin/sh
 # Regenerate src/types/database.generated.ts from the local Supabase database
 # (supabase start applies every migration, so this reflects supabase/migrations).
-# Uses --db-url because `supabase gen types --local` fails password auth on
-# CLI v2.109.1 (see CLAUDE.md, Known Infrastructure Issues).
+# Uses --db-url because `supabase gen types --local` fails (v2.109.1: password
+# auth; v2.122.1: exit 1 with no message).
 set -e
 
 db_url=$(supabase status -o env | sed -n 's/^DB_URL="\{0,1\}\([^"]*\)"\{0,1\}$/\1/p')

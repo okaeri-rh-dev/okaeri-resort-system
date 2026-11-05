@@ -44,7 +44,7 @@ export function useExpensesTable({ onViewExpense, onEditExpense }: ExpensesTable
   const exportExpenses = useExportExpenses();
 
   // Data
-  const { data: expenses = [], error, isLoading } = useExpenses();
+  const { data: expenses = [], error, isLoading, isPlaceholderData } = useExpenses();
 
   // Get total count (unfiltered) for empty state differentiation
   const { data: expenseStats } = useExpenseStats();
@@ -154,6 +154,7 @@ export function useExpensesTable({ onViewExpense, onEditExpense }: ExpensesTable
     expenses: filteredExpenses,
     totalUnfilteredCount,
     isLoading,
+    isPlaceholderData,
     error,
     filters,
     setFilters,

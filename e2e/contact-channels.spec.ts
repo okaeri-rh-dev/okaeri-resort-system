@@ -7,27 +7,16 @@
  * seeded booking snapshot; the contact channels on it come from the real database.
  */
 import { expect, test, type Page } from "@playwright/test";
-import { createClient } from "@supabase/supabase-js";
 
 import { loginAsManager, loginAsStaff } from "./fixtures/auth";
 import { seedConfirmation } from "./fixtures/confirmation";
+import { serviceClient } from "./fixtures/service-client";
 
 const HANDLE = "e2e.okaeri";
 const INSTAGRAM_URL = `https://www.instagram.com/${HANDLE}/?igsh=e2e`;
 const CHANNEL_LINK = { name: `Instagram: @${HANDLE}` };
 const BOOKING_REFERENCE = "E2E-CHANNELS";
 const CONFIRMATION_CONTACT_TEXT = "If you have any questions or need to make changes";
-
-function serviceClient() {
-  // Local-only, like the other specs that seed through the service role.
-  return createClient(
-    process.env.VITE_SUPABASE_URL || "http://127.0.0.1:54321",
-    process.env.SUPABASE_SERVICE_ROLE_KEY ||
-      process.env.TEST_SUPABASE_SERVICE_ROLE_KEY ||
-      "sb_secret_N7UND0UgjKTVK-Uodkm0Hg_xSvEMPvz",
-    { auth: { autoRefreshToken: false, persistSession: false } }
-  );
-}
 
 /** Opens a guest page and waits for its contact channels to load, so absence checks mean something. */
 async function openGuestPage(page: Page, path: string) {

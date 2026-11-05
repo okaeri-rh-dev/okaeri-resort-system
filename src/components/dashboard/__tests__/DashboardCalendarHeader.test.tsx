@@ -6,10 +6,8 @@ import { StackedHeader } from "../DashboardCalendar";
 describe("StackedHeader", () => {
   const baseProps = {
     currentMonth: new Date(2026, 4, 18), // May 2026
-    monthlyBookingCount: 12,
     onPrev: vi.fn(),
     onNext: vi.fn(),
-    onToday: vi.fn(),
   };
 
   it("does not render the 'Booking Calendar' title (reclaimed for vertical space)", () => {
@@ -38,8 +36,8 @@ describe("StackedHeader", () => {
     expect(next.className).toMatch(/w-11/);
   });
 
-  it("does not render booking count metadata (redundant with visible chips)", () => {
-    render(<StackedHeader {...baseProps} />);
-    expect(screen.queryByText(/bookings this month/)).not.toBeInTheDocument();
+  it("shows the month's numbers under the month name", () => {
+    render(<StackedHeader {...baseProps} numbers="20% occupancy · 8 confirmed" />);
+    expect(screen.getByText("20% occupancy · 8 confirmed")).toBeVisible();
   });
 });

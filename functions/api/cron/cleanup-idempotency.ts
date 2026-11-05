@@ -61,16 +61,3 @@ export async function onRequestPost(context: { request: Request; env: Env }): Pr
     );
   }
 }
-
-/**
- * Handle OPTIONS for CORS preflight
- */
-export async function onRequestOptions(): Promise<Response> {
-  return new Response(null, {
-    headers: {
-      "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Methods": "POST, OPTIONS",
-      "Access-Control-Allow-Headers": "Content-Type, Authorization",
-    },
-  });
-}

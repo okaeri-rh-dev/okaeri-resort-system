@@ -59,7 +59,7 @@ import { useMultiUnitBookingStore } from "@/stores/useMultiUnitBookingStore";
 import { useUnits } from "@/stores/useUnitStore";
 import type { AdminMultiUnitBookingCreate, Unit } from "@/types";
 
-import { WalkInField } from "./form-fields";
+import { BookingSourceField, ConfirmationCodeField, PayoutField } from "./form-fields";
 import { MultiUnitPricingSummary } from "./MultiUnitPricingSummary";
 import { MultiUnitSelector } from "./MultiUnitSelector";
 import { UnitCardList } from "./UnitCardList";
@@ -109,7 +109,7 @@ export function MultiUnitBookingForm({ onSuccess, onCancel }: MultiUnitBookingFo
       payment_method: "GCash",
       special_requests: "",
       internal_notes: "",
-      is_walk_in: false,
+      booking_source: "Direct",
     },
   });
 
@@ -121,6 +121,7 @@ export function MultiUnitBookingForm({ onSuccess, onCancel }: MultiUnitBookingFo
   // Watch form values for real-time availability
   const checkIn = form.watch("check_in");
   const checkOut = form.watch("check_out");
+  const isAirbnb = form.watch("booking_source") === "Airbnb";
 
   // Extract form.setValue into useEffectEvent to remove form from dependencies
   const adjustCheckOutDate = useEffectEvent((checkInDate: Date, checkOutDate: Date) => {
@@ -294,14 +295,21 @@ export function MultiUnitBookingForm({ onSuccess, onCancel }: MultiUnitBookingFo
           guest_assignment: unit.guest_assignment,
           unit_notes: unit.guest_assignment?.special_requests,
         })),
-        payment: {
-          method: data.payment_method,
-          amount: data.payment_amount || getTotalAmount(),
-          proof_url: data.payment_proof_url,
-        },
+        ...(data.booking_source === "Airbnb"
+          ? {
+              payout: data.payout,
+              airbnb_confirmation_code: data.airbnb_confirmation_code,
+            }
+          : {
+              payment: {
+                method: data.payment_method,
+                amount: data.payment_amount || getTotalAmount(),
+                proof_url: data.payment_proof_url,
+              },
+            }),
         special_requests: data.special_requests,
         internal_notes: data.internal_notes,
-        is_walk_in: data.is_walk_in ?? false,
+        booking_source: data.booking_source,
         source: "web",
         idempotency_key: idempotencyKey,
       };
@@ -325,11 +333,11 @@ export function MultiUnitBookingForm({ onSuccess, onCancel }: MultiUnitBookingFo
       }
     } catch (error) {
       console.error("Booking creation failed:", error);
-      toast.error(
-        error instanceof OfflineBookingError
-          ? error.message
-          : "Failed to create booking. Please try again."
-      );
+      if (error instanceof OfflineBookingError) toast.error(error.message);
+      else
+        toast.error("Failed to create booking", {
+          description: error instanceof Error ? error.message : "Please try again.",
+        });
     }
   };
 
@@ -448,10 +456,7 @@ export function MultiUnitBookingForm({ onSuccess, onCancel }: MultiUnitBookingFo
               {/* Step 2: Guest Information */}
               {step === 2 && (
                 <div className="space-y-4">
-                  <WalkInField
-                    control={form.control}
-                    description="Check this if the guest arrived on-site without a prior reservation. Reporting flag only."
-                  />
+                  <BookingSourceField control={form.control} />
 
                   <FormField
                     control={form.control}
@@ -515,20 +520,27 @@ export function MultiUnitBookingForm({ onSuccess, onCancel }: MultiUnitBookingFo
 
                   <MultiUnitPricingSummary units={selectedUnits} />
 
-                  <FormField control={form.control} name="payment_method" label="Payment Method">
-                    {(field) => (
-                      <SelectControl
-                        value={field.value}
-                        onValueChange={field.onChange}
-                        placeholder="Select payment method"
-                      >
-                        <SelectItem value="GCash">GCash</SelectItem>
-                        <SelectItem value="BankTransfer">Bank Transfer</SelectItem>
-                        <SelectItem value="Cash">Cash</SelectItem>
-                        <SelectItem value="CreditCard">Credit Card</SelectItem>
-                      </SelectControl>
-                    )}
-                  </FormField>
+                  {isAirbnb ? (
+                    <>
+                      <PayoutField control={form.control} />
+                      <ConfirmationCodeField control={form.control} />
+                    </>
+                  ) : (
+                    <FormField control={form.control} name="payment_method" label="Payment Method">
+                      {(field) => (
+                        <SelectControl
+                          value={field.value}
+                          onValueChange={field.onChange}
+                          placeholder="Select payment method"
+                        >
+                          <SelectItem value="GCash">GCash</SelectItem>
+                          <SelectItem value="BankTransfer">Bank Transfer</SelectItem>
+                          <SelectItem value="Cash">Cash</SelectItem>
+                          <SelectItem value="CreditCard">Credit Card</SelectItem>
+                        </SelectControl>
+                      )}
+                    </FormField>
+                  )}
 
                   <FormField
                     control={form.control}

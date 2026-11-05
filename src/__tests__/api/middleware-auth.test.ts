@@ -130,6 +130,22 @@ describe("Middleware JWT Authentication", () => {
     expect(context.next).toHaveBeenCalled();
   });
 
+  it.each([
+    ["the anon key (no sub, role anon)", { sub: undefined, aud: undefined, role: "anon" }],
+    ["a token with no sub", { sub: undefined }],
+    ["a token for another audience", { aud: "anon" }],
+  ])("should return 401 for %s", async (_label, claims) => {
+    const request = createMockRequest("https://api.example.com/api/monitoring/check-quotas", {
+      headers: { Authorization: `Bearer ${await generateTestJWT(claims)}` },
+    });
+    const context = { ...createMockContext(request, mockEnv), next: vi.fn() };
+
+    const response = await onRequest(context as never);
+
+    expect(response.status).toBe(401);
+    expect(context.next).not.toHaveBeenCalled();
+  });
+
   it("should return 401 for invalid JWT signature", async () => {
     const request = createMockRequest("https://api.example.com/api/bookings/123/units/add", {
       method: "POST",
@@ -393,6 +409,7 @@ describe("Middleware asymmetric (ES256) JWT verification", () => {
     const payloadB64 = encodeJson({
       sub: "test-user-id",
       role: "authenticated",
+      aud: "authenticated",
       exp: now + 3600,
       ...payload,
     });

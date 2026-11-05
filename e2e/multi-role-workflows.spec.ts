@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 
+import { E2E_REF } from "../scripts/e2e/fixtures";
 import { loginAsAdmin, loginAsOwner, loginAsStaff } from "./fixtures/auth";
 import { ROUTES, TIMEOUTS, VIEWPORTS } from "./fixtures/test-data";
 import { AdminQueuePage } from "./pages/AdminQueuePage";
@@ -80,28 +81,12 @@ test.describe("Multi-Role Workflows", () => {
         return;
       }
 
-      // Staff should not see review payment buttons, or they should be disabled
-      const reviewButtons = await queuePage.reviewPaymentButtons.all();
+      const reviewLinks = await queuePage.reviewPaymentLinks.all();
+      if (reviewLinks.length === 0) return;
 
-      // Either no buttons visible, or clicking should be prevented
-      if (reviewButtons.length > 0) {
-        // Check if buttons are disabled or lead to access denied
-        await reviewButtons[0].click();
-
-        // Should either stay on page, show error, or redirect
-        const hasAccessDenied =
-          (await page.getByText(/access denied|unauthorized|permission/i).isVisible()) ||
-          page.url().includes("queue"); // Stayed on queue page
-
-        // Staff might be able to navigate but can't take action
-        if (page.url().includes("verify-payment")) {
-          const verifyPage = new PaymentVerificationPage(page);
-          // Verify button should not be visible or should be disabled
-          await verifyPage.expectVerifyButtonHidden();
-        } else {
-          expect(hasAccessDenied).toBeTruthy();
-        }
-      }
+      // The verify-payment route is manager+, so staff land on the dashboard
+      await reviewLinks[0].click();
+      await expect(page).toHaveURL(/\/admin\/dashboard/);
     });
 
     test("staff cannot assign units", async ({ page }) => {
@@ -113,10 +98,10 @@ test.describe("Multi-Role Workflows", () => {
         return;
       }
 
-      const assignButtons = await queuePage.assignUnitsButtons.all();
+      const assignLinks = await queuePage.assignUnitsLinks.all();
 
-      if (assignButtons.length > 0) {
-        await assignButtons[0].click();
+      if (assignLinks.length > 0) {
+        await assignLinks[0].click();
 
         if (page.url().includes("assign-units")) {
           const assignPage = new UnitAssignmentPage(page);
@@ -194,13 +179,13 @@ test.describe("Multi-Role Workflows", () => {
         return;
       }
 
-      const reviewButtons = await queuePage.reviewPaymentButtons.all();
-      if (reviewButtons.length === 0) {
+      const reviewLinks = await queuePage.reviewPaymentLinks.all();
+      if (reviewLinks.length === 0) {
         test.skip();
         return;
       }
 
-      await reviewButtons[0].click();
+      await reviewLinks[0].click();
 
       const verifyPage = new PaymentVerificationPage(page);
       await verifyPage.expectPageLoaded();
@@ -213,18 +198,7 @@ test.describe("Multi-Role Workflows", () => {
       const queuePage = new AdminQueuePage(page);
       await queuePage.goto();
 
-      if (await queuePage.emptyState.isVisible()) {
-        test.skip();
-        return;
-      }
-
-      const assignButtons = await queuePage.assignUnitsButtons.all();
-      if (assignButtons.length === 0) {
-        test.skip();
-        return;
-      }
-
-      await assignButtons[0].click();
+      await queuePage.openAssignCabins(E2E_REF.QUEUE_PAID);
 
       const assignPage = new UnitAssignmentPage(page);
       await assignPage.expectPageLoaded();
@@ -323,13 +297,13 @@ test.describe("Multi-Role Workflows", () => {
         return;
       }
 
-      const reviewButtons = await queuePage.reviewPaymentButtons.all();
-      if (reviewButtons.length === 0) {
+      const reviewLinks = await queuePage.reviewPaymentLinks.all();
+      if (reviewLinks.length === 0) {
         test.skip();
         return;
       }
 
-      await reviewButtons[0].click();
+      await reviewLinks[0].click();
 
       const verifyPage = new PaymentVerificationPage(page);
       await verifyPage.expectPageLoaded();
@@ -439,8 +413,8 @@ test.describe("Multi-Role Workflows", () => {
       const detailPage = new BookingDetailPage(page);
       await detailPage.expectPageLoaded();
 
-      // Staff should not see edit button
-      await detailPage.expectEditButtonHidden();
+      // Staff edit booking details; only the total is manager-only (#310)
+      await detailPage.expectEditButtonVisible();
     });
 
     test("admin sees all action buttons", async ({ page }) => {

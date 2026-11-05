@@ -2,7 +2,7 @@
  * Public Availability Calendar API Endpoint
  *
  * Returns aggregated availability counts for Okaeri Resort's units.
- * This is a public, unauthenticated endpoint with aggressive caching.
+ * This is a public, unauthenticated endpoint.
  *
  * VIEW-ONLY: No pricing information, no guest data, no booking details.
  * Supports manager-mediated booking (guest contacts manager after viewing).
@@ -46,11 +46,6 @@ interface Env {
   TURNSTILE_SECRET_KEY?: string;
 }
 
-interface AvailabilityDay {
-  date: string;
-  available_count: number;
-}
-
 type AvailabilityStatus = "full" | "moderate" | "limited" | "booked";
 
 interface AvailabilityResponse {
@@ -83,44 +78,13 @@ export async function onRequest(context: {
   const { request, env, waitUntil } = context;
 
   // ============================================================================
-  // CORS HEADERS (Specific Origins Only)
-  // ============================================================================
-
-  const allowedOrigins = [
-    "https://okaeri-resort.com",
-    "https://www.okaeri-resort.com",
-    env.ENVIRONMENT === "development" ? "http://localhost:5173" : null,
-  ].filter(Boolean) as string[];
-
-  const origin = request.headers.get("Origin");
-  const corsOrigin = origin && allowedOrigins.includes(origin) ? origin : allowedOrigins[0];
-
-  const corsHeaders = {
-    "Access-Control-Allow-Origin": corsOrigin,
-    "Access-Control-Allow-Methods": "GET, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type",
-    "Access-Control-Allow-Credentials": "false",
-  };
-
-  // ============================================================================
-  // PREFLIGHT REQUEST HANDLING
-  // ============================================================================
-
-  if (request.method === "OPTIONS") {
-    return new Response(null, {
-      headers: corsHeaders,
-      status: 204,
-    });
-  }
-
-  // ============================================================================
   // METHOD VALIDATION
   // ============================================================================
 
   if (request.method !== "GET") {
     return new Response(JSON.stringify({ error: "Method not allowed" } as ErrorResponse), {
       status: 405,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json" },
     });
   }
 
@@ -153,7 +117,7 @@ export async function onRequest(context: {
         } as ErrorResponse),
         {
           status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json" },
         }
       );
     }
@@ -170,7 +134,7 @@ export async function onRequest(context: {
     if (isNaN(start.getTime()) || isNaN(end.getTime())) {
       return new Response(JSON.stringify({ error: "Invalid date values" } as ErrorResponse), {
         status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json" },
       });
     }
 
@@ -179,7 +143,7 @@ export async function onRequest(context: {
         JSON.stringify({ error: "End date must be after or equal to start date" } as ErrorResponse),
         {
           status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json" },
         }
       );
     }
@@ -201,7 +165,7 @@ export async function onRequest(context: {
         } as ErrorResponse),
         {
           status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json" },
         }
       );
     }
@@ -215,7 +179,7 @@ export async function onRequest(context: {
         JSON.stringify({ error: "Cannot query more than 1 year in the future" } as ErrorResponse),
         {
           status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json" },
         }
       );
     }
@@ -225,7 +189,7 @@ export async function onRequest(context: {
     if (daysDiff > 180) {
       return new Response(JSON.stringify({ error: "Date range cannot exceed 180 days" } as ErrorResponse), {
         status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json" },
       });
     }
 
@@ -246,7 +210,7 @@ export async function onRequest(context: {
       if (!isValid) {
         return new Response(JSON.stringify({ error: "Bot verification failed" } as ErrorResponse), {
           status: 403,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json" },
         });
       }
     }
@@ -266,7 +230,7 @@ export async function onRequest(context: {
       console.error("[Availability API] Database error:", error);
       return new Response(JSON.stringify({ error: "Failed to fetch availability data" } as ErrorResponse), {
         status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json" },
       });
     }
 
@@ -274,14 +238,15 @@ export async function onRequest(context: {
     // RESPONSE TRANSFORMATION
     // ============================================================================
 
-    const availability = (data as AvailabilityDay[]).map((day) => ({
+    const totalUnits = data[0]?.total_units ?? 0;
+    const availability = data.map((day) => ({
       date: day.date,
       availableCount: day.available_count,
-      status: getAvailabilityStatus(day.available_count),
+      status: getAvailabilityStatus(day.available_count, totalUnits),
     }));
 
     const response: AvailabilityResponse = {
-      totalUnits: 3,
+      totalUnits,
       dateRange: {
         start: startDate,
         end: endDate,
@@ -317,21 +282,9 @@ export async function onRequest(context: {
       })()
     );
 
-    // ============================================================================
-    // CDN CACHING HEADERS
-    // ============================================================================
-
-    const etag = `"availability-${startDate}-${endDate}-${Math.floor(Date.now() / 300000)}"`;
-
     return new Response(JSON.stringify(response), {
       headers: {
-        ...corsHeaders,
         "Content-Type": "application/json",
-        // CDN caching: 5 minutes fresh, 2 minutes stale-while-revalidate
-        "Cache-Control": "public, s-maxage=300, stale-while-revalidate=120",
-        ETag: etag,
-        // Vary header ensures proper caching by query params
-        Vary: "Accept-Encoding",
       },
       status: 200,
     });
@@ -339,18 +292,15 @@ export async function onRequest(context: {
     console.error("[Availability API] Unexpected error:", error);
     return new Response(JSON.stringify({ error: "Internal server error" } as ErrorResponse), {
       status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json" },
     });
   }
 }
 
-/**
- * Map available count to status string. The resort has 3 cabins; a larger count (extra test
- * cabins) still reads as full availability.
- */
-export function getAvailabilityStatus(count: number): AvailabilityStatus {
-  if (count >= 3) return "full"; // All 3 units available
-  if (count === 2) return "moderate"; // 2 units available
-  if (count === 1) return "limited"; // Only 1 unit available
-  return "booked"; // Fully booked (0 available)
+/** Grades a night's free cabins against the resort's cabin count. */
+export function getAvailabilityStatus(count: number, totalUnits: number): AvailabilityStatus {
+  if (count <= 0) return "booked";
+  if (count >= totalUnits) return "full";
+  if (count === 1) return "limited";
+  return "moderate";
 }

@@ -1,30 +1,50 @@
-import React, { useCallback, useMemo, useState } from "react";
+import React, { createContext, useContext, useMemo, type ReactNode } from "react";
 
-import { format, getDay } from "date-fns";
-import { CalendarDays, ChevronLeft, ChevronRight } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import {
+  addMonths,
+  endOfMonth,
+  endOfWeek,
+  format,
+  getDay,
+  startOfMonth,
+  startOfWeek,
+} from "date-fns";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
+import { hatchedFill } from "@/components/calendar/availability-fill";
 import {
   Button,
   Card,
   CardContent,
   CardHeader,
-  CardTitle,
   InlineCalendar,
   type CalendarDayButtonProps,
 } from "@/components/patterns";
+import { blocksInNightsQuery } from "@/hooks/useAvailabilityTimeline";
+import { useBlockCabins } from "@/hooks/useBlocks";
 import { useCalendarBookings } from "@/hooks/useCalendarBookings";
+import { blockedNightLabels } from "@/lib/availability-timeline";
+import type { ManilaDay } from "@/lib/bookings/stay";
 import { hasProperty, isObject } from "@/lib/type-guards";
 import { cn } from "@/lib/utils";
 import type { Booking } from "@/types";
 
 import { BookingIndicators } from "./BookingIndicators";
 import { BookingTooltip } from "./BookingTooltip";
+import { calendarChipClass } from "./unit-calendar-config";
 
 interface DashboardCalendarProps {
   bookings: Booking[] | undefined;
   isLoading?: boolean;
+  month: Date;
+  onMonthChange: (month: Date) => void;
+  today: ManilaDay;
+  selectedDay: ManilaDay;
+  onSelectDay: (day: ManilaDay) => void;
+  /** A line under the month name, such as the month's numbers */
+  numbers?: ReactNode;
   className?: string;
-  headerVariant?: "row" | "stacked";
 }
 
 // Uniform subtle tint for any day with bookings (avoids competing with unit chip colors)
@@ -35,26 +55,28 @@ function getDayBackgroundClass(bookingCount: number): string {
   return "bg-foreground/10 hover:bg-accent";
 }
 
-// Extracted DayButton component for better performance
-interface DayButtonProps {
-  day: { date: Date };
-  modifiers?: unknown;
+interface DayCellData {
   bookingsByDate: { [key: string]: Booking[] };
-  compact?: boolean;
-  [key: string]: unknown; // For other props passed by Calendar
+  blockedLabelByNight: Record<string, string>;
+  today: ManilaDay;
+  selectedDay: ManilaDay;
+  onSelectDay: (day: ManilaDay) => void;
 }
 
-const DayButton = React.memo(function DayButton({
-  day,
-  modifiers,
-  bookingsByDate,
-  compact = false,
-  ...props
-}: DayButtonProps) {
+// Through context, not props: a day cell component made per render would remount the grid on
+// every change (a selection, a query result) and lose the focus and a click in progress
+const DayCellContext = createContext<DayCellData | null>(null);
+
+function DayButton({ day, modifiers, ...props }: CalendarDayButtonProps) {
+  const cell = useContext(DayCellContext);
+  if (!cell) throw new Error("DayButton must be inside DashboardCalendar");
+  const { bookingsByDate, blockedLabelByNight, today, selectedDay, onSelectDay } = cell;
   const date = day.date;
   const dateKey = format(date, "yyyy-MM-dd");
   const dayBookings = bookingsByDate[dateKey] || [];
-  const isToday = format(date, "yyyy-MM-dd") === format(new Date(), "yyyy-MM-dd");
+  const blockedLabel = blockedLabelByNight[dateKey];
+  const isToday = dateKey === today;
+  const isSelected = dateKey === selectedDay;
   const isWeekend = getDay(date) === 0 || getDay(date) === 6; // Sunday = 0, Saturday = 6
   const bookingCountClass = getDayBackgroundClass(dayBookings.length);
   const isOutsideMonth =
@@ -64,11 +86,12 @@ const DayButton = React.memo(function DayButton({
     <BookingTooltip bookings={dayBookings} date={date}>
       <Button
         {...props}
+        onClick={() => onSelectDay(dateKey)}
+        aria-pressed={isSelected}
         variant="ghost"
         className={cn(
           "relative h-20 w-full text-sm font-normal @sm/calendar:h-24 @2xl/calendar:h-28",
-          compact ? "p-0.5" : "p-1",
-          "min-w-0", // Allow shrinking below content size
+          "min-w-0 p-0.5", // Allow shrinking below content size
           "transition-colors duration-150",
           // Base weekend styling (only if no bookings)
           isWeekend && dayBookings.length === 0 && !isToday && "bg-foreground/5",
@@ -77,6 +100,7 @@ const DayButton = React.memo(function DayButton({
           // Today special styling (overrides other backgrounds)
           isToday &&
             "border-primary bg-accent text-accent-foreground hover:bg-accent border font-semibold",
+          isSelected && "ring-primary ring-2 ring-inset",
           // Make text bolder when there are bookings
           dayBookings.length > 0 && "font-medium",
           isOutsideMonth && "text-muted-foreground"
@@ -85,93 +109,41 @@ const DayButton = React.memo(function DayButton({
           dayBookings.length > 0
             ? `, ${dayBookings.length} booking${dayBookings.length !== 1 ? "s" : ""}`
             : ""
-        }`}
+        }${blockedLabel ? `, blocked: ${blockedLabel}` : ""}`}
       >
         <div className="flex h-full w-full min-w-0 flex-col items-center justify-start overflow-hidden">
           <span className="text-xs font-medium @sm/calendar:text-sm">{format(date, "d")}</span>
           {dayBookings.length > 0 && (
-            <BookingIndicators
-              bookings={dayBookings}
-              compact={compact}
-              className="mt-1 w-full min-w-0"
-            />
+            <BookingIndicators bookings={dayBookings} compact className="mt-1 w-full min-w-0" />
           )}
+          {blockedLabel && <BlockedChip label={blockedLabel} />}
         </div>
       </Button>
     </BookingTooltip>
   );
-});
-
-interface CalendarHeaderProps {
-  currentMonth: Date;
-  monthlyBookingCount: number;
-  onPrev: () => void;
-  onNext: () => void;
-  onToday: () => void;
 }
 
-function RowHeader({
-  currentMonth,
-  monthlyBookingCount,
-  onPrev,
-  onNext,
-  onToday,
-}: CalendarHeaderProps) {
+/** Shows who a block shuts out; changing it is done on the Blocked dates page. */
+function BlockedChip({ label }: { label: string }) {
   return (
-    <CardHeader className="pb-3">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <CardTitle className="flex items-center gap-2 text-xl font-semibold">
-            <CalendarDays className="text-primary size-5" aria-hidden="true" />
-            <span>Booking Calendar</span>
-          </CardTitle>
-          {monthlyBookingCount > 0 && (
-            <span className="bg-secondary text-secondary-foreground rounded-full px-2 py-0.5 text-sm font-medium">
-              {monthlyBookingCount} booking{monthlyBookingCount !== 1 ? "s" : ""} this month
-            </span>
-          )}
-        </div>
-
-        {/* Navigation Controls */}
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={onToday}
-            className="h-8 px-2.5 text-xs font-medium"
-          >
-            Today
-          </Button>
-          <div className="flex items-center gap-1">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onPrev}
-              className="h-8 w-8 p-0"
-              aria-label="Previous month"
-            >
-              <ChevronLeft className="size-4" />
-            </Button>
-            <div className="border-border bg-background min-w-[140px] rounded-md border px-3 py-1 text-center">
-              <span className="text-sm font-semibold">{format(currentMonth, "MMMM yyyy")}</span>
-            </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onNext}
-              className="h-8 w-8 p-0"
-              aria-label="Next month"
-            >
-              <ChevronRight className="size-4" />
-            </Button>
-          </div>
-        </div>
-      </div>
-    </CardHeader>
+    <div
+      className={cn(calendarChipClass(true), "border-border text-foreground mt-0.5", hatchedFill)}
+    >
+      <span className="shrink-0">Blocked</span>
+      {/* A narrow cell has no room for the cabins; the day's aria-label still names them */}
+      <span className="ml-1 hidden truncate @sm/calendar:inline">{label}</span>
+    </div>
   );
 }
 
-export function StackedHeader({ currentMonth, onPrev, onNext }: CalendarHeaderProps) {
+interface CalendarHeaderProps {
+  currentMonth: Date;
+  numbers?: ReactNode;
+  onPrev: () => void;
+  onNext: () => void;
+}
+
+export function StackedHeader({ currentMonth, numbers, onPrev, onNext }: CalendarHeaderProps) {
   return (
     <CardHeader className="px-3 py-2">
       <div className="flex items-center justify-between">
@@ -184,12 +156,14 @@ export function StackedHeader({ currentMonth, onPrev, onNext }: CalendarHeaderPr
         >
           <ChevronLeft className="size-5" />
         </Button>
-        <span
-          aria-live="polite"
-          className="min-w-0 truncate px-3 text-base font-semibold tabular-nums"
-        >
-          {format(currentMonth, "MMMM yyyy")}
-        </span>
+        <div className="flex min-w-0 flex-col items-center px-3">
+          <span aria-live="polite" className="truncate text-base font-semibold tabular-nums">
+            {format(currentMonth, "MMMM yyyy")}
+          </span>
+          {numbers && (
+            <span className="text-muted-foreground truncate text-xs tabular-nums">{numbers}</span>
+          )}
+        </div>
         <Button
           variant="ghost"
           size="icon"
@@ -207,86 +181,64 @@ export function StackedHeader({ currentMonth, onPrev, onNext }: CalendarHeaderPr
 export const DashboardCalendar = React.memo(function DashboardCalendar({
   bookings,
   isLoading,
+  month,
+  onMonthChange,
+  today,
+  selectedDay,
+  onSelectDay,
+  numbers,
   className,
-  headerVariant = "row",
 }: DashboardCalendarProps) {
-  const [currentMonth, setCurrentMonth] = useState(new Date());
   const visibleBookings = useMemo(
     () => bookings?.filter((b) => b.booking_status !== "Cancelled"),
     [bookings]
   );
-  const { bookingsByDate, monthlyBookingCount } = useCalendarBookings(
-    visibleBookings,
-    currentMonth
+  const { bookingsByDate } = useCalendarBookings(visibleBookings, month);
+  const firstVisibleNight = format(startOfWeek(startOfMonth(month)), "yyyy-MM-dd");
+  const lastVisibleNight = format(endOfWeek(endOfMonth(month)), "yyyy-MM-dd");
+  const { data: blocks } = useQuery(blocksInNightsQuery(firstVisibleNight, lastVisibleNight));
+  const { cabinName } = useBlockCabins();
+  const blockedLabelByNight = useMemo(
+    () =>
+      blockedNightLabels(
+        blocks ?? [],
+        { firstNight: firstVisibleNight, lastNight: lastVisibleNight },
+        cabinName
+      ),
+    [blocks, firstVisibleNight, lastVisibleNight, cabinName]
   );
-  const compact = headerVariant === "stacked";
 
-  // Navigation handlers
-  const handlePreviousMonth = () => {
-    setCurrentMonth((prev) => {
-      const newDate = new Date(prev);
-      newDate.setMonth(prev.getMonth() - 1);
-      return newDate;
-    });
-  };
-
-  const handleNextMonth = () => {
-    setCurrentMonth((prev) => {
-      const newDate = new Date(prev);
-      newDate.setMonth(prev.getMonth() + 1);
-      return newDate;
-    });
-  };
-
-  const handleToday = () => {
-    setCurrentMonth(new Date());
-  };
-
-  // Create the DayButton component callback at the top level to follow React hooks rules
-  const dayButtonComponent = useCallback(
-    (props: CalendarDayButtonProps) => (
-      <DayButton {...props} bookingsByDate={bookingsByDate} compact={compact} />
-    ),
-    [bookingsByDate, compact]
+  const cell = useMemo(
+    () => ({ bookingsByDate, blockedLabelByNight, today, selectedDay, onSelectDay }),
+    [bookingsByDate, blockedLabelByNight, today, selectedDay, onSelectDay]
   );
 
   return (
-    <Card className={cn("w-full", headerVariant === "stacked" && "p-1", className)}>
-      {headerVariant === "stacked" ? (
-        <StackedHeader
-          currentMonth={currentMonth}
-          monthlyBookingCount={monthlyBookingCount}
-          onPrev={handlePreviousMonth}
-          onNext={handleNextMonth}
-          onToday={handleToday}
-        />
-      ) : (
-        <RowHeader
-          currentMonth={currentMonth}
-          monthlyBookingCount={monthlyBookingCount}
-          onPrev={handlePreviousMonth}
-          onNext={handleNextMonth}
-          onToday={handleToday}
-        />
-      )}
+    <Card className={cn("w-full p-1", className)}>
+      <StackedHeader
+        currentMonth={month}
+        numbers={numbers}
+        onPrev={() => onMonthChange(addMonths(month, -1))}
+        onNext={() => onMonthChange(addMonths(month, 1))}
+      />
 
       {/* Named, because the month grid's <table> is also a container (for the chips' cqi) and a
           table can't answer width queries */}
-      <CardContent
-        className={cn("@container/calendar pt-0", headerVariant === "stacked" ? "p-0" : "p-4")}
-      >
+      <CardContent className="@container/calendar p-0">
         {isLoading ? (
           <div className="flex h-[480px] items-center justify-center">
             <div className="text-muted-foreground text-sm">Loading calendar...</div>
           </div>
         ) : (
-          <InlineCalendar
-            variant="month-grid"
-            month={currentMonth}
-            onMonthChange={setCurrentMonth}
-            dayButton={dayButtonComponent}
-            compact={headerVariant === "stacked"}
-          />
+          <DayCellContext.Provider value={cell}>
+            <InlineCalendar
+              variant="month-grid"
+              month={month}
+              onMonthChange={onMonthChange}
+              dayButton={DayButton}
+              compact
+            />
+          </DayCellContext.Provider>
         )}
       </CardContent>
     </Card>

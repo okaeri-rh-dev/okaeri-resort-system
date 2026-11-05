@@ -2,6 +2,8 @@ import { queryOptions, useMutation, useQuery } from "@tanstack/react-query";
 import { create } from "zustand";
 import { devtools, persist } from "zustand/middleware";
 
+import { SEARCH_DEBOUNCE_MS, useDebouncedValue } from "@/hooks/useDebouncedValue";
+import { throwDetailLoadError } from "@/lib/detail-load-error";
 import {
   appendVerificationNote,
   createPayment,
@@ -99,7 +101,7 @@ export const paymentDetailQuery = (paymentId: string) =>
         .eq("payment_id", paymentId)
         .single();
 
-      if (error) throw new Error(`Failed to load payment: ${handleSupabaseError(error)}`);
+      if (error) throwDetailLoadError(error, "payment");
       return data;
     },
     staleTime: 30000,
@@ -179,8 +181,11 @@ const paymentListQuery = ({
 
 export const usePayments = () => {
   const { filters, searchQuery, sortBy, sortOrder } = usePaymentStore();
+  const debouncedSearchQuery = useDebouncedValue(searchQuery, SEARCH_DEBOUNCE_MS);
 
-  return useQuery(paymentListQuery({ filters, searchQuery, sortBy, sortOrder }));
+  return useQuery(
+    paymentListQuery({ filters, searchQuery: debouncedSearchQuery, sortBy, sortOrder })
+  );
 };
 
 // Mutations go through the Payment module; the database derives the booking's payment status.

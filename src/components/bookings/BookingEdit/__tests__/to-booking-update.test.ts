@@ -16,7 +16,8 @@ const editInput: BookingEditInput = {
   num_guests: 2,
   payment_method: "GCash",
   special_requests: "Late arrival",
-  is_walk_in: false,
+  booking_source: "Direct",
+  total_amount: 5000,
 };
 
 describe("toBookingUpdate", () => {
@@ -25,25 +26,44 @@ describe("toBookingUpdate", () => {
   });
 
   it("sends the picked days as the stay", () => {
-    const update = toBookingUpdate(editInput);
+    const update = toBookingUpdate(editInput, 5000);
 
     expect(update.stay).toEqual({ check_in: "2026-10-15", check_out: "2026-10-17" });
   });
 
   it("sends only bookings columns", () => {
-    const update = toBookingUpdate(editInput);
+    const update = toBookingUpdate(editInput, 5000);
 
     expect(Object.keys(update).sort()).toEqual(
       [
         "contact_number",
         "email",
         "guest_name",
-        "is_walk_in",
+        "booking_source",
+        "airbnb_confirmation_code",
         "num_guests",
         "payment_method",
         "special_requests",
         "stay",
       ].sort()
     );
+  });
+
+  it("sends the total only when it changed", () => {
+    expect(toBookingUpdate({ ...editInput, total_amount: 4200.5 }, 5000).total_amount).toBe(4200.5);
+    expect(toBookingUpdate(editInput, 5000)).not.toHaveProperty("total_amount");
+  });
+
+  it.each([
+    ["Airbnb", "HMABC123", "HMABC123"],
+    ["Airbnb", "", null],
+    ["Direct", "HMABC123", null],
+  ] as const)("sends a %s booking's code %o as %o", (booking_source, code, sent) => {
+    const update = toBookingUpdate(
+      { ...editInput, booking_source, airbnb_confirmation_code: code },
+      5000
+    );
+
+    expect(update.airbnb_confirmation_code).toBe(sent);
   });
 });

@@ -1,16 +1,17 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 /**
- * registerSwReload() is the single, visibility-gated reload path for SW updates.
- * These tests capture the `controllerchange` handler it registers and drive it
- * directly, so we don't depend on the environment dispatching real SW events.
+ * These tests capture the `controllerchange` handler that registerSwReload()
+ * registers and drive it directly, so we don't depend on the environment
+ * dispatching real SW events.
  */
 
-function setVisibility(state: "visible" | "hidden") {
+function changeVisibility(state: "visible" | "hidden") {
   Object.defineProperty(document, "visibilityState", {
     configurable: true,
     get: () => state,
   });
+  document.dispatchEvent(new Event("visibilitychange"));
 }
 
 let controllerChangeHandler: (() => void) | undefined;
@@ -30,50 +31,98 @@ function stubServiceWorker(hasController: boolean) {
   });
 }
 
-describe("registerSwReload", () => {
+async function loadModule({ hasController = true } = {}) {
+  stubServiceWorker(hasController);
+  const pwaReload = await import("../pwa-reload");
+  pwaReload.registerSwReload();
+  return pwaReload;
+}
+
+describe("pwa-reload", () => {
   beforeEach(() => {
-    vi.resetModules(); // reset the module-level `registered` guard
+    vi.resetModules(); // reset the module-level state
     reloadSpy = vi.fn();
     Object.defineProperty(window, "location", {
       configurable: true,
       value: { reload: reloadSpy },
     });
-    setVisibility("visible");
+    changeVisibility("visible");
   });
 
   afterEach(() => {
-    setVisibility("visible");
+    changeVisibility("visible");
   });
 
-  it("reloads immediately when the tab is visible and a controller already existed", async () => {
-    stubServiceWorker(true);
-    const { registerSwReload } = await import("../pwa-reload");
-    registerSwReload();
+  it("does not activate a waiting update until a safe point", async () => {
+    const { setWaitingUpdate, atSafePoint } = await loadModule();
+    const activate = vi.fn(() => controllerChangeHandler?.());
 
-    controllerChangeHandler?.();
-    expect(reloadSpy).toHaveBeenCalledTimes(1);
-  });
-
-  it("defers the reload while hidden, then reloads on next visibility", async () => {
-    setVisibility("hidden");
-    stubServiceWorker(true);
-    const { registerSwReload } = await import("../pwa-reload");
-    registerSwReload();
-
-    controllerChangeHandler?.();
+    setWaitingUpdate(activate);
+    expect(activate).not.toHaveBeenCalled();
     expect(reloadSpy).not.toHaveBeenCalled();
 
-    setVisibility("visible");
-    document.dispatchEvent(new Event("visibilitychange"));
+    atSafePoint();
+    expect(activate).toHaveBeenCalledTimes(1);
     expect(reloadSpy).toHaveBeenCalledTimes(1);
+
+    atSafePoint();
+    expect(reloadSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it("reloads once when the tab returns after being hidden for 30 minutes or more", async () => {
+    const { setWaitingUpdate, HIDDEN_RELOAD_MS } = await loadModule();
+    setWaitingUpdate(() => controllerChangeHandler?.());
+
+    changeVisibility("hidden");
+    vi.setSystemTime(Date.now() + HIDDEN_RELOAD_MS);
+    changeVisibility("visible");
+    expect(reloadSpy).toHaveBeenCalledTimes(1);
+
+    changeVisibility("hidden");
+    vi.setSystemTime(Date.now() + HIDDEN_RELOAD_MS);
+    changeVisibility("visible");
+    expect(reloadSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not reload when the tab returns after a short absence", async () => {
+    const { setWaitingUpdate, HIDDEN_RELOAD_MS } = await loadModule();
+    const activate = vi.fn(() => controllerChangeHandler?.());
+    setWaitingUpdate(activate);
+
+    changeVisibility("hidden");
+    vi.setSystemTime(Date.now() + HIDDEN_RELOAD_MS - 1000);
+    changeVisibility("visible");
+    expect(activate).not.toHaveBeenCalled();
+    expect(reloadSpy).not.toHaveBeenCalled();
+  });
+
+  it("never reloads a hidden tab", async () => {
+    const { setWaitingUpdate, atSafePoint } = await loadModule();
+    const activate = vi.fn(() => controllerChangeHandler?.());
+    setWaitingUpdate(activate);
+
+    changeVisibility("hidden");
+    atSafePoint();
+    controllerChangeHandler?.();
+    expect(activate).not.toHaveBeenCalled();
+    expect(reloadSpy).not.toHaveBeenCalled();
   });
 
   it("does not reload on the initial SW claim (no prior controller)", async () => {
-    stubServiceWorker(false);
-    const { registerSwReload } = await import("../pwa-reload");
-    registerSwReload();
+    const { atSafePoint } = await loadModule({ hasController: false });
+
+    controllerChangeHandler?.();
+    atSafePoint();
+    expect(reloadSpy).not.toHaveBeenCalled();
+  });
+
+  it("waits for a safe point when another tab activates the update", async () => {
+    const { atSafePoint } = await loadModule();
 
     controllerChangeHandler?.();
     expect(reloadSpy).not.toHaveBeenCalled();
+
+    atSafePoint();
+    expect(reloadSpy).toHaveBeenCalledTimes(1);
   });
 });

@@ -31,9 +31,14 @@ export class OfflineBookingError extends Error {
 // QUERY HOOKS
 // ============================================
 
-const multiUnitAvailabilityQuery = (unitIds: string[], checkIn: string, checkOut: string) =>
+const multiUnitAvailabilityQuery = (
+  unitIds: string[],
+  checkIn: string,
+  checkOut: string,
+  excludeBookingId?: string
+) =>
   queryOptions({
-    queryKey: availabilityKeys.multiUnit.units(unitIds, checkIn, checkOut),
+    queryKey: availabilityKeys.multiUnit.units(unitIds, checkIn, checkOut, excludeBookingId),
     queryFn: async () => {
       // Get current session token for authentication
       const {
@@ -45,6 +50,7 @@ const multiUnitAvailabilityQuery = (unitIds: string[], checkIn: string, checkOut
       unitIds.forEach((id) => params.append("units[]", id));
       params.append("check_in", checkIn);
       params.append("check_out", checkOut);
+      if (excludeBookingId) params.append("exclude_booking_id", excludeBookingId);
 
       const response = await fetch(`/api/availability/multi-unit?${params}`, {
         headers: {
@@ -62,16 +68,17 @@ const multiUnitAvailabilityQuery = (unitIds: string[], checkIn: string, checkOut
   });
 
 /**
- * Check availability for multiple units; checkIn/checkOut are Manila days (YYYY-MM-DD)
+ * Check availability for multiple units; checkIn/checkOut are Manila days (YYYY-MM-DD).
+ * excludeBookingId leaves that booking's own stay out, for editing it.
  */
 export const useMultiUnitAvailability = (
   unitIds: string[],
   checkIn: string,
   checkOut: string,
-  options: { enabled?: boolean } = {}
+  options: { enabled?: boolean; excludeBookingId?: string } = {}
 ) => {
   return useQuery({
-    ...multiUnitAvailabilityQuery(unitIds, checkIn, checkOut),
+    ...multiUnitAvailabilityQuery(unitIds, checkIn, checkOut, options.excludeBookingId),
     enabled: options.enabled !== false && unitIds.length > 0 && !!checkIn && !!checkOut,
   });
 };

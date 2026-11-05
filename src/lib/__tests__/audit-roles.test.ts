@@ -1,6 +1,6 @@
 // src/lib/__tests__/audit-roles.test.ts
 
-import type { User } from "@supabase/supabase-js";
+import { AuthApiError, AuthSessionMissingError, type User } from "@supabase/supabase-js";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
@@ -80,7 +80,7 @@ describe("Audit Roles", () => {
       expect(role).toBeNull();
     });
 
-    it("should handle RPC errors gracefully", async () => {
+    it("rejects when the RPC fails", async () => {
       vi.mocked(supabase.auth.getUser).mockResolvedValue({
         data: { user: { id: "user-123", email: "user@test.com" } as User },
         error: null,
@@ -91,8 +91,44 @@ describe("Audit Roles", () => {
         error: { message: "Database error" },
       } as any);
 
-      const role = await getUserAuditRole();
-      expect(role).toBeNull();
+      await expect(getUserAuditRole()).rejects.toThrow("Database error");
+    });
+
+    it("rejects when getUser fails", async () => {
+      vi.mocked(supabase.auth.getUser).mockResolvedValue({
+        data: { user: null },
+        error: new AuthApiError("Network down", 500, undefined),
+      } as any);
+
+      await expect(getUserAuditRole()).rejects.toThrow("Network down");
+    });
+
+    it("rejects when the lookup throws", async () => {
+      vi.mocked(supabase.auth.getUser).mockRejectedValue(new Error("fetch failed"));
+
+      await expect(getUserAuditRole()).rejects.toThrow("fetch failed");
+    });
+
+    it("resolves null when there is no session", async () => {
+      vi.mocked(supabase.auth.getUser).mockResolvedValue({
+        data: { user: null },
+        error: new AuthSessionMissingError(),
+      } as any);
+
+      await expect(getUserAuditRole()).resolves.toBeNull();
+    });
+
+    it("does not cache a failed lookup", async () => {
+      vi.mocked(supabase.auth.getUser).mockResolvedValue({
+        data: { user: { id: "user-123" } as User },
+        error: null,
+      });
+      vi.mocked(supabase.rpc)
+        .mockResolvedValueOnce({ data: null, error: { message: "Database error" } } as any)
+        .mockResolvedValueOnce({ data: "admin", error: null } as any);
+
+      await expect(getUserAuditRole()).rejects.toThrow();
+      await expect(getUserAuditRole()).resolves.toBe(AuditRole.ADMIN);
     });
   });
 

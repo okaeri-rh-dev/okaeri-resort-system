@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 
+import { PolicyContactChannels } from "@/components/contact-channels/PolicyContactChannels";
 import {
   Callout,
   Card,
@@ -9,13 +10,25 @@ import {
   CardTitle,
   Separator,
 } from "@/components/patterns";
+import { useActiveContactChannels, type ContactChannel } from "@/hooks/useContactChannels";
 import { GuestLayout } from "@/layouts/GuestLayout";
+import { firstChannelOfKind } from "@/lib/contact-channel";
 
 export const Route = createFileRoute("/privacy-policy")({
   component: PrivacyPolicyPage,
 });
 
+/** The first visible email channel, else every visible channel. */
+function toPrivacyContactChannels(channels: ContactChannel[]): ContactChannel[] {
+  const email = firstChannelOfKind(channels, "email");
+  return email ? [email] : channels;
+}
+
 function PrivacyPolicyPage() {
+  const { data, isError } = useActiveContactChannels();
+  const contactChannels = isError ? [] : data;
+  const privacyContactChannels = contactChannels && toPrivacyContactChannels(contactChannels);
+
   return (
     <GuestLayout width="form">
       <div>
@@ -454,11 +467,10 @@ function PrivacyPolicyPage() {
                 <div className="bg-muted rounded-md p-4">
                   <p className="font-semibold">Data Protection Officer</p>
                   <p className="font-semibold">Okaeri Resort</p>
-                  <div className="text-muted-foreground mt-3 space-y-1 text-sm">
-                    <p>Email: privacy@okaeriresort.com</p>
-                    <p>Phone: [Resort Contact Number]</p>
-                    <p>Business Hours: Monday - Sunday, 8:00 AM - 8:00 PM (Philippine Time)</p>
-                  </div>
+                  <p className="text-muted-foreground mt-2 text-sm">
+                    The resort manager handles privacy requests.
+                  </p>
+                  <PolicyContactChannels channels={privacyContactChannels} className="mt-3" />
                 </div>
 
                 <div className="bg-muted mt-4 rounded-md p-4">

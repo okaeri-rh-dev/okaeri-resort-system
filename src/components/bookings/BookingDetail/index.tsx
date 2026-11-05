@@ -48,7 +48,7 @@ interface BookingDetailPageProps {
 export function BookingDetailPage({ booking, bookingId }: BookingDetailPageProps) {
   // Data is received via props from the route component
   // No need for useParams() or useLoaderData() here
-  const { canEdit } = useUserRole();
+  const { canEditBookings } = useUserRole();
 
   return (
     <DetailPageLayout
@@ -70,7 +70,7 @@ export function BookingDetailPage({ booking, bookingId }: BookingDetailPageProps
         </>
       }
       editRoute={
-        canEdit && !booking.anonymized_at
+        canEditBookings && !booking.anonymized_at
           ? { to: "/admin/bookings/$bookingId/edit", params: { bookingId } }
           : undefined
       }

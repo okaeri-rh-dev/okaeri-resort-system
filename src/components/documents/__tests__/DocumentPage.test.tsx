@@ -35,7 +35,11 @@ vi.mock("@/lib/formatters", () => ({
 }));
 
 describe("DocumentPage", () => {
-  const defaultLetterhead: LetterheadConfig = { ...DEFAULT_LETTERHEAD };
+  const defaultLetterhead: LetterheadConfig = {
+    ...DEFAULT_LETTERHEAD,
+    phone: "+63 917 123 4567",
+    email: "stay@okaeri-resort.example",
+  };
 
   const defaultFormData: DocumentFormData = {
     document_type: "quotation",
@@ -90,8 +94,8 @@ describe("DocumentPage", () => {
 
   it("should render the letterhead contact info", () => {
     render(<DocumentPage formData={defaultFormData} letterhead={defaultLetterhead} />);
-    expect(screen.getByText(DEFAULT_LETTERHEAD.email)).toBeInTheDocument();
-    expect(screen.getByText(DEFAULT_LETTERHEAD.phone)).toBeInTheDocument();
+    expect(screen.getByText("stay@okaeri-resort.example")).toBeInTheDocument();
+    expect(screen.getByText("+63 917 123 4567")).toBeInTheDocument();
   });
 
   it("should display QUOTATION for quotation type", () => {

@@ -22,9 +22,45 @@ _Avoid_: Departure time, check-out time
 One Manila day from the check-in day up to, but not including, the check-out day. A booking's night count is the number of these days.
 _Avoid_: Day (when counting a stay)
 
+**Booking source**:
+Where a booking came from, one of: Website (the guest booked on the public site), Walk-in (the guest arrived without a prior reservation), Direct (the guest reserved by phone or Messenger) or Airbnb. Staff pick Walk-in, Direct or Airbnb; Website is set only by the public site.
+_Avoid_: Channel (that word means a contact channel), origin, platform
+
+**Airbnb booking**:
+A booking made on Airbnb and entered by staff by hand. Airbnb has already confirmed it, its total is the payout the resort receives, it counts as fully paid once entered, and it may carry Airbnb's confirmation code.
+_Avoid_: OTA booking, external booking
+
+**Pending booking**:
+A booking that waits for payment before staff confirm it: an online booking waits for staff to verify its payment proof, and a staff-made booking (such as a walk-in) waits for its deposit.
+_Avoid_: Unverified booking, request
+
+**Confirmed booking**:
+A booking that is neither pending nor cancelled. It stays confirmed after the guest checks in or out.
+_Avoid_: Active booking
+
+**Live booking**:
+A booking in Pending, Confirmed or CheckedIn. Only live bookings conflict with a block: a checked-out or cancelled booking never does.
+_Avoid_: Open booking, current booking
+
+**Needs-action booking**:
+A booking that waits for staff: a pending booking, a confirmed booking past its check-in day that has not checked in, or a checked-in booking past its check-out day. An outstanding balance alone does not make a booking need action.
+_Avoid_: Overdue booking, alert, task
+
+**Occupancy**:
+For one calendar month, the booked cabin nights of confirmed bookings divided by the number of units times the days in the month.
+_Avoid_: Utilisation, load
+
 **Unit**:
 A rentable accommodation (cabin or room) that a booking occupies. Guests and staff call units "cabins", so screen copy says "cabin"; the model says unit.
 _Avoid_: Room, property
+
+**Block**:
+A range of nights when one unit, or every unit, cannot be booked, with a reason such as maintenance or aircon cleaning. Like a booking, it covers nights, so a guest can still check out on a block's first day. Blocks may overlap. Screen copy says "blocked dates".
+_Avoid_: Blackout, hold, out of order
+
+**Resort closure**:
+A block that covers every unit, including units added after it was made.
+_Avoid_: Shutdown, holiday
 
 ### Money received
 

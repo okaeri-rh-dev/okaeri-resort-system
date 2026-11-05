@@ -2,7 +2,9 @@ import { queryOptions, useMutation, useQuery, useQueryClient } from "@tanstack/r
 import { create } from "zustand";
 import { devtools, persist } from "zustand/middleware";
 
+import { SEARCH_DEBOUNCE_MS, useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { accountKeys, transferKeys } from "@/lib/query-keys";
+import { ilikeAnyFilter } from "@/lib/search-filter";
 import { handleSupabaseError, supabase } from "@/lib/supabase";
 import type { AccountTransfer } from "@/types";
 import type { TablesInsert } from "@/types/database.types";
@@ -148,10 +150,7 @@ const transferListQuery = (params: {
 
       // Apply search
       if (searchQuery) {
-        query = query.or(`
-          transfer_reference.ilike.%${searchQuery}%,
-          notes.ilike.%${searchQuery}%
-        `);
+        query = query.or(ilikeAnyFilter(["transfer_reference", "notes"], searchQuery));
       }
 
       // Apply sorting
@@ -177,7 +176,10 @@ const transferListQuery = (params: {
 // Fetch all transfers with account relations
 export const useTransfers = () => {
   const { filters, searchQuery, sortBy, sortOrder } = useTransferStore();
-  return useQuery(transferListQuery({ filters, searchQuery, sortBy, sortOrder }));
+  const debouncedSearchQuery = useDebouncedValue(searchQuery, SEARCH_DEBOUNCE_MS);
+  return useQuery(
+    transferListQuery({ filters, searchQuery: debouncedSearchQuery, sortBy, sortOrder })
+  );
 };
 
 // Fetch single transfer

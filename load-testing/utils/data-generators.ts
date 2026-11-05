@@ -74,7 +74,8 @@ export function generateName(): string {
  * Generate a random email address
  */
 export function generateEmail(name?: string): string {
-  const baseName = name?.toLowerCase().replace(/\s+/g, ".") || generateName().toLowerCase().replace(/\s+/g, ".");
+  const baseName =
+    name?.toLowerCase().replace(/\s+/g, ".") || generateName().toLowerCase().replace(/\s+/g, ".");
   const randomNum = randomIntBetween(1, 999);
   const domain = randomItem(emailDomains);
   return `${baseName}${randomNum}@${domain}`;
@@ -214,4 +215,23 @@ export function getRandomUnitId(): string {
     return randomItem(ids);
   }
   return randomItem(testUnitIds);
+}
+
+export interface StatusLookup {
+  booking_reference: string;
+  email: string;
+}
+
+/**
+ * Reference/email pairs of real bookings for status checks, read from TEST_BOOKINGS
+ * ("BK-202611-ABC123:guest@example.com,...").
+ */
+export function getStatusLookups(): StatusLookup[] {
+  if (!__ENV.TEST_BOOKINGS) {
+    throw new Error("Set TEST_BOOKINGS to reference:email pairs of existing bookings");
+  }
+  return __ENV.TEST_BOOKINGS.split(",").map((pair) => {
+    const [booking_reference, email] = pair.split(":");
+    return { booking_reference, email };
+  });
 }

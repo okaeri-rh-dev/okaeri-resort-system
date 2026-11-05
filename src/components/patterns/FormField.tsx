@@ -22,8 +22,9 @@ export { Form };
 export interface FormFieldProps<
   TFieldValues extends FieldValues = FieldValues,
   TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>,
+  TTransformedValues = TFieldValues,
 > extends Pick<
-  ControllerProps<TFieldValues, TName>,
+  ControllerProps<TFieldValues, TName, TTransformedValues>,
   "control" | "name" | "rules" | "defaultValue" | "disabled"
 > {
   label: React.ReactNode;
@@ -56,13 +57,14 @@ export interface FormFieldProps<
 export function FormField<
   TFieldValues extends FieldValues = FieldValues,
   TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>,
+  TTransformedValues = TFieldValues,
 >({
   label,
   description,
   children,
   className,
   ...controllerProps
-}: FormFieldProps<TFieldValues, TName>) {
+}: FormFieldProps<TFieldValues, TName, TTransformedValues>) {
   return (
     <FormFieldController
       {...controllerProps}

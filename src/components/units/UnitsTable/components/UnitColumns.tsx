@@ -3,15 +3,16 @@ import { useMemo } from "react";
 import { Link } from "@tanstack/react-router";
 import { createColumnHelper, type Header } from "@tanstack/react-table";
 
-import { ActionMenu, Checkbox, SortableHeader, StatusBadge } from "@/components/patterns";
-import { statusBadgeProps } from "@/lib/status-tone";
-import type { Unit, UnitStatus } from "@/types";
+import { ActionMenu, Checkbox, SortableHeader } from "@/components/patterns";
+import { CabinTonight } from "@/components/units/CabinTonight";
+import type { CabinNight, Unit } from "@/types";
 
-import { InlineEdit, InlineSelect } from "./InlineEdit";
+import { InlineEdit } from "./InlineEdit";
 
 const columnHelper = createColumnHelper<Unit>();
 
 interface UseUnitColumnsProps {
+  cabinStates: Map<string, CabinNight> | undefined;
   onUpdateUnit: (unitId: string, updates: Partial<Unit>) => void;
   isEditMode: boolean;
   onViewUnit?: (unit: Unit) => void;
@@ -24,6 +25,7 @@ interface UseUnitColumnsProps {
  * Handles column configuration and inline editing
  */
 export function useUnitColumns({
+  cabinStates,
   onUpdateUnit,
   isEditMode,
   onViewUnit,
@@ -107,31 +109,17 @@ export function useUnitColumns({
         size: 120,
       }),
 
-      // Status column with inline editing
-      columnHelper.accessor("unit_status", {
+      // Derived from blocks and bookings, so it is never edited here (ADR 0005)
+      columnHelper.accessor((unit) => cabinStates?.get(unit.unit_id)?.state ?? "", {
+        id: "tonight",
         header: ({ header }: { header: Header<Unit, unknown> }) => (
-          <SortableHeader header={header}>Status</SortableHeader>
+          <SortableHeader header={header}>Tonight</SortableHeader>
         ),
-        cell: ({ getValue, row }) => {
-          const statusOptions: Array<{ value: UnitStatus; label: string }> = [
-            { value: "Available", label: "Available" },
-            { value: "Occupied", label: "Occupied" },
-            { value: "Maintenance", label: "Maintenance" },
-            { value: "Reserved", label: "Reserved" },
-          ];
-
-          if (isEditMode) {
-            return (
-              <InlineSelect
-                value={getValue() ?? "Available"}
-                options={statusOptions}
-                onSave={(value) => onUpdateUnit(row.original.unit_id, { unit_status: value })}
-              />
-            );
-          }
-          return <StatusBadge {...statusBadgeProps(getValue(), "Available")} />;
+        cell: ({ row }) => {
+          const cabinNight = cabinStates?.get(row.original.unit_id);
+          return cabinNight ? <CabinTonight cabinNight={cabinNight} /> : null;
         },
-        size: 120,
+        size: 160,
       }),
 
       // Actions column
@@ -163,6 +151,6 @@ export function useUnitColumns({
         size: 80,
       }),
     ],
-    [isEditMode, onUpdateUnit, onViewUnit, onEditUnit, onDeleteUnit]
+    [cabinStates, isEditMode, onUpdateUnit, onViewUnit, onEditUnit, onDeleteUnit]
   );
 }

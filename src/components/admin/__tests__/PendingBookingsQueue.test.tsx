@@ -6,6 +6,10 @@ import { stubPaneWidth } from "@/test/pane-width";
 
 import { PendingBookingsQueue } from "../PendingBookingsQueue";
 
+vi.mock("@tanstack/react-router", async () => ({
+  Link: (await import("@/test/router-link-stub")).RouterLinkStub,
+}));
+
 vi.mock("@/lib/supabase", () => ({
   supabaseAuth: { getSession: async () => ({ data: { session: null } }) },
 }));
@@ -58,7 +62,23 @@ describe("PendingBookingsQueue", () => {
     expect(within(card).getByText("Maria Santos")).toBeVisible();
     expect(within(card).getByText("Critical")).toBeVisible();
     expect(within(card).getByText("₱12,500.00")).toBeVisible();
-    expect(within(card).getByRole("button", { name: "Review Payment" })).toBeVisible();
+    const action = within(card).getByRole("link", { name: "Review Payment" });
+    expect(action).toHaveAttribute("href", "/admin/verify-payment/booking-1");
+    expect(action).not.toHaveAttribute("title");
+  });
+
+  it("links a paid booking to cabin assignment", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () =>
+        Response.json({ bookings: [{ ...queuedBooking, payment_status: "Completed" }] })
+      )
+    );
+    stubPaneWidth(390);
+    renderQueue();
+
+    const action = await screen.findByRole("link", { name: "Assign Cabins" });
+    expect(action).toHaveAttribute("href", "/admin/bookings/booking-1/assign-units");
   });
 
   it("shows a table on a wide pane", async () => {

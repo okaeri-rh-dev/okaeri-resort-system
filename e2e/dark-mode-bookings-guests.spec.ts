@@ -5,10 +5,9 @@ import {
   E2E_GUEST,
   E2E_GUEST_ID,
   E2E_REF,
-  E2E_USER,
 } from "../scripts/e2e/fixtures";
+import { loginAsOwner } from "./fixtures/auth";
 import { COMPACT, EXPANDED, expectReadable, useDarkTheme } from "./fixtures/contrast";
-import { LoginPage } from "./pages/LoginPage";
 
 /**
  * Booking and guest screens read in dark mode: no text under WCAG AA against what is painted
@@ -19,9 +18,7 @@ import { LoginPage } from "./pages/LoginPage";
 async function loginInDark(page: Page, viewport: typeof COMPACT) {
   await useDarkTheme(page);
   await page.setViewportSize(viewport);
-  const loginPage = new LoginPage(page);
-  await loginPage.goto();
-  await loginPage.loginAndWaitForDashboard(E2E_USER.email, E2E_USER.password);
+  await loginAsOwner(page);
 }
 
 async function openBookingDetail(page: Page, bookingReference: string) {

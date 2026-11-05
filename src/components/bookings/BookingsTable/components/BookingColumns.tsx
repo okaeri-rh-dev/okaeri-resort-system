@@ -10,6 +10,7 @@ import type { Booking, BookingStatus } from "@/types";
 
 import { BookingActionsCell } from "./BookingActionsCell";
 import { CabinChip } from "./CabinChip";
+import { SourceBadge } from "./SourceBadge";
 
 const columnHelper = createColumnHelper<Booking>();
 
@@ -46,7 +47,7 @@ export const useBookingColumns = ({
               {row.original.guest_name}
             </Link>
             <div className="text-muted-foreground flex flex-wrap items-center gap-1.5 text-xs">
-              {row.original.is_walk_in && <StatusBadge tone="warning">Walk-in</StatusBadge>}
+              <SourceBadge source={row.original.booking_source} />
               {(row.original.contact_number && formatPhoneNumber(row.original.contact_number)) ||
                 row.original.email ||
                 ""}

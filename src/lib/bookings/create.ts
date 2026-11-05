@@ -2,6 +2,9 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 import type { Database, Tables, TablesInsert } from "@/types/database.types";
 
+import { BlockedUnitError, isBlockedNightError } from "./availability";
+import { DuplicateConfirmationCodeError, isDuplicateConfirmationCode } from "./confirmation-code";
+import type { StaffBookingSource } from "./source";
 import { toStayInstants, type ManilaDay } from "./stay";
 
 type Client = SupabaseClient<Database>;
@@ -29,7 +32,8 @@ export type NewBooking = {
   payment_method: string | null;
   special_requests?: string | null;
   internal_notes?: string | null;
-  is_walk_in: boolean;
+  booking_source: StaffBookingSource;
+  airbnb_confirmation_code?: string | null;
 };
 
 export type BookingWithUnits = Tables<"bookings"> & {
@@ -52,13 +56,16 @@ export async function createBooking(
       payment_method: booking.payment_method,
       special_requests: booking.special_requests ?? null,
       internal_notes: booking.internal_notes ?? null,
-      is_walk_in: booking.is_walk_in,
+      booking_source: booking.booking_source,
+      airbnb_confirmation_code: booking.airbnb_confirmation_code ?? null,
       booking_status: "Pending",
       payment_status: "Pending",
     },
     p_units: booking.units,
     p_guest_id: guestId,
   });
+  if (isBlockedNightError(error)) throw new BlockedUnitError();
+  if (isDuplicateConfirmationCode(error)) throw new DuplicateConfirmationCodeError();
   if (error) throw new Error(error.message);
 
   const { data, error: fetchError } = await client

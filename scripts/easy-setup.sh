@@ -132,7 +132,6 @@ prompt "VITE_SUPABASE_ANON_KEY" "Supabase anon key" "${VITE_SUPABASE_ANON_KEY}"
 prompt "SUPABASE_SERVICE_ROLE_KEY" "Supabase service role key (secret)" "${SUPABASE_SERVICE_ROLE_KEY}"
 prompt "VITE_TURNSTILE_SITE_KEY" "Cloudflare Turnstile site key" "${VITE_TURNSTILE_SITE_KEY}"
 prompt "TURNSTILE_SECRET_KEY" "Cloudflare Turnstile secret key" "${TURNSTILE_SECRET_KEY}"
-prompt "RESEND_API_KEY" "Resend API key (optional)" "${RESEND_API_KEY}"
 prompt "DOMAIN" "Your domain (e.g., your-resort.pages.dev)" "${DOMAIN}"
 
 # Save to .env.local
@@ -146,9 +145,6 @@ SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
 # Cloudflare Turnstile
 VITE_TURNSTILE_SITE_KEY=${VITE_TURNSTILE_SITE_KEY}
 TURNSTILE_SECRET_KEY=${TURNSTILE_SECRET_KEY}
-
-# Email Service (Optional)
-RESEND_API_KEY=${RESEND_API_KEY}
 
 # Application
 DOMAIN=${DOMAIN}
@@ -253,11 +249,6 @@ if confirm "Set Cloudflare secrets now?"; then
 
     echo "Setting TURNSTILE_SECRET_KEY..."
     echo "$TURNSTILE_SECRET_KEY" | wrangler secret put TURNSTILE_SECRET_KEY
-
-    if [ -n "$RESEND_API_KEY" ]; then
-        echo "Setting RESEND_API_KEY..."
-        echo "$RESEND_API_KEY" | wrangler secret put RESEND_API_KEY
-    fi
 
     echo -e "${GREEN}✅ Secrets configured${NC}"
 else

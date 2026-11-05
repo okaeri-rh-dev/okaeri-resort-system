@@ -18,9 +18,20 @@ export function verifyCronAuth(
     return { valid: false, error: "Server configuration error" };
   }
 
-  if (authHeader.substring(7) !== cronSecret) {
+  if (!secretsMatch(authHeader.substring(7), cronSecret)) {
     return { valid: false, error: "Invalid token" };
   }
 
   return { valid: true };
+}
+
+/** Constant-time compare, so response timing does not leak how much of a guess was right. */
+export function secretsMatch(given: string, expected: string): boolean {
+  const givenBytes = new TextEncoder().encode(given);
+  const expectedBytes = new TextEncoder().encode(expected);
+  if (givenBytes.length !== expectedBytes.length) return false;
+
+  let difference = 0;
+  for (let i = 0; i < expectedBytes.length; i++) difference |= givenBytes[i] ^ expectedBytes[i];
+  return difference === 0;
 }

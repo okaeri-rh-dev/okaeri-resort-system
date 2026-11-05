@@ -13,6 +13,7 @@ import {
   Label,
   Separator,
 } from "@/components/patterns";
+import { pickedDay } from "@/lib/bookings/stay";
 import type { MultiUnitBookingRequest } from "@/lib/validation/booking-schema";
 
 import { PaymentSummary } from "./PaymentSummary";
@@ -175,8 +176,8 @@ export function BookingReviewStep({
         formData.check_out && (
           <PaymentSummary
             unitRequests={formData.unit_requests}
-            checkIn={new Date(formData.check_in)}
-            checkOut={new Date(formData.check_out)}
+            checkIn={pickedDay(formData.check_in)}
+            checkOut={pickedDay(formData.check_out)}
           />
         )}
 

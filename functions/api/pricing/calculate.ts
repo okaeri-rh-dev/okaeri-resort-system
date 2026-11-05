@@ -2,27 +2,32 @@ import type { Request as CloudflareRequest } from "@cloudflare/workers-types";
 import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
 
+import { manilaDaySchema, toStayInstants, withStayRules } from "@/lib/bookings/stay";
+import { checkKVRateLimit, getClientIp } from "@/lib/kv-rate-limit";
 import type { Database } from "@/types/database.types";
 
-import { calculateBookingPrice } from "../../lib/pricing";
+import {
+  calculateBookingPrice,
+  fetchActiveSeasons,
+  loadPricingConfig,
+  toCentavo,
+} from "../../lib/pricing";
 
 // Environment types
 interface Env {
   SUPABASE_URL: string;
   SUPABASE_SERVICE_ROLE_KEY: string;
-  KV_RATE_LIMIT: KVNamespace;
-  KV_PRICING_CACHE: KVNamespace;
+  RATE_LIMIT_KV: KVNamespace;
+  ENVIRONMENT?: string;
 }
 
 // Request validation schema
-const pricingCalculateRequestSchema = z
-  .object({
-    check_in: z.string().refine((date) => !isNaN(Date.parse(date)), "Invalid check-in date format"),
-    check_out: z
-      .string()
-      .refine((date) => !isNaN(Date.parse(date)), "Invalid check-out date format"),
+const pricingCalculateRequestSchema = withStayRules(
+  z.object({
+    check_in: manilaDaySchema,
+    check_out: manilaDaySchema,
     guest_count: z.number().int().min(1).max(50).optional(), // Optional - can be calculated from unit_requests
-    unit_id: z.string().uuid().optional(),
+    unit_id: z.guid().optional(),
     // For custom pricing (e.g., when unit doesn't exist yet)
     custom_pricing: z
       .object({
@@ -36,15 +41,13 @@ const pricingCalculateRequestSchema = z
     unit_requests: z
       .array(
         z.object({
-          unit_id: z.string().uuid().optional(), // Optional for guest bookings (admin assigns later)
+          unit_id: z.guid().optional(), // Optional for guest bookings (admin assigns later)
           guest_count: z.number().int().min(1),
         })
       )
       .optional(),
   })
-  .refine((data) => new Date(data.check_out) > new Date(data.check_in), {
-    message: "Check-out date must be after check-in date",
-  })
+)
   .refine(
     (data) => {
       // Must have either: unit_id, custom_pricing, unit_requests, or guest_count for base pricing
@@ -59,69 +62,17 @@ const pricingCalculateRequestSchema = z
     path: ["guest_count"],
   });
 
-// CORS headers
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization",
-};
-
-// Rate limiting helper
-async function checkRateLimit(
-  kv: KVNamespace,
-  identifier: string,
-  limit: number = 10,
-  windowMinutes: number = 1
-): Promise<boolean> {
-  const key = `rate_limit:pricing:${identifier}`;
-  const now = Date.now();
-  const window = windowMinutes * 60 * 1000;
-
-  const data = (await kv.get(key, "json")) as { count: number; resetAt: number } | null;
-
-  if (!data || now > data.resetAt) {
-    await kv.put(key, JSON.stringify({ count: 1, resetAt: now + window }), {
-      expirationTtl: windowMinutes * 60,
-    });
-    return true;
-  }
-
-  if (data.count >= limit) {
-    return false;
-  }
-
-  await kv.put(key, JSON.stringify({ count: data.count + 1, resetAt: data.resetAt }), {
-    expirationTtl: Math.floor((data.resetAt - now) / 1000),
-  });
-  return true;
-}
-
-// Cache key generator
-function getCacheKey(params: {
-  check_in: string;
-  check_out: string;
-  guest_count: number;
-  unit_id?: string;
-}): string {
-  return `pricing:${params.unit_id || "custom"}:${params.check_in}:${params.check_out}:${params.guest_count}`;
-}
-
 export async function onRequest(context: {
   request: CloudflareRequest;
   env: Env;
 }): Promise<Response> {
   const { request, env } = context;
 
-  // Handle CORS preflight
-  if (request.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
-  }
-
   // Only allow POST
   if (request.method !== "POST") {
     return new Response(
       JSON.stringify({ error: "METHOD_NOT_ALLOWED", message: "Only POST method is allowed" }),
-      { status: 405, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { status: 405, headers: { "Content-Type": "application/json" } }
     );
   }
 
@@ -138,72 +89,52 @@ export async function onRequest(context: {
           message: "Invalid request parameters",
           errors: validationResult.error.flatten().fieldErrors,
         }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 400, headers: { "Content-Type": "application/json" } }
       );
     }
 
     const data = validationResult.data;
     // The schema requires guest_count whenever unit_requests is absent, so the 0 is unreachable
     const guestCount = data.guest_count ?? 0;
+    const stay = toStayInstants(data.check_in, data.check_out);
+    const checkIn = new Date(stay.check_in);
+    const checkOut = new Date(stay.check_out);
 
     // Extract auth token (optional for public guest booking)
     const authHeader = request.headers?.get("Authorization");
     const token = authHeader?.replace("Bearer ", "");
 
-    // Rate limiting (check if KV namespace exists)
-    if (env.KV_RATE_LIMIT) {
-      const identifier = token || request.headers?.get("cf-connecting-ip") || "anonymous";
-      const rateLimitOk = await checkRateLimit(
-        env.KV_RATE_LIMIT,
-        identifier,
-        token ? 60 : 10, // Authenticated: 60/min, Guest: 10/min
-        1
-      );
+    // The token is not verified on this public path, so it only picks the tier;
+    // the key is always the client IP.
+    const rateLimit = await checkKVRateLimit(
+      env.RATE_LIMIT_KV,
+      `pricing:${getClientIp(request as unknown as Request)}`,
+      { limit: token ? 60 : 10, windowSeconds: 60, environment: env.ENVIRONMENT }
+    );
 
-      if (!rateLimitOk) {
-        return new Response(
-          JSON.stringify({
-            error: "RATE_LIMIT_EXCEEDED",
-            message: "Too many pricing requests. Please try again later.",
-          }),
-          { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-    }
-
-    // Check cache for single unit requests
-    let cachedResult = null;
-    let cacheKey = "";
-
-    if (data.unit_id && !data.unit_requests) {
-      cacheKey = getCacheKey({
-        check_in: data.check_in,
-        check_out: data.check_out,
-        guest_count: guestCount,
-        unit_id: data.unit_id,
-      });
-
-      if (env.KV_PRICING_CACHE) {
-        const cached = await env.KV_PRICING_CACHE.get(cacheKey, "json");
-        if (cached) {
-          cachedResult = cached;
-        }
-      }
-    }
-
-    if (cachedResult) {
+    if (!rateLimit.allowed) {
       return new Response(
         JSON.stringify({
-          success: true,
-          ...cachedResult,
-          cached: true,
+          error: "RATE_LIMIT_EXCEEDED",
+          message: "Too many pricing requests. Please try again later.",
         }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        {
+          status: 429,
+          headers: {
+            "Content-Type": "application/json",
+            "Retry-After": rateLimit.retryAfter.toString(),
+          },
+        }
       );
     }
 
     // Initialize Supabase client
     const supabase = createClient<Database>(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
+
+    const [config, seasons] = await Promise.all([
+      loadPricingConfig(supabase),
+      fetchActiveSeasons(supabase),
+    ]);
 
     // Handle different pricing scenarios
     let pricingResult;
@@ -211,16 +142,7 @@ export async function onRequest(context: {
 
     if (data.unit_requests) {
       // Multi-unit booking (with or without specific unit IDs)
-
-      // Get default pricing config for guest bookings without unit IDs
-      const { data: pricingConfig } = await supabase
-        .from("pricing_config")
-        .select("*")
-        .eq("id", "default")
-        .single();
-
       const pricingPromises = data.unit_requests.map(async (unitRequest) => {
-        let unitData = null;
         let unitName = "Unit (To be assigned)";
 
         // If unit_id is provided, fetch specific unit
@@ -234,19 +156,15 @@ export async function onRequest(context: {
           if (error || !unit) {
             throw new Error(`Unit ${unitRequest.unit_id} not found`);
           }
-          unitData = unit;
           unitName = unit.unit_name;
         }
 
-        // Use global pricing config as primary source, fall back to unit-specific rates
-        const pricing = await calculateBookingPrice(supabase, {
-          checkIn: new Date(data.check_in),
-          checkOut: new Date(data.check_out),
+        const pricing = calculateBookingPrice({
+          checkIn,
+          checkOut,
           guestCount: unitRequest.guest_count,
-          baseRate: pricingConfig?.base_rate ?? unitData?.base_rate ?? 3000,
-          weekendRate: pricingConfig?.weekend_rate ?? unitData?.weekend_rate ?? 3500,
-          extraPersonRate: pricingConfig?.extra_person_rate ?? unitData?.extra_person_rate ?? 500,
-          baseOccupancy: pricingConfig?.base_occupancy ?? unitData?.base_occupancy ?? 2,
+          config,
+          seasons,
         });
 
         return {
@@ -259,8 +177,10 @@ export async function onRequest(context: {
       const unitPricings = await Promise.all(pricingPromises);
 
       // Aggregate totals
-      const totalAmount = unitPricings.reduce((sum, up) => sum + up.pricing.total, 0);
-      const totalDownpayment = unitPricings.reduce((sum, up) => sum + up.pricing.downpayment, 0);
+      const totalAmount = toCentavo(unitPricings.reduce((sum, up) => sum + up.pricing.total, 0));
+      const totalDownpayment = toCentavo(
+        unitPricings.reduce((sum, up) => sum + up.pricing.downpayment, 0)
+      );
       const hasSeasonalRates = unitPricings.some((up) =>
         up.pricing.nightlyBreakdown.some((night) => night.seasonalMultiplier !== 1.0)
       );
@@ -299,25 +219,16 @@ export async function onRequest(context: {
             error: "UNIT_NOT_FOUND",
             message: `Unit ${data.unit_id} not found`,
           }),
-          { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          { status: 404, headers: { "Content-Type": "application/json" } }
         );
       }
 
-      // Get global pricing config as primary source
-      const { data: pricingConfig } = await supabase
-        .from("pricing_config")
-        .select("*")
-        .eq("id", "default")
-        .single();
-
-      pricingResult = await calculateBookingPrice(supabase, {
-        checkIn: new Date(data.check_in),
-        checkOut: new Date(data.check_out),
+      pricingResult = calculateBookingPrice({
+        checkIn,
+        checkOut,
         guestCount,
-        baseRate: pricingConfig?.base_rate ?? unit.base_rate ?? 3000,
-        weekendRate: pricingConfig?.weekend_rate ?? unit.weekend_rate ?? 3500,
-        extraPersonRate: pricingConfig?.extra_person_rate ?? unit.extra_person_rate ?? 500,
-        baseOccupancy: pricingConfig?.base_occupancy ?? unit.base_occupancy ?? 2,
+        config,
+        seasons,
       });
 
       // Check for seasonal rates
@@ -337,11 +248,12 @@ export async function onRequest(context: {
       }
     } else if (data.custom_pricing) {
       // Custom pricing (no unit specified)
-      pricingResult = await calculateBookingPrice(supabase, {
-        checkIn: new Date(data.check_in),
-        checkOut: new Date(data.check_out),
+      pricingResult = calculateBookingPrice({
+        checkIn,
+        checkOut,
         guestCount,
-        ...data.custom_pricing,
+        config: { ...config, ...data.custom_pricing },
+        seasons,
       });
 
       const hasSeasonalRates = pricingResult.nightlyBreakdown.some(
@@ -353,21 +265,12 @@ export async function onRequest(context: {
       }
     } else if (data.guest_count) {
       // Guest booking with only guest count (no specific units)
-      // Use default pricing configuration
-      const { data: pricingConfig } = await supabase
-        .from("pricing_config")
-        .select("*")
-        .eq("id", "default")
-        .single();
-
-      pricingResult = await calculateBookingPrice(supabase, {
-        checkIn: new Date(data.check_in),
-        checkOut: new Date(data.check_out),
+      pricingResult = calculateBookingPrice({
+        checkIn,
+        checkOut,
         guestCount,
-        baseRate: pricingConfig?.base_rate || 3000,
-        weekendRate: pricingConfig?.weekend_rate || 3500,
-        extraPersonRate: pricingConfig?.extra_person_rate || 500,
-        baseOccupancy: pricingConfig?.base_occupancy || 2,
+        config,
+        seasons,
       });
 
       const hasSeasonalRates = pricingResult.nightlyBreakdown.some(
@@ -391,20 +294,7 @@ export async function onRequest(context: {
           error: "INVALID_REQUEST",
           message: "Must provide unit_id, custom_pricing, unit_requests, or guest_count",
         }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    // Cache single unit results for 1 hour
-    if (data.unit_id && !data.unit_requests && env.KV_PRICING_CACHE) {
-      await env.KV_PRICING_CACHE.put(
-        cacheKey,
-        JSON.stringify({
-          pricing: pricingResult,
-          notice,
-          calculated_at: new Date().toISOString(),
-        }),
-        { expirationTtl: 3600 } // 1 hour
+        { status: 400, headers: { "Content-Type": "application/json" } }
       );
     }
 
@@ -422,9 +312,7 @@ export async function onRequest(context: {
       {
         status: 200,
         headers: {
-          ...corsHeaders,
           "Content-Type": "application/json",
-          "Cache-Control": "private, max-age=300", // Browser cache for 5 minutes
         },
       }
     );
@@ -434,10 +322,9 @@ export async function onRequest(context: {
     return new Response(
       JSON.stringify({
         error: "CALCULATION_ERROR",
-        message: error instanceof Error ? error.message : "Failed to calculate pricing",
-        debug: process.env.NODE_ENV === "development" ? error : undefined,
+        message: "Failed to calculate pricing",
       }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { status: 500, headers: { "Content-Type": "application/json" } }
     );
   }
 }

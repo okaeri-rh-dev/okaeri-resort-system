@@ -16,6 +16,7 @@ import {
   Textarea,
 } from "@/components/patterns";
 import { sanitizeFormData } from "@/lib/security/sanitize";
+import { typeError } from "@/lib/validation/type-error";
 import { useCreateAccount, useUpdateAccount } from "@/stores/useAccountStore";
 import type { Account, AccountType } from "@/types";
 
@@ -40,7 +41,7 @@ const accountFormSchema = z.object({
     .regex(/^[A-Z0-9-]+$/, "Code must be uppercase letters, numbers, and hyphens only")
     .transform((val) => val.toUpperCase()),
   account_type: z.enum(["Bank", "E-Wallet", "Cash"], {
-    required_error: "Please select an account type",
+    error: typeError("Please select an account type"),
   }),
   description: z.string().max(500, "Description too long").optional(),
   initial_balance: z
