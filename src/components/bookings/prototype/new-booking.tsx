@@ -519,16 +519,19 @@ export function PaymentFields({ api }: { api: DraftApi }) {
             type="number"
             inputMode="decimal"
             min={0}
+            placeholder="e.g. 8500"
+            aria-describedby={`${ids}-payout-hint`}
             value={draft.payout ?? ""}
             onChange={(e) =>
               api.update({ payout: e.target.value ? Number(e.target.value) : undefined })
             }
           />
-          {api.lines.length > 1 && (
-            <p className="text-muted-foreground text-xs">
-              Split across the cabins in proportion to their usual prices.
-            </p>
-          )}
+          <p id={`${ids}-payout-hint`} className="text-muted-foreground text-xs">
+            The amount Airbnb pays the resort for this stay, after Airbnb&apos;s fee. Not the price
+            the guest paid on Airbnb.
+            {api.lines.length > 1 &&
+              " It is split across the cabins in proportion to their usual prices."}
+          </p>
         </div>
         <div className="space-y-2">
           <Label htmlFor={`${ids}-code`}>Airbnb confirmation code (optional)</Label>
