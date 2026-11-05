@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from "react";
 
 import { useQueryClient } from "@tanstack/react-query";
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate, useSearch } from "@tanstack/react-router";
 import { parseISO, startOfMonth } from "date-fns";
 import { ChevronRight } from "lucide-react";
 
@@ -19,9 +19,10 @@ export function Dashboard() {
   const { data: bookings, isLoading, dataUpdatedAt, isFetching } = useAllBookings();
   const { sortedUnits } = useBlockCabins();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
+  const { day: selectedDay } = useSearch({ strict: false });
   const today = manilaDayOf(new Date());
-  const [selectedDay, setSelectedDay] = useState<ManilaDay>(today);
-  const [month, setMonth] = useState(() => startOfMonth(parseISO(today)));
+  const [month, setMonth] = useState(() => startOfMonth(parseISO(selectedDay ?? today)));
 
   const refresh = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: bookingKeys.all });
@@ -29,11 +30,15 @@ export function Dashboard() {
     queryClient.invalidateQueries({ queryKey: guestKeys.all });
   }, [queryClient]);
 
-  // The calendar follows a day picked in another month (an outside day, or the day buttons)
-  const selectDay = useCallback((day: ManilaDay) => {
-    setSelectedDay(day);
-    setMonth(startOfMonth(parseISO(day)));
-  }, []);
+  // The pane adds no history entry. The calendar follows a day picked in another month (an outside
+  // day, or the day buttons)
+  const selectDay = useCallback(
+    (day: ManilaDay | undefined) => {
+      navigate({ to: ".", search: day ? { day } : {}, replace: true });
+      if (day) setMonth(startOfMonth(parseISO(day)));
+    },
+    [navigate]
+  );
 
   const allBookings = useMemo(() => bookings ?? [], [bookings]);
   const numbers = monthNumbers(allBookings, month, sortedUnits.length);
@@ -53,28 +58,26 @@ export function Dashboard() {
         </Link>
       )}
 
-      {/* Beside the calendar once the pane has room: a supporting pane is 360px (DESIGN.md, Panes) */}
-      <div className="@container">
-        <div className="grid gap-4 @3xl:grid-cols-[minmax(0,1fr)_22.5rem] @3xl:items-start @3xl:gap-6">
-          <DashboardCalendar
-            bookings={bookings}
-            isLoading={isLoading}
-            month={month}
-            onMonthChange={setMonth}
-            today={today}
-            selectedDay={selectedDay}
-            onSelectDay={selectDay}
-            numbers={`${Math.round(numbers.occupancy * 100)}% occupancy · ${numbers.confirmedCount} confirmed`}
-          />
-          <DayPanel
-            bookings={allBookings}
-            isLoading={isLoading}
-            day={selectedDay}
-            today={today}
-            onSelectDay={selectDay}
-          />
-        </div>
-      </div>
+      <DashboardCalendar
+        bookings={bookings}
+        isLoading={isLoading}
+        month={month}
+        onMonthChange={setMonth}
+        today={today}
+        selectedDay={selectedDay}
+        onSelectDay={selectDay}
+        numbers={`${Math.round(numbers.occupancy * 100)}% occupancy · ${numbers.confirmedCount} confirmed`}
+      />
+      {selectedDay && (
+        <DayPanel
+          bookings={allBookings}
+          isLoading={isLoading}
+          day={selectedDay}
+          today={today}
+          onSelectDay={selectDay}
+          onClose={() => selectDay(undefined)}
+        />
+      )}
     </div>
   );
 }

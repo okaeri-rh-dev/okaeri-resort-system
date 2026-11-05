@@ -5,10 +5,11 @@ import {
   createRouter,
   RouterProvider,
 } from "@tanstack/react-router";
-import { render, screen, within } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { dashboardSearchSchema } from "@/lib/dashboard";
 import type { Booking, BookingStatus } from "@/types";
 
 import { Dashboard } from "../Dashboard";
@@ -81,9 +82,10 @@ function booking(
   };
 }
 
-function renderDashboard() {
+function renderDashboard(url = "/admin/dashboard") {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   const rootRoute = createRootRoute({
+    validateSearch: dashboardSearchSchema,
     component: () => (
       <QueryClientProvider client={queryClient}>
         <Dashboard />
@@ -92,9 +94,14 @@ function renderDashboard() {
   });
   const router = createRouter({
     routeTree: rootRoute,
-    history: createMemoryHistory({ initialEntries: ["/admin/dashboard"] }),
+    history: createMemoryHistory({ initialEntries: [url] }),
   });
   render(<RouterProvider router={router} />);
+  return router;
+}
+
+async function openToday() {
+  await userEvent.setup().click(await screen.findByRole("button", { name: /^November 10, 2026/ }));
 }
 
 describe("Dashboard", () => {
@@ -108,7 +115,14 @@ describe("Dashboard", () => {
     data.blocks = [];
   });
 
-  it("opens on today's check-ins, check-outs and stays", async () => {
+  it("opens with the day pane closed", async () => {
+    renderDashboard();
+
+    await screen.findByRole("button", { name: /^November 10, 2026/ });
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
+  it("shows today's check-ins, check-outs and stays when today is picked", async () => {
     data.bookings = [
       booking("in", "Maria Santos", "2026-11-10", "2026-11-12"),
       booking("out", "Jose Rizal", "2026-11-08", "2026-11-10", { unitCode: "C2" }),
@@ -116,51 +130,76 @@ describe("Dashboard", () => {
       booking("later", "Ben Cruz", "2026-11-11", "2026-11-12"),
     ];
     renderDashboard();
+    await openToday();
 
-    expect(await screen.findByRole("heading", { name: /^Today/ })).toBeVisible();
-    const panel = screen.getByRole("region", { name: /^Today/ });
-    expect(panel).toHaveTextContent("Check-ins (1)");
-    expect(panel).toHaveTextContent("Maria Santos");
-    expect(panel).toHaveTextContent("Check-outs (1)");
-    expect(panel).toHaveTextContent("Jose Rizal");
-    expect(panel).toHaveTextContent("Staying (1)");
-    expect(panel).toHaveTextContent("Ana Reyes");
-    expect(panel).not.toHaveTextContent("Ben Cruz");
+    const pane = screen.getByRole("dialog", { name: /^Today/ });
+    expect(pane).toHaveTextContent("Check-ins (1)");
+    expect(pane).toHaveTextContent("Maria Santos");
+    expect(pane).toHaveTextContent("Check-outs (1)");
+    expect(pane).toHaveTextContent("Jose Rizal");
+    expect(pane).toHaveTextContent("Staying (1)");
+    expect(pane).toHaveTextContent("Ana Reyes");
+    expect(pane).not.toHaveTextContent("Ben Cruz");
   });
 
-  it("shows a day picked in the calendar", async () => {
+  it("opens a day picked in the calendar and puts it in the URL, with no history entry", async () => {
     const user = userEvent.setup();
     data.bookings = [booking("in", "Maria Santos", "2026-11-14", "2026-11-16")];
-    renderDashboard();
+    const router = renderDashboard();
 
     await user.click(await screen.findByRole("button", { name: /^November 14, 2026/ }));
+    await user.click(screen.getByRole("button", { name: "Next day" }));
 
-    const panel = screen.getByRole("region", { name: /^Saturday Nov 14/ });
-    expect(panel).toHaveTextContent("Maria Santos");
-    expect(screen.getByRole("button", { name: /^November 14, 2026/ })).toHaveAttribute(
-      "aria-pressed",
-      "true"
+    expect(screen.getByRole("dialog", { name: /^Sunday Nov 15/ })).toHaveTextContent(
+      "Maria Santos"
     );
+    expect(router.state.location.search).toEqual({ day: "2026-11-15" });
+    expect(router.history.length).toBe(1);
+  });
+
+  it("opens the day in the URL, in its month", async () => {
+    renderDashboard("/admin/dashboard?day=2026-12-03");
+
+    expect(await screen.findByRole("dialog", { name: /^Thursday Dec 3/ })).toBeVisible();
+    expect(screen.getAllByText("December 2026")[0]).toBeVisible();
+  });
+
+  it("ignores a day in the URL that is not a date", async () => {
+    renderDashboard("/admin/dashboard?day=tomorrow");
+
+    await screen.findByRole("button", { name: /^November 10, 2026/ });
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
+  it("closes the pane and takes the day out of the URL", async () => {
+    const user = userEvent.setup();
+    const router = renderDashboard("/admin/dashboard?day=2026-11-10");
+
+    await user.click(await screen.findByRole("button", { name: "Close" }));
+
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+    expect(router.state.location.search).toEqual({});
   });
 
   it("steps through days with the previous and next day buttons", async () => {
     const user = userEvent.setup();
     renderDashboard();
+    await openToday();
 
-    await user.click(await screen.findByRole("button", { name: "Next day" }));
-    expect(screen.getByRole("region", { name: /^Wednesday Nov 11/ })).toBeVisible();
+    await user.click(screen.getByRole("button", { name: "Next day" }));
+    expect(screen.getByRole("dialog", { name: /^Wednesday Nov 11/ })).toBeVisible();
 
     await user.click(screen.getByRole("button", { name: "Previous day" }));
     await user.click(screen.getByRole("button", { name: "Previous day" }));
-    expect(screen.getByRole("region", { name: /^Monday Nov 9/ })).toBeVisible();
+    expect(screen.getByRole("dialog", { name: /^Monday Nov 9/ })).toBeVisible();
   });
 
   it("says so on a day with nothing on", async () => {
     renderDashboard();
+    await openToday();
 
     expect(await screen.findByText("No check-ins or check-outs.")).toBeVisible();
   });
-
   it("links each row to its booking, with the balance and the verification pill", async () => {
     data.bookings = [
       booking("pending", "Maria Santos", "2026-11-10", "2026-11-12", {
@@ -184,6 +223,7 @@ describe("Dashboard", () => {
       }),
     ];
     renderDashboard();
+    await openToday();
 
     const staffRow = await screen.findByRole("link", { name: /Ana Cruz/ });
     expect(within(staffRow).queryByText("Waiting for verification")).not.toBeInTheDocument();
@@ -222,7 +262,7 @@ describe("Dashboard", () => {
     data.bookings = [booking("c1", "Maria Santos", "2026-11-20", "2026-11-22")];
     renderDashboard();
 
-    await screen.findByRole("heading", { name: /^Today/ });
+    await screen.findByText("2% occupancy · 1 confirmed");
     expect(screen.queryByText(/waiting for verification/)).not.toBeInTheDocument();
   });
 
@@ -251,7 +291,7 @@ describe("Dashboard", () => {
     // Past the hover card's open delay
     await new Promise((resolve) => setTimeout(resolve, 300));
 
-    expect(screen.getByRole("region", { name: /^Saturday Nov 14/ })).toBeVisible();
+    expect(screen.getByRole("dialog", { name: /^Saturday Nov 14/ })).toBeVisible();
     expect(screen.queryByText("November 14, 2026")).not.toBeInTheDocument();
   });
 
@@ -260,8 +300,9 @@ describe("Dashboard", () => {
       { blackout_id: "b1", unit_id: "unit-1", start_date: "2026-11-10", end_date: "2026-11-10" },
     ];
     renderDashboard();
+    await openToday();
 
-    const panel = await screen.findByRole("region", { name: /^Today/ });
-    expect(await within(panel).findByText("Blocked: Cabin 1")).toBeVisible();
+    const pane = screen.getByRole("dialog", { name: /^Today/ });
+    expect(await within(pane).findByText("Blocked: Cabin 1")).toBeVisible();
   });
 });

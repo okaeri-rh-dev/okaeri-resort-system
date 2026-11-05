@@ -3,6 +3,7 @@ import { lazy, Suspense } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { dashboardSearchSchema } from "@/lib/dashboard";
 import { requireStaff } from "@/lib/route-guards";
 
 // Lazy load the Dashboard component
@@ -11,6 +12,7 @@ const Dashboard = lazy(() =>
 );
 
 export const Route = createFileRoute("/admin/dashboard")({
+  validateSearch: dashboardSearchSchema,
   beforeLoad: async () => {
     await requireStaff();
   },

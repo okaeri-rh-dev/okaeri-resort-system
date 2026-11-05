@@ -40,7 +40,6 @@ test.describe("Dark mode surfaces", () => {
   test("admin dashboard reads in dark", async ({ page }) => {
     await page.setViewportSize(EXPANDED);
     await loginAsOwner(page);
-    await expect(page.getByRole("region", { name: /^Today/ })).toBeVisible();
     await expect(page.getByText(/% occupancy · \d+ confirmed/)).toBeVisible();
     await expectReadable(page);
   });

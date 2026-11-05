@@ -120,22 +120,26 @@ test.describe("Dashboard and settings read in light and dark", () => {
         await stubBookings(page);
         await page.setViewportSize(EXPANDED);
         await loginAsAdmin(page);
-        await expect(page.getByRole("region", { name: /^Today/ })).toBeVisible();
+        await page.goto(`/admin/dashboard?day=${isoDay(0)}`);
+        await expect(page.getByRole("dialog", { name: /^Today/ })).toBeVisible();
         await expect(page.getByRole("link", { name: /Ana Reyes/ })).toBeVisible();
         await expect(visible(page.getByLabel("C3: Ana Reyes"))).toBeVisible();
         // A wide calendar pane names the cabin on each chip
         await expect(visible(page.getByText("C3", { exact: true }))).toBeVisible();
         await expectReadable(page);
+        await expectReadable(page, '[role="dialog"]');
       });
 
       test("mobile dashboard", async ({ page }) => {
         await stubBookings(page);
         await page.setViewportSize(COMPACT);
         await loginAsAdmin(page);
+        await page.goto(`/admin/dashboard?day=${isoDay(0)}`);
         await expect(page.getByText("1 booking waiting for verification")).toBeVisible();
         await expect(page.getByRole("link", { name: /Ana Reyes/ })).toBeVisible();
         await expect(page.getByText("Waiting for verification", { exact: true })).toBeVisible();
         await expectReadable(page);
+        await expectReadable(page, '[role="dialog"]');
       });
 
       for (const viewport of [EXPANDED, COMPACT]) {

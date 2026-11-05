@@ -40,7 +40,7 @@ interface DashboardCalendarProps {
   month: Date;
   onMonthChange: (month: Date) => void;
   today: ManilaDay;
-  selectedDay: ManilaDay;
+  selectedDay: ManilaDay | undefined;
   onSelectDay: (day: ManilaDay) => void;
   /** A line under the month name, such as the month's numbers */
   numbers?: ReactNode;
@@ -59,7 +59,7 @@ interface DayCellData {
   bookingsByDate: { [key: string]: Booking[] };
   blockedLabelByNight: Record<string, string>;
   today: ManilaDay;
-  selectedDay: ManilaDay;
+  selectedDay: ManilaDay | undefined;
   onSelectDay: (day: ManilaDay) => void;
 }
 

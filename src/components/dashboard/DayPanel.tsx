@@ -1,11 +1,11 @@
-import { useId, type ReactNode } from "react";
+import type { ReactNode } from "react";
 
 import { useQuery } from "@tanstack/react-query";
 import { format, parseISO } from "date-fns";
 import { ChevronLeft, ChevronRight, LogIn, LogOut, Moon } from "lucide-react";
 
 import { hatchedFill } from "@/components/calendar/availability-fill";
-import { Button, Card, CardContent } from "@/components/patterns";
+import { Button, Sheet, SheetContent, SheetTitle } from "@/components/patterns";
 import { blocksInNightsQuery } from "@/hooks/useAvailabilityTimeline";
 import { useBlockCabins } from "@/hooks/useBlocks";
 import { blockedNightLabel } from "@/lib/availability-timeline";
@@ -22,18 +22,10 @@ interface DayPanelProps {
   day: ManilaDay;
   today: ManilaDay;
   onSelectDay: (day: ManilaDay) => void;
-  className?: string;
+  onClose: () => void;
 }
 
-export function DayPanel({
-  bookings,
-  isLoading,
-  day,
-  today,
-  onSelectDay,
-  className,
-}: DayPanelProps) {
-  const headingId = useId();
+export function DayPanel({ bookings, isLoading, day, today, onSelectDay, onClose }: DayPanelProps) {
   const { checkIns, checkOuts, staying } = movementsOn(bookings, day);
   const { data: blocks } = useQuery(blocksInNightsQuery(day, day));
   const { cabinName } = useBlockCabins();
@@ -41,16 +33,18 @@ export function DayPanel({
   const date = parseISO(day);
 
   return (
-    <Card padding="sm" className={className}>
-      <CardContent className="p-0">
-        <section aria-labelledby={headingId} className="space-y-3">
-          <div className="flex items-center justify-between gap-2">
-            <h2 id={headingId} className="font-display text-lg font-semibold">
-              {day === today ? "Today" : format(date, "EEEE")}{" "}
-              <span className="text-muted-foreground font-sans text-sm font-normal">
-                {format(date, "MMM d")}
-              </span>
-            </h2>
+    <Sheet open onOpenChange={(open) => !open && onClose()}>
+      <SheetContent side="pane" aria-describedby={undefined}>
+        <div className="space-y-3">
+          <div className="flex items-center justify-between gap-2 pr-10">
+            <SheetTitle asChild>
+              <h2 className="font-display text-lg font-semibold">
+                {day === today ? "Today" : format(date, "EEEE")}{" "}
+                <span className="text-muted-foreground font-sans text-sm font-normal">
+                  {format(date, "MMM d")}
+                </span>
+              </h2>
+            </SheetTitle>
             <span className="flex gap-1">
               <Button
                 variant="ghost"
@@ -100,9 +94,9 @@ export function DayPanel({
               />
             </div>
           )}
-        </section>
-      </CardContent>
-    </Card>
+        </div>
+      </SheetContent>
+    </Sheet>
   );
 }
 

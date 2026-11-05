@@ -15,13 +15,7 @@ export const Route = createFileRoute("/admin/roles")({
         attemptedRoute: "/admin/roles",
       });
 
-      throw redirect({
-        to: "/admin/dashboard",
-        search: {
-          error: "unauthorized",
-          message: "Only administrators can manage user roles",
-        },
-      });
+      throw redirect({ to: "/admin/dashboard" });
     }
 
     logger.info("Admin accessing roles page", { userRole });

@@ -1,7 +1,13 @@
 import { format, getDaysInMonth } from "date-fns";
+import { z } from "zod";
 
-import { dayAfter, manilaDayOf, type ManilaDay } from "@/lib/bookings/stay";
+import { dayAfter, manilaDayOf, manilaDaySchema, type ManilaDay } from "@/lib/bookings/stay";
 import type { Booking } from "@/types";
+
+/** `?day=` is the day open in the day pane; an invalid day leaves it closed */
+export const dashboardSearchSchema = z.object({
+  day: manilaDaySchema.optional().catch(undefined),
+});
 
 export interface DayMovements {
   day: ManilaDay;

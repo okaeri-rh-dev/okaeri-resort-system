@@ -71,7 +71,7 @@ Pane layouts:
 | Admin lists                    | Single pane, detail on its own route                                                       |
 | Booking Queue → verify payment | List-detail; two panes from `expanded`                                                     |
 | Detail views                   | Supporting pane: below up to `medium`, beside at 360px from `expanded`, 412px from `large` |
-| Dashboard                      | Feed; columns follow pane width                                                            |
+| Dashboard                      | Single pane; the day opens in a bottom sheet up to `medium`, a side sheet from `expanded`  |
 | Guest booking                  | Price summary below on compact and `medium`, sticky side pane from `expanded`              |
 | Public calendar                | Single pane                                                                                |
 
