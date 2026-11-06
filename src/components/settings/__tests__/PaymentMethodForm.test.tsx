@@ -35,6 +35,12 @@ const gcash: PaymentMethodConfig = {
   updated_at: null,
 };
 
+const gcashWithQr: PaymentMethodConfig = {
+  ...gcash,
+  qr_code_url: "https://example.test/old.png",
+  qr_code_storage_path: "qr-codes/gcash-0.png",
+};
+
 const upload = vi.fn();
 const remove = vi.fn();
 
@@ -61,15 +67,7 @@ describe("PaymentMethodForm QR code", () => {
   it("shows no QR code when an upload fails after a remove", async () => {
     upload.mockRejectedValue(new Error("upload failed"));
     const user = userEvent.setup();
-    render(
-      <PaymentMethodForm
-        method={{
-          ...gcash,
-          qr_code_url: "https://example.test/old.png",
-          qr_code_storage_path: "qr-codes/gcash-0.png",
-        }}
-      />
-    );
+    render(<PaymentMethodForm method={gcashWithQr} />);
 
     await user.click(screen.getByRole("button", { name: "Remove QR code" }));
     await user.upload(
@@ -105,15 +103,7 @@ describe("PaymentMethodForm QR code", () => {
 
   it("removes a QR code that existed when the form opened", async () => {
     const user = userEvent.setup();
-    render(
-      <PaymentMethodForm
-        method={{
-          ...gcash,
-          qr_code_url: "https://example.test/old.png",
-          qr_code_storage_path: "qr-codes/gcash-0.png",
-        }}
-      />
-    );
+    render(<PaymentMethodForm method={gcashWithQr} />);
 
     await user.click(screen.getByRole("button", { name: "Remove QR code" }));
 
