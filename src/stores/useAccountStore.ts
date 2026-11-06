@@ -2,6 +2,7 @@ import { queryOptions, useMutation, useQuery, useQueryClient } from "@tanstack/r
 import { create } from "zustand";
 import { devtools, persist } from "zustand/middleware";
 
+import { afterWrite } from "@/lib/after-write";
 import { accountKeys } from "@/lib/query-keys";
 import { handleSupabaseError, supabase } from "@/lib/supabase";
 import type { Account, AccountType, AccountWithBalance } from "@/types";
@@ -221,7 +222,7 @@ export const useCreateAccount = () => {
       }
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: accountKeys.all });
+      afterWrite("accounts");
     },
   });
 };
@@ -264,7 +265,7 @@ export const useUpdateAccount = () => {
       }
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: accountKeys.all });
+      afterWrite("accounts");
     },
   });
 };
@@ -289,19 +290,14 @@ export const useDeleteAccount = () => {
       removeOptimistic(accountId);
       return { accountId };
     },
-    onError: () => {
-      queryClient.invalidateQueries({ queryKey: accountKeys.all });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: accountKeys.all });
+    onSettled: () => {
+      afterWrite("accounts");
     },
   });
 };
 
 // Reactivate account
 export const useReactivateAccount = () => {
-  const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: async (accountId: string) => {
       const { data, error } = await supabase
@@ -314,8 +310,8 @@ export const useReactivateAccount = () => {
       if (error) throw new Error(handleSupabaseError(error));
       return data as Account;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: accountKeys.all });
+    onSettled: () => {
+      afterWrite("accounts");
     },
   });
 };
