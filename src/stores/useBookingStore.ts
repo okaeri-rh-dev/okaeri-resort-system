@@ -397,9 +397,7 @@ export const useAllBookings = () =>
 export const useCreateBooking = () =>
   useMutation({
     mutationFn: requestBooking,
-    onSettled: () => {
-      afterWrite(...BOOKING_CREATE_WRITES);
-    },
+    onSettled: () => afterWrite(...BOOKING_CREATE_WRITES),
   });
 
 // Update booking status with optimistic update
@@ -428,9 +426,7 @@ export const useUpdateBookingStatus = () => {
       }
       toast.error("Failed to change the booking status", { description: error.message });
     },
-    onSettled: () => {
-      afterWrite("bookings");
-    },
+    onSettled: () => afterWrite("bookings"),
   });
 };
 
@@ -447,9 +443,7 @@ export const useUploadPaymentProof = () =>
     onError: (error) => {
       toast.error("Failed to record the payment proof", { description: error.message });
     },
-    onSettled: () => {
-      afterWrite("payments");
-    },
+    onSettled: () => afterWrite("payments"),
   });
 
 // Cancel booking
@@ -462,9 +456,7 @@ export const useCancelBooking = () =>
     onError: (error) => {
       toast.error("Failed to cancel the booking", { description: error.message });
     },
-    onSettled: () => {
-      afterWrite("bookings");
-    },
+    onSettled: () => afterWrite("bookings"),
   });
 
 export const useUpdateBooking = () =>
@@ -477,7 +469,5 @@ export const useUpdateBooking = () =>
     onError: (error) => {
       toast.error("Failed to update the booking", { description: error.message });
     },
-    onSettled: () => {
-      afterWrite(...UPDATE_BOOKING_WRITES);
-    },
+    onSettled: () => afterWrite(...UPDATE_BOOKING_WRITES),
   });

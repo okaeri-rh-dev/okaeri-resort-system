@@ -110,9 +110,7 @@ export function useCreateBlocks() {
         blocks.some((block) => block.unit_id === null) ? "Resort closed" : "Dates blocked"
       );
     },
-    onSettled: () => {
-      afterWrite("availability_blackouts");
-    },
+    onSettled: () => afterWrite("availability_blackouts"),
   });
 }
 
@@ -126,9 +124,7 @@ export function useUpdateBlock() {
     onSuccess: () => {
       toast.success("Block updated");
     },
-    onSettled: () => {
-      afterWrite("availability_blackouts");
-    },
+    onSettled: () => afterWrite("availability_blackouts"),
   });
 }
 
@@ -141,9 +137,7 @@ export function useDeleteBlock() {
     onSuccess: () => {
       toast.success("Block deleted");
     },
-    onSettled: () => {
-      afterWrite("availability_blackouts");
-    },
+    onSettled: () => afterWrite("availability_blackouts"),
   });
 }
 
@@ -213,8 +207,6 @@ export function useCancelBookingsAndSaveBlock() {
           : "Bookings cancelled and dates blocked"
       );
     },
-    onSettled: () => {
-      afterWrite(...CANCEL_AND_BLOCK_WRITES);
-    },
+    onSettled: () => afterWrite(...CANCEL_AND_BLOCK_WRITES),
   });
 }

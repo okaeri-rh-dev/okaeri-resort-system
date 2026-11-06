@@ -119,18 +119,29 @@ describe("afterWrite", () => {
 
   it("reaches every key root from some table, except data that is not table data", () => {
     const notTableData = [publicAvailabilityKeys.all];
-    const roots: unknown[][] = [];
+    const keys: unknown[][] = [];
     const collect = (value: unknown) => {
-      if (Array.isArray(value)) roots.push(value);
-      else if (value && typeof value === "object") Object.values(value).forEach(collect);
+      if (Array.isArray(value)) keys.push(value);
+      else if (typeof value === "function") {
+        try {
+          collect(value());
+        } catch {
+          // queryKeys.entity throws on an unknown type; its keys come from factories collected anyway
+        }
+      } else if (value && typeof value === "object") Object.values(value).forEach(collect);
     };
     collect(queryKeyModule);
 
     const cache = spyOnCache();
     afterWrite(...(Object.keys(everyTable) as TableName[]));
-    const reached = [...cache.invalidated(), ...cache.removed()];
+    const reached = [...cache.invalidated(), ...cache.removed()] as unknown[][];
+    const startsWith = (key: unknown[], prefix: readonly unknown[]) =>
+      prefix.every((part, i) => JSON.stringify(part) === JSON.stringify(key[i]));
 
-    for (const root of roots.filter((r) => !notTableData.includes(r as never)))
-      expect(reached, JSON.stringify(root)).toContainEqual(root);
+    for (const key of keys.filter((k) => !notTableData.some((root) => startsWith(k, root))))
+      expect(
+        reached.some((root) => startsWith(key, root)),
+        JSON.stringify(key)
+      ).toBe(true);
   });
 });

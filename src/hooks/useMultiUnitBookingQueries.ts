@@ -121,8 +121,6 @@ export const useCreateMultiUnitBooking = () => {
         removeOptimisticBooking(context.optimisticBooking.booking_id);
       }
     },
-    onSettled: () => {
-      afterWrite(...BOOKING_CREATE_WRITES);
-    },
+    onSettled: () => afterWrite(...BOOKING_CREATE_WRITES),
   });
 };

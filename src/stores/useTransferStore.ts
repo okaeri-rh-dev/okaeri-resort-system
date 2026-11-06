@@ -247,9 +247,7 @@ export const useCreateTransfer = () => {
           .removeOptimisticTransfer(context.optimisticTransfer.transfer_id);
       }
     },
-    onSettled: () => {
-      afterWrite("account_transfers");
-    },
+    onSettled: () => afterWrite("account_transfers"),
   });
 };
 
@@ -273,8 +271,6 @@ export const useDeleteTransfer = () => {
       removeOptimistic(transferId);
       return { transferId };
     },
-    onSettled: () => {
-      afterWrite("account_transfers");
-    },
+    onSettled: () => afterWrite("account_transfers"),
   });
 };

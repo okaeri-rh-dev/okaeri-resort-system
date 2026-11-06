@@ -1,8 +1,5 @@
 /**
- * Real-time Subscription Hooks for Multi-Unit Bookings (Phase 3)
- *
- * Supabase real-time subscriptions for availability changes.
- * Automatically updates the UI when blocks change in the database.
+ * Real-time subscription to availability blocks: refreshes availability reads when a block changes.
  *
  * @module useMultiUnitRealtime
  */

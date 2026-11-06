@@ -168,9 +168,7 @@ export function PaymentProofViewer({
       console.error("Payment verification error:", error);
       setError(error.message);
     },
-    onSettled: () => {
-      afterWrite(...VERIFY_PAYMENT_WRITES);
-    },
+    onSettled: () => afterWrite(...VERIFY_PAYMENT_WRITES),
   });
 
   // Handler functions

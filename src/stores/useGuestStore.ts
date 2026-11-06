@@ -259,14 +259,14 @@ const RETENTION_ERROR_BY_STATUS: Record<number, string> = {
 };
 
 // anonymize_guest and delete_guest write these (20261021000000_guest_retention.sql)
-const GUEST_RETENTION_WRITES: TableName[] = [
+const GUEST_RETENTION_WRITES = [
   "guests",
   "guest_assignments",
   "bookings",
   "booking_units",
   "payments",
   "audit_logs_archive",
-];
+] as const satisfies readonly TableName[];
 
 async function callGuestRetention(path: string, method: "POST" | "DELETE") {
   const response = await fetch(path, {

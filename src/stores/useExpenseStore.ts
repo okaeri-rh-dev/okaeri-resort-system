@@ -328,9 +328,7 @@ export const useCreateExpense = () => {
         useExpenseStore.getState().removeOptimisticExpense(context.optimisticExpense.expense_id);
       }
     },
-    onSettled: () => {
-      afterWrite("expenses");
-    },
+    onSettled: () => afterWrite("expenses"),
   });
 };
 
@@ -395,9 +393,7 @@ export const useUpdateExpense = () => {
         updateOptimistic(expenseId, context.previousExpense);
       }
     },
-    onSettled: () => {
-      afterWrite("expenses");
-    },
+    onSettled: () => afterWrite("expenses"),
   });
 };
 
@@ -417,9 +413,7 @@ export const useDeleteExpense = () => {
       removeOptimistic(expenseId);
       return { expenseId };
     },
-    onSettled: () => {
-      afterWrite("expenses");
-    },
+    onSettled: () => afterWrite("expenses"),
   });
 };
 

@@ -118,7 +118,7 @@ export const pricingKeys = {
   cached: (cacheKey: string) => [...pricingKeys.cache(), cacheKey] as const,
 };
 
-// Availability reads sit under several top-level roots; invalidateAvailability() covers each one
+// Availability reads sit under several top-level roots; afterWrite() in src/lib/after-write.ts reaches each one
 export const availabilityKeys = {
   availableUnits: {
     all: ["available-units"] as const,
@@ -127,10 +127,6 @@ export const availabilityKeys = {
     search: (checkIn: string, checkOut: string, filters: object, limit: number) =>
       [...availabilityKeys.availableUnits.range(checkIn, checkOut), filters, limit] as const,
   },
-  availableUnitsByType: (checkIn: string, checkOut: string) =>
-    ["available-units-by-type", checkIn, checkOut] as const,
-  batch: (unitIds: string[], checkIn: string, checkOut: string) =>
-    ["batch-unit-availability", unitIds, checkIn, checkOut] as const,
   calendar: {
     all: ["availability-calendar"] as const,
     stays: (firstNight: string, lastNight: string) =>

@@ -191,9 +191,7 @@ export function UnitAssignmentInterface({
 
       setAssignmentError(errorMessage);
     },
-    onSettled: () => {
-      afterWrite(...ASSIGN_UNITS_WRITES);
-    },
+    onSettled: () => afterWrite(...ASSIGN_UNITS_WRITES),
   });
 
   // ============================================

@@ -194,9 +194,7 @@ export const useCreatePayment = () =>
   useMutation({
     mutationFn: ({ input, receiptFile }: { input: PaymentInput; receiptFile?: File }) =>
       createPayment(supabase, input, receiptFile),
-    onSettled: () => {
-      afterWrite("payments");
-    },
+    onSettled: () => afterWrite("payments"),
   });
 
 export const useUpdatePayment = () =>
@@ -210,17 +208,13 @@ export const useUpdatePayment = () =>
       changes: PaymentChanges;
       receiptFile?: File;
     }) => updatePayment(supabase, paymentId, changes, receiptFile),
-    onSettled: () => {
-      afterWrite("payments");
-    },
+    onSettled: () => afterWrite("payments"),
   });
 
 export const useSoftDeletePayment = () =>
   useMutation({
     mutationFn: (paymentId: string) => softDeletePayment(supabase, paymentId),
-    onSettled: () => {
-      afterWrite("payments");
-    },
+    onSettled: () => afterWrite("payments"),
   });
 
 export const useVerifyPayment = () =>
@@ -231,9 +225,7 @@ export const useVerifyPayment = () =>
       } = await supabaseAuth.getUser();
       return appendVerificationNote(supabase, paymentId, user?.email ?? "unknown user");
     },
-    onSettled: () => {
-      afterWrite("payments");
-    },
+    onSettled: () => afterWrite("payments"),
   });
 
 // Export payments

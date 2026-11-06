@@ -221,9 +221,7 @@ export const useCreateAccount = () => {
         useAccountStore.getState().removeOptimisticAccount(context.optimisticAccount.account_id);
       }
     },
-    onSettled: () => {
-      afterWrite("accounts");
-    },
+    onSettled: () => afterWrite("accounts"),
   });
 };
 
@@ -264,9 +262,7 @@ export const useUpdateAccount = () => {
         updateOptimistic(accountId, context.previousAccount);
       }
     },
-    onSettled: () => {
-      afterWrite("accounts");
-    },
+    onSettled: () => afterWrite("accounts"),
   });
 };
 
@@ -290,9 +286,7 @@ export const useDeleteAccount = () => {
       removeOptimistic(accountId);
       return { accountId };
     },
-    onSettled: () => {
-      afterWrite("accounts");
-    },
+    onSettled: () => afterWrite("accounts"),
   });
 };
 
@@ -310,8 +304,6 @@ export const useReactivateAccount = () => {
       if (error) throw new Error(handleSupabaseError(error));
       return data as Account;
     },
-    onSettled: () => {
-      afterWrite("accounts");
-    },
+    onSettled: () => afterWrite("accounts"),
   });
 };
