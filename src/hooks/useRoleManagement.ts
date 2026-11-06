@@ -2,7 +2,6 @@
 
 import { queryOptions, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import { pendingUsersKeys } from "@/hooks/usePendingUsers";
 import {
   AuditRole,
   countUsersByRole,
@@ -13,22 +12,9 @@ import {
   type AppRole,
 } from "@/lib/audit-roles";
 import { logger } from "@/lib/logger";
+import { pendingUsersKeys, roleKeys } from "@/lib/query-keys";
 import { supabase } from "@/lib/supabase";
 import type { AuditLog } from "@/types/audit.types";
-
-// ============================================
-// QUERY KEYS
-// ============================================
-
-export const roleKeys = {
-  all: ["roles"] as const,
-  lists: () => [...roleKeys.all, "list"] as const,
-  list: (filters: string) => [...roleKeys.lists(), { filters }] as const,
-  details: () => [...roleKeys.all, "detail"] as const,
-  detail: (id: string) => [...roleKeys.details(), id] as const,
-  stats: () => [...roleKeys.all, "stats"] as const,
-  history: (userId: string) => [...roleKeys.all, "history", userId] as const,
-};
 
 // ============================================
 // QUERIES

@@ -18,7 +18,7 @@ React hooks shared across components. Entity CRUD (bookings, guests, payments, e
 | `useRoleManagement.ts`          | `useAllRoles`, `useRoleStats`, `useRoleHistory`, grant/update/deactivate mutations            |
 | `usePendingUsers.ts`            | `usePendingUsers`: users with no role assigned (admin API)                                         |
 | `usePricingConfig.ts`           | `usePricingConfig`, `useUpdatePricingConfig`                                                  |
-| `usePricingCalculation.ts`      | `usePricingCalculation`, `useCachedPricing`, `useClearPricingCache`                           |
+| `usePricingCalculation.ts`      | `usePricingCalculation`, `useCachedPricing`                                                  |
 | `useDiscountRules.ts`           | `useDiscountRules`, `useSaveDiscountRules`                                                    |
 | `useSeasonalRates.ts`           | `useSeasonalRates`, `useSaveSeasonalRates`                                                    |
 | `useExpenseCategories.ts`       | category list, active list, create/update/archive/restore                                     |

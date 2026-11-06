@@ -19,7 +19,6 @@ import {
   multiUnitBookingKeys,
   paymentKeys,
   unitKeys,
-  upcomingKeys,
 } from "@/lib/query-keys";
 
 // ============================================
@@ -52,8 +51,6 @@ export function invalidatePayments() {
 }
 
 export function invalidateAvailability() {
-  queryClient.invalidateQueries({ queryKey: availabilityKeys.unit.all });
-  queryClient.invalidateQueries({ queryKey: availabilityKeys.unitFast.all });
   queryClient.invalidateQueries({ queryKey: availabilityKeys.availableUnits.all });
   queryClient.invalidateQueries({ queryKey: availabilityKeys.calendar.all });
   queryClient.invalidateQueries({ queryKey: availabilityKeys.multiUnit.all });
@@ -63,11 +60,6 @@ export function invalidateAvailability() {
 export function invalidateMultiUnitBookings() {
   queryClient.invalidateQueries({ queryKey: multiUnitBookingKeys.all });
   queryClient.invalidateQueries({ queryKey: multiUnitBookingKeys.pending });
-}
-
-export function invalidateUpcoming() {
-  queryClient.invalidateQueries({ queryKey: upcomingKeys.checkIns.all });
-  queryClient.invalidateQueries({ queryKey: upcomingKeys.checkOuts.all });
 }
 
 // ============================================
@@ -81,7 +73,6 @@ export function afterBookingCreate() {
   invalidateUnits();
   invalidateAvailability();
   invalidateMultiUnitBookings();
-  invalidateUpcoming();
 }
 
 /** After changing booking status (confirm, check-in, check-out). */
@@ -90,7 +81,6 @@ export function afterBookingStatusChange() {
   invalidateUnits();
   invalidateAvailability();
   invalidateMultiUnitBookings();
-  invalidateUpcoming();
 }
 
 /** After recording/verifying/uploading a payment. */
@@ -121,7 +111,6 @@ export function afterBookingCancel() {
   invalidateUnits();
   invalidateAvailability();
   invalidateMultiUnitBookings();
-  invalidateUpcoming();
 }
 
 /** After anonymizing or deleting a guest: their bookings and payments lose personal data too. */
@@ -130,5 +119,4 @@ export function afterGuestRetention() {
   invalidateBookings();
   invalidatePayments();
   invalidateMultiUnitBookings();
-  invalidateUpcoming();
 }

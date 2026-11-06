@@ -1,5 +1,6 @@
 import { queryOptions, useQuery } from "@tanstack/react-query";
 
+import { pendingUsersKeys } from "@/lib/query-keys";
 import { supabase } from "@/lib/supabase";
 
 export interface PendingUser {
@@ -9,10 +10,6 @@ export interface PendingUser {
   created_at: string;
   email_confirmed_at: string | null;
 }
-
-export const pendingUsersKeys = {
-  all: ["pending-users"] as const,
-};
 
 const pendingUsersQuery = () =>
   queryOptions({

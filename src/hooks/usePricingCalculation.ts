@@ -226,22 +226,6 @@ export function useCachedPricing(cacheKey?: string) {
   return queryClient.getQueryData<PricingCalculateResponse>(pricingKeys.cached(cacheKey));
 }
 
-/**
- * Helper hook to clear pricing cache
- */
-export function useClearPricingCache() {
-  const queryClient = useQueryClient();
-
-  return {
-    clearAll: () => {
-      queryClient.removeQueries({ queryKey: pricingKeys.cache() });
-    },
-    clearSpecific: (cacheKey: string) => {
-      queryClient.removeQueries({ queryKey: pricingKeys.cached(cacheKey) });
-    },
-  };
-}
-
 // Re-export types for convenience
 export type {
   PricingCalculateRequest,

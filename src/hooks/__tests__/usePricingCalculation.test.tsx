@@ -9,11 +9,7 @@ import { supabase } from "@/lib/supabase";
 import type { PricingCalculateRequest, PricingCalculateResponse } from "@/types/api/pricing";
 
 import { server } from "../../../__tests__/mocks/server";
-import {
-  useCachedPricing,
-  useClearPricingCache,
-  usePricingCalculation,
-} from "../usePricingCalculation";
+import { useCachedPricing, usePricingCalculation } from "../usePricingCalculation";
 
 // Note: We use MSW handlers instead of mocking fetch directly
 // because the global MSW server intercepts all requests
@@ -610,30 +606,6 @@ describe("usePricingCalculation", () => {
 
       // queryClient.getQueryData returns undefined when cache key doesn't exist
       expect(result.current).toBeUndefined();
-    });
-
-    it("useClearPricingCache should clear all pricing cache", () => {
-      queryClient.setQueryData(["pricing", "cache", "key1"], mockSuccessResponse);
-      queryClient.setQueryData(["pricing", "cache", "key2"], mockSeasonalResponse);
-
-      const { result } = renderHook(() => useClearPricingCache(), { wrapper });
-
-      result.current.clearAll();
-
-      expect(queryClient.getQueryData(["pricing", "cache", "key1"])).toBeUndefined();
-      expect(queryClient.getQueryData(["pricing", "cache", "key2"])).toBeUndefined();
-    });
-
-    it("useClearPricingCache should clear specific cache key", () => {
-      queryClient.setQueryData(["pricing", "cache", "key1"], mockSuccessResponse);
-      queryClient.setQueryData(["pricing", "cache", "key2"], mockSeasonalResponse);
-
-      const { result } = renderHook(() => useClearPricingCache(), { wrapper });
-
-      result.current.clearSpecific("key1");
-
-      expect(queryClient.getQueryData(["pricing", "cache", "key1"])).toBeUndefined();
-      expect(queryClient.getQueryData(["pricing", "cache", "key2"])).toBeDefined();
     });
   });
 

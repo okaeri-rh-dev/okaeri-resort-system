@@ -2,6 +2,7 @@
 
 import type { ManilaDay } from "@/lib/bookings/stay";
 import type { BlockNights } from "@/lib/supabase";
+import type { AuditLogFilters } from "@/types/audit.types";
 import type { AuditFilters, EntityType } from "@/types/entity-detail.types";
 
 export const guestKeys = {
@@ -119,18 +120,6 @@ export const pricingKeys = {
 
 // Availability reads sit under several top-level roots; invalidateAvailability() covers each one
 export const availabilityKeys = {
-  unit: {
-    all: ["unit-availability"] as const,
-    byUnit: (unitId: string) => [...availabilityKeys.unit.all, unitId] as const,
-    range: (unitId: string, checkIn: string, checkOut: string, excludeBookingId?: string) =>
-      [...availabilityKeys.unit.byUnit(unitId), checkIn, checkOut, excludeBookingId] as const,
-  },
-  unitFast: {
-    all: ["unit-availability-fast"] as const,
-    byUnit: (unitId: string) => [...availabilityKeys.unitFast.all, unitId] as const,
-    range: (unitId: string, checkIn: string, checkOut: string, excludeBookingId?: string) =>
-      [...availabilityKeys.unitFast.byUnit(unitId), checkIn, checkOut, excludeBookingId] as const,
-  },
   availableUnits: {
     all: ["available-units"] as const,
     range: (checkIn: string, checkOut: string) =>
@@ -144,7 +133,6 @@ export const availabilityKeys = {
     ["batch-unit-availability", unitIds, checkIn, checkOut] as const,
   calendar: {
     all: ["availability-calendar"] as const,
-    byUnit: (unitId: string) => [...availabilityKeys.calendar.all, unitId] as const,
     stays: (firstNight: string, lastNight: string) =>
       [...availabilityKeys.calendar.all, "stays", firstNight, lastNight] as const,
   },
@@ -163,20 +151,6 @@ export const availabilityKeys = {
       [...availabilityKeys.blackouts.all, "nights", firstNight, lastNight] as const,
     conflicts: (nights: BlockNights) =>
       [...availabilityKeys.blackouts.all, "conflicts", nights] as const,
-    byUnit: (unitId: string) => [...availabilityKeys.blackouts.all, unitId] as const,
-    range: (unitId: string, startDate?: string, endDate?: string) =>
-      [...availabilityKeys.blackouts.byUnit(unitId), startDate, endDate] as const,
-  },
-};
-
-export const upcomingKeys = {
-  checkIns: {
-    all: ["upcoming-checkins"] as const,
-    within: (days: number) => [...upcomingKeys.checkIns.all, days] as const,
-  },
-  checkOuts: {
-    all: ["upcoming-checkouts"] as const,
-    within: (days: number) => [...upcomingKeys.checkOuts.all, days] as const,
   },
 };
 
@@ -189,6 +163,39 @@ export const multiUnitBookingKeys = {
   all: ["multi-unit-bookings"] as const,
   detail: (bookingId?: string) => [...multiUnitBookingKeys.all, bookingId] as const,
   pending: ["pending-multi-unit-bookings"] as const,
+};
+
+export const userRoleKeys = {
+  current: ["user-role", "current"] as const,
+};
+
+export const pendingUsersKeys = {
+  all: ["pending-users"] as const,
+};
+
+export const roleKeys = {
+  all: ["roles"] as const,
+  lists: () => [...roleKeys.all, "list"] as const,
+  list: (filters: string) => [...roleKeys.lists(), { filters }] as const,
+  stats: () => [...roleKeys.all, "stats"] as const,
+  history: (userId: string) => [...roleKeys.all, "history", userId] as const,
+};
+
+export const auditKeys = {
+  all: ["audit-logs"] as const,
+  lists: () => [...auditKeys.all, "list"] as const,
+  list: (filters?: AuditLogFilters) => [...auditKeys.lists(), filters] as const,
+  record: (tableName: string, recordId: string) =>
+    [...auditKeys.all, "record", tableName, recordId] as const,
+  recentForRecord: (tableName: string, recordId: string) =>
+    [...auditKeys.record(tableName, recordId), "recent"] as const,
+  stats: (filters?: AuditLogFilters) => [...auditKeys.all, "stats", filters] as const,
+  user: (email: string) => [...auditKeys.all, "user", email] as const,
+};
+
+export const publicAvailabilityKeys = {
+  all: ["publicAvailability"] as const,
+  month: (monthIso: string) => [...publicAvailabilityKeys.all, monthIso] as const,
 };
 
 const entityKeyFactories: Record<
