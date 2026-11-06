@@ -99,12 +99,12 @@ describe("PublicAvailabilityCalendar", () => {
       });
     });
 
-    it("keeps a screen-reader-only page heading and shows the month as the visible heading", async () => {
+    it("shows the month as its top heading and leaves the page h1 to the route", async () => {
       renderComponent();
 
       const monthHeading = await screen.findByRole("heading", { level: 2, name: "January 2025" });
       expect(monthHeading).toBeVisible();
-      expect(screen.getByRole("heading", { level: 1 })).toHaveClass("sr-only");
+      expect(screen.queryByRole("heading", { level: 1 })).not.toBeInTheDocument();
       expect(screen.queryByText(/Cabins/)).not.toBeInTheDocument();
     });
 
