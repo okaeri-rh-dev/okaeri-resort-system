@@ -31,7 +31,7 @@ A booking made on Airbnb and entered by staff by hand. Airbnb has already confir
 _Avoid_: OTA booking, external booking
 
 **Pending booking**:
-A booking that waits for payment before staff confirm it: an online booking waits for staff to verify its payment proof, and a staff-made booking (such as a walk-in) waits for its deposit.
+A booking that waits for payment before staff confirm it: an online booking waits for staff to verify its payment proof and choose its units (the guest asks only for a number of cabins), and a staff-made booking (such as a walk-in) waits for its deposit.
 _Avoid_: Unverified booking, request
 
 **Confirmed booking**:
@@ -41,6 +41,10 @@ _Avoid_: Active booking
 **Live booking**:
 A booking in Pending, Confirmed or CheckedIn. Only live bookings conflict with a block: a checked-out or cancelled booking never does.
 _Avoid_: Open booking, current booking
+
+**In-house booking**:
+A checked-in booking: the guest is at the resort now.
+_Avoid_: Current booking, active booking
 
 **Needs-action booking**:
 A booking that waits for staff: a pending booking, a confirmed booking past its check-in day that has not checked in, or a checked-in booking past its check-out day. An outstanding balance alone does not make a booking need action.
