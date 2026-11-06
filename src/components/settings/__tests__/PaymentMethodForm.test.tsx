@@ -1,3 +1,5 @@
+import { useState } from "react";
+
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -119,22 +121,25 @@ describe("PaymentMethodForm QR code", () => {
   });
 
   it("does not remove a QR code while an upload is pending", async () => {
-    vi.mocked(useUploadQrCode).mockReturnValue({
-      mutateAsync: upload,
-      isPending: true,
-    } as unknown as ReturnType<typeof useUploadQrCode>);
+    function useNeverEndingUpload() {
+      const [isPending, setIsPending] = useState(false);
+      return {
+        isPending,
+        mutateAsync: () => {
+          setIsPending(true);
+          return new Promise(() => {});
+        },
+      } as unknown as ReturnType<typeof useUploadQrCode>;
+    }
+    vi.mocked(useUploadQrCode).mockImplementation(useNeverEndingUpload);
     const user = userEvent.setup();
-    render(
-      <PaymentMethodForm
-        method={{
-          ...gcash,
-          qr_code_url: "https://example.test/old.png",
-          qr_code_storage_path: "qr-codes/gcash-0.png",
-        }}
-      />
-    );
+    render(<PaymentMethodForm method={gcash} />);
 
-    const removeButton = screen.getByRole("button", { name: "Remove QR code" });
+    await user.upload(
+      screen.getByLabelText("Upload QR code image"),
+      new File(["qr"], "qr.png", { type: "image/png" })
+    );
+    const removeButton = await screen.findByRole("button", { name: "Remove QR code" });
     expect(removeButton).toBeDisabled();
     await user.click(removeButton);
 
