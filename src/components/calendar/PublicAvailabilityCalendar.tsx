@@ -208,8 +208,6 @@ export function PublicAvailabilityCalendar() {
   return (
     <div className="border-border bg-card @container overflow-hidden rounded-lg border">
       <div className="border-border bg-muted border-b">
-        <h1 className="sr-only">Okaeri availability</h1>
-
         {/* Month Navigation - Compact */}
         <div className="bg-card px-4 py-2">
           <div className="flex items-center justify-between">

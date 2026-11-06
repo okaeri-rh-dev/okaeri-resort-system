@@ -129,6 +129,7 @@ function HomePage() {
       />
 
       <div className="flex h-full flex-col">
+        <h1 className="sr-only">Okaeri availability</h1>
         <Suspense
           fallback={
             <div className="border-border bg-card flex h-96 flex-col items-center justify-center rounded-lg border p-8">

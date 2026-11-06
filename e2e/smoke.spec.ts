@@ -23,6 +23,22 @@ test.describe("Smoke Tests", () => {
       await calendarPage.runSmokeTest();
     });
 
+    test("public calendar page keeps its heading when availability fails to load", async ({
+      page,
+    }) => {
+      await page.route("**/api/public/v1/availability**", (route) =>
+        route.fulfill({ status: 500, body: "{}" })
+      );
+      await new PublicCalendarPage(page).goto();
+
+      await expect(page.getByText("Failed to load availability data.")).toBeVisible({
+        timeout: 15000,
+      });
+      await expect(
+        page.getByRole("heading", { level: 1, name: "Okaeri availability" })
+      ).toHaveCount(1);
+    });
+
     test("booking form page is accessible", async ({ page }) => {
       await page.goto(ROUTES.public.booking);
 

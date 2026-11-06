@@ -61,16 +61,6 @@ describe("Public Calendar E2E Flow", () => {
       });
     });
 
-    it("should display page title and unit count", async () => {
-      renderPublicCalendar();
-
-      await waitFor(() => {
-        expect(screen.getByText("January 2025")).toBeInTheDocument();
-      });
-
-      expect(screen.getByRole("heading", { level: 1 })).toHaveClass("sr-only");
-    });
-
     it("should have proper DOM structure", async () => {
       const { container } = renderPublicCalendar();
 
