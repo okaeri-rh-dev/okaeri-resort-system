@@ -13,9 +13,9 @@ describe("LoginScreen", () => {
   it("renders the sign-in heading and the login form", () => {
     render(<LoginScreen />);
     // Scope to the level-2 heading: LoginForm's CardTitle also renders
-    // "Okaeri Resort System" as an <h3>, so a bare getByText matches twice.
+    // "Okaeri Rest House" as an <h3>, so a bare getByText matches twice.
     expect(
-      screen.getByRole("heading", { level: 2, name: "Okaeri Resort System" })
+      screen.getByRole("heading", { level: 2, name: "Okaeri Rest House" })
     ).toBeInTheDocument();
     expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
   });

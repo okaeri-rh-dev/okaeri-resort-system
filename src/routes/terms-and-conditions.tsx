@@ -27,14 +27,14 @@ function TermsAndConditionsPage() {
         {/* Header */}
         <div className="mb-8 text-center">
           <h1 className="mb-2 text-3xl font-bold">Terms and Conditions</h1>
-          <p className="text-muted-foreground">Okaeri Resort Booking Agreement</p>
+          <p className="text-muted-foreground">Okaeri Rest House Booking Agreement</p>
           <p className="text-muted-foreground mt-1 text-sm">Effective Date: October 2025</p>
         </div>
 
         {/* Main Content */}
         <Card className="mx-auto max-w-4xl">
           <CardHeader>
-            <CardTitle>Welcome to Okaeri Resort</CardTitle>
+            <CardTitle>Welcome to Okaeri Rest House</CardTitle>
             <CardDescription>
               Please read these terms and conditions carefully before making a booking
             </CardDescription>
@@ -56,7 +56,7 @@ function TermsAndConditionsPage() {
                 <div className="space-y-2">
                   <p>
                     <strong>1.1 Acceptance of Terms:</strong> These Terms and Conditions constitute
-                    a legally binding agreement between you (the "Guest") and Okaeri Resort (the
+                    a legally binding agreement between you (the "Guest") and Okaeri Rest House (the
                     "Resort") operating in the Republic of the Philippines.
                   </p>
                   <p>
@@ -379,7 +379,7 @@ function TermsAndConditionsPage() {
                 <div className="space-y-2">
                   <p>For questions or concerns regarding these Terms and Conditions:</p>
                   <div className="bg-muted mt-2 rounded-md p-4">
-                    <p className="font-semibold">Okaeri Resort</p>
+                    <p className="font-semibold">Okaeri Rest House</p>
                     <PolicyContactChannels channels={contactChannels} className="mt-2" />
                   </div>
                 </div>
@@ -389,7 +389,7 @@ function TermsAndConditionsPage() {
 
               {/* Footer */}
               <div className="bg-background rounded-lg border p-4 text-center">
-                <p className="font-medium">Thank you for choosing Okaeri Resort</p>
+                <p className="font-medium">Thank you for choosing Okaeri Rest House</p>
                 <p className="mt-2">
                   By proceeding with your booking, you acknowledge that you have read, understood,
                   and agree to be bound by these Terms and Conditions.

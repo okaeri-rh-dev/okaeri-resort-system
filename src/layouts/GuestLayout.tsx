@@ -27,7 +27,7 @@ export function GuestLayout({ pageHeader, width, children }: GuestLayoutProps) {
   return (
     <AppShell
       surface="guest"
-      brand={{ name: "Okaeri Resort", to: "/" }}
+      brand={{ name: "Okaeri Rest House", to: "/" }}
       destinations={destinations}
       theme={{ value: theme, onChange: setTheme }}
       pageHeader={pageHeader}

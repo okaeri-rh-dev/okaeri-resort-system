@@ -89,7 +89,7 @@ describe("Terms and conditions contact information", () => {
     renderAt("/terms-and-conditions");
 
     const section = await contactSection(/Contact Information/);
-    expect(section.getByText("Okaeri Resort")).toBeInTheDocument();
+    expect(section.getByText("Okaeri Rest House")).toBeInTheDocument();
     expect(section.getByRole("link", { name: "Viber: +63 917 123 4567" })).toBeInTheDocument();
     expect(
       section.getByRole("link", { name: "Email: stay@okaeri-resort.example" })

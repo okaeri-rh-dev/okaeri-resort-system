@@ -194,7 +194,7 @@ export function PaymentMethodForm({ method, onSuccess, onCancel }: PaymentMethod
 
         <div className="grid grid-cols-1 gap-6 @lg:grid-cols-2">
           <FormField control={form.control} name="account_name" label="Account Name">
-            {(field) => <Input placeholder="e.g., Okaeri Resort" {...field} />}
+            {(field) => <Input placeholder="e.g., Okaeri Rest House" {...field} />}
           </FormField>
 
           <FormField control={form.control} name="account_number" label="Account Number">

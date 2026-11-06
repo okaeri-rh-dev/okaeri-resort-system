@@ -31,6 +31,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import type { RoutePath } from "@/types/route-path";
 
+import { Logo } from "./Logo";
 import { PageHeader, type PageHeaderProps } from "./PageHeader";
 import { DarkModeSwitch, ThemeSegments, type ShellTheme } from "./ThemeControls";
 import { CompactWindowContext, useCompactWindowQuery } from "./window-size";
@@ -490,7 +491,11 @@ function AdminShell({
     <CurrentDestinationContext.Provider value={current}>
       <div className="bg-background medium:flex-row flex h-dvh flex-col">
         <header className="bg-card border-border medium:hidden flex h-14 shrink-0 items-center justify-between border-b px-4">
-          <Link to={brand.to} className="font-display text-foreground text-lg font-bold">
+          <Link
+            to={brand.to}
+            className="font-display text-foreground flex items-center gap-2 text-lg font-bold"
+          >
+            <Logo variant="mark" className="h-[0.7em]" />
             {brand.name}
           </Link>
           <div className="flex items-center gap-2">
@@ -522,7 +527,11 @@ function AdminShell({
               <Menu className="size-5" aria-hidden="true" />
             </Button>
             <div className="large:block hidden">
-              <Link to={brand.to} className="font-display text-2xl font-bold">
+              <Link
+                to={brand.to}
+                className="font-display flex flex-col items-start gap-2 text-2xl font-bold"
+              >
+                <Logo variant="mark" className="h-[0.7em]" />
                 {brand.name}
               </Link>
               {brand.tagline && <p className="mt-1 text-sm opacity-80">{brand.tagline}</p>}
@@ -609,7 +618,8 @@ function AdminShell({
             className="bg-sidebar text-sidebar-foreground border-sidebar-border flex w-72 flex-col gap-0 p-0"
           >
             <div className="border-sidebar-border shrink-0 border-b p-6">
-              <SheetTitle className="font-display text-sidebar-foreground text-xl font-bold">
+              <SheetTitle className="font-display text-sidebar-foreground flex flex-col items-start gap-2 text-xl font-bold">
+                <Logo variant="mark" className="h-[0.7em]" />
                 {brand.name}
               </SheetTitle>
               <SheetDescription
@@ -675,7 +685,11 @@ function GuestShell({ brand, destinations, theme, banner, ...content }: AppShell
       <div className="bg-background flex min-h-dvh flex-col">
         <header className="bg-card border-border sticky top-0 z-40 border-b">
           <div className="medium:px-6 mx-auto flex h-14 w-full max-w-300 items-center justify-between gap-4 px-4">
-            <Link to={brand.to} className="font-display text-foreground text-lg font-bold">
+            <Link
+              to={brand.to}
+              className="font-display text-foreground flex items-center gap-2 text-lg font-bold"
+            >
+              <Logo variant="mark" className="h-[0.7em]" />
               {brand.name}
             </Link>
             <div className="flex items-center gap-2">
@@ -721,7 +735,10 @@ function GuestShell({ brand, destinations, theme, banner, ...content }: AppShell
         <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
           <SheetContent side="right" className="flex w-72 flex-col gap-0 p-0">
             <div className="border-border shrink-0 border-b p-6">
-              <SheetTitle className="font-display text-xl font-bold">{brand.name}</SheetTitle>
+              <SheetTitle className="font-display flex flex-col items-start gap-2 text-xl font-bold">
+                <Logo variant="mark" className="h-[0.7em]" />
+                {brand.name}
+              </SheetTitle>
               <SheetDescription className={cn("mt-1", !brand.tagline && "sr-only")}>
                 {brand.tagline ?? "Pages"}
               </SheetDescription>

@@ -1,8 +1,12 @@
-# Okaeri Resort
+# Okaeri Rest House
 
 A small family-run resort's booking and internal bookkeeping system. Staff record stays and the money received for them; there is no front desk.
 
 ## Language
+
+**Okaeri Rest House**:
+The name of the resort, for guests and staff alike, and of this system.
+_Avoid_: Okaeri Resort
 
 ### Stays
 
