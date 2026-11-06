@@ -68,12 +68,7 @@ describe("Public Calendar E2E Flow", () => {
         expect(screen.getByText("January 2025")).toBeInTheDocument();
       });
 
-      // Check for actual title text in component
-      expect(screen.getByText(/Okaeri Availability/i)).toBeInTheDocument();
-
-      // "3 Units" appears in legend too, so check it exists at least once
-      const unitElements = screen.getAllByText(/3 Cabins/i);
-      expect(unitElements.length).toBeGreaterThan(0);
+      expect(screen.getByRole("heading", { level: 1 })).toHaveClass("sr-only");
     });
 
     it("should have proper DOM structure", async () => {
@@ -91,7 +86,7 @@ describe("Public Calendar E2E Flow", () => {
   });
 
   describe("Calendar Functionality", () => {
-    it("should display calendar header with calendar icon", async () => {
+    it("should render navigation icons", async () => {
       const { container } = renderPublicCalendar();
 
       // Wait for calendar to load
@@ -99,13 +94,8 @@ describe("Public Calendar E2E Flow", () => {
         expect(screen.getByText("January 2025")).toBeInTheDocument();
       });
 
-      // Check for header with title
-      const header = screen.getByText(/Okaeri Availability/i);
-      expect(header).toBeInTheDocument();
-
-      // Calendar icon should be present (lucide-react renders as SVG)
-      const calendarIcons = container.querySelectorAll("svg");
-      expect(calendarIcons.length).toBeGreaterThan(0);
+      // lucide-react renders icons as SVG
+      expect(container.querySelectorAll("svg").length).toBeGreaterThan(0);
     });
 
     it("should display month navigation controls", async () => {
@@ -241,9 +231,6 @@ describe("Public Calendar E2E Flow", () => {
       await waitFor(() => {
         expect(screen.getByText("January 2025")).toBeInTheDocument();
       });
-
-      // Calendar should render with all content
-      expect(screen.getByText(/Okaeri Availability/i)).toBeInTheDocument();
 
       // Grid should be present
       const grid = screen.getByRole("grid", { name: /Availability calendar/i });

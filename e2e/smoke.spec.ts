@@ -161,8 +161,7 @@ test.describe("Smoke Tests", () => {
       // Verify page is functional on mobile
       await expect(page.locator("body")).toBeVisible();
 
-      // Verify calendar loads on mobile - check for main heading (use first() to handle duplicates)
-      await expect(page.getByRole("heading", { name: "Okaeri Availability" })).toBeVisible({
+      await expect(page.getByRole("grid", { name: "Availability calendar" })).toBeVisible({
         timeout: 10000,
       });
     });
@@ -188,8 +187,7 @@ test.describe("Smoke Tests", () => {
       // Verify page is functional on tablet
       await expect(page.locator("body")).toBeVisible();
 
-      // Verify calendar loads on tablet
-      await expect(page.getByRole("heading", { name: "Okaeri Availability" })).toBeVisible({
+      await expect(page.getByRole("grid", { name: "Availability calendar" })).toBeVisible({
         timeout: 10000,
       });
 

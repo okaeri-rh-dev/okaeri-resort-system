@@ -279,18 +279,9 @@ export class PublicCalendarPage {
    * Uses the specific grid with aria-label to avoid strict mode violations
    */
   async expectCalendarVisible() {
-    // Use the specific calendar grid with aria-label for precise selection
-    const calendarGrid = this.page.getByRole("grid", { name: "Availability calendar" });
-    const hasGrid = await calendarGrid.isVisible().catch(() => false);
-
-    if (hasGrid) {
-      await expect(calendarGrid).toBeVisible();
-      return;
-    }
-
-    // Fallback: check for the main heading "Okaeri Availability"
-    const heading = this.page.getByRole("heading", { name: "Okaeri Availability" });
-    await expect(heading).toBeVisible({ timeout: 10000 });
+    await expect(this.page.getByRole("grid", { name: "Availability calendar" })).toBeVisible({
+      timeout: 10000,
+    });
   }
 
   /**

@@ -21,7 +21,7 @@ import { useState } from "react";
 
 import { queryOptions, useQuery } from "@tanstack/react-query";
 import { isAfter, max } from "date-fns";
-import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 
 import { Button, Callout } from "@/components/patterns";
 import {
@@ -207,18 +207,8 @@ export function PublicAvailabilityCalendar() {
 
   return (
     <div className="border-border bg-card @container overflow-hidden rounded-lg border">
-      {/* Calendar Header with Title - Clean White with Border */}
       <div className="border-border bg-muted border-b">
-        {/* Title Row */}
-        <div className="border-border border-b px-4 pt-2.5 pb-2">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <CalendarIcon className="text-muted-foreground h-5 w-5" />
-              <h1 className="text-foreground text-lg font-semibold">Okaeri Availability</h1>
-            </div>
-            <span className="text-muted-foreground text-xs">{data.totalUnits} Cabins</span>
-          </div>
-        </div>
+        <h1 className="sr-only">Okaeri availability</h1>
 
         {/* Month Navigation - Compact */}
         <div className="bg-card px-4 py-2">
