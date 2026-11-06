@@ -3,6 +3,7 @@ import { create } from "zustand";
 import { devtools, persist } from "zustand/middleware";
 
 import { SEARCH_DEBOUNCE_MS, useDebouncedValue } from "@/hooks/useDebouncedValue";
+import { afterWrite } from "@/lib/after-write";
 import { throwDetailLoadError } from "@/lib/detail-load-error";
 import {
   appendVerificationNote,
@@ -12,7 +13,6 @@ import {
   type PaymentChanges,
   type PaymentInput,
 } from "@/lib/payments";
-import { afterBookingPaymentChange } from "@/lib/query-invalidation";
 import { paymentKeys } from "@/lib/query-keys";
 import { handleSupabaseError, supabase, supabaseAuth } from "@/lib/supabase";
 import { toManilaDateString } from "@/lib/timezone";
@@ -195,7 +195,7 @@ export const useCreatePayment = () =>
     mutationFn: ({ input, receiptFile }: { input: PaymentInput; receiptFile?: File }) =>
       createPayment(supabase, input, receiptFile),
     onSettled: () => {
-      afterBookingPaymentChange();
+      afterWrite("payments");
     },
   });
 
@@ -211,7 +211,7 @@ export const useUpdatePayment = () =>
       receiptFile?: File;
     }) => updatePayment(supabase, paymentId, changes, receiptFile),
     onSettled: () => {
-      afterBookingPaymentChange();
+      afterWrite("payments");
     },
   });
 
@@ -219,7 +219,7 @@ export const useSoftDeletePayment = () =>
   useMutation({
     mutationFn: (paymentId: string) => softDeletePayment(supabase, paymentId),
     onSettled: () => {
-      afterBookingPaymentChange();
+      afterWrite("payments");
     },
   });
 
@@ -232,7 +232,7 @@ export const useVerifyPayment = () =>
       return appendVerificationNote(supabase, paymentId, user?.email ?? "unknown user");
     },
     onSettled: () => {
-      afterBookingPaymentChange();
+      afterWrite("payments");
     },
   });
 

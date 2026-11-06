@@ -115,6 +115,7 @@ const multiUnitBookingSchema = z
 
 type MultiUnitBookingRequest = z.infer<typeof multiUnitBookingSchema>;
 
+// Tables written here are listed in BOOKING_CREATE_WRITES (src/lib/bookings/request.ts) for the client cache
 /**
  * Main handler for multi-unit booking creation
  */

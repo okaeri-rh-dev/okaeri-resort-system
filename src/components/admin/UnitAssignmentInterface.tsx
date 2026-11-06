@@ -37,8 +37,8 @@ import {
   Checkbox,
 } from "@/components/patterns";
 import { getAccessToken, useAuthToken } from "@/hooks/useAuthToken";
+import { afterWrite, type TableName } from "@/lib/after-write";
 import { pluralize } from "@/lib/formatters";
-import { afterBookingUpdate } from "@/lib/query-invalidation";
 import { availabilityKeys } from "@/lib/query-keys";
 import { cn, formatCurrency } from "@/lib/utils";
 
@@ -74,6 +74,13 @@ interface AssignmentValidation {
   isValid: boolean;
   message: string;
 }
+
+// Tables POST /api/admin/assign-units writes (assign_units_to_booking)
+const ASSIGN_UNITS_WRITES = [
+  "booking_units",
+  "booking_unit_availability",
+  "bookings",
+] as const satisfies readonly TableName[];
 
 const availableUnitsQuery = (checkInDate: string, checkOutDate: string) =>
   queryOptions({
@@ -163,8 +170,6 @@ export function UnitAssignmentInterface({
       return response.json();
     },
     onSuccess: () => {
-      afterBookingUpdate();
-
       // Clear selection and errors
       setSelectedUnits(new Set());
       setAssignmentError(null);
@@ -185,6 +190,9 @@ export function UnitAssignmentInterface({
       }
 
       setAssignmentError(errorMessage);
+    },
+    onSettled: () => {
+      afterWrite(...ASSIGN_UNITS_WRITES);
     },
   });
 

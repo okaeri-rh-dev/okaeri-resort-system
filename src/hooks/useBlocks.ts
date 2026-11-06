@@ -10,7 +10,7 @@ import {
 } from "@tanstack/react-query";
 import { toast } from "sonner";
 
-import { afterBookingCancel, invalidateAvailability } from "@/lib/query-invalidation";
+import { afterWrite, type TableName } from "@/lib/after-write";
 import { availabilityKeys } from "@/lib/query-keys";
 import {
   db,
@@ -98,17 +98,7 @@ export function useBlockCabins() {
   }, [data]);
 }
 
-function useAfterBlockChange() {
-  const queryClient = useQueryClient();
-  return () => {
-    queryClient.invalidateQueries({ queryKey: availabilityKeys.blackouts.all });
-    invalidateAvailability();
-  };
-}
-
 export function useCreateBlocks() {
-  const afterBlockChange = useAfterBlockChange();
-
   return useMutation({
     mutationFn: async (input: NewBlockInput): Promise<Block[]> => {
       const { data, error } = await db.blackouts.create(input);
@@ -116,17 +106,17 @@ export function useCreateBlocks() {
       return data;
     },
     onSuccess: (blocks) => {
-      afterBlockChange();
       toast.success(
         blocks.some((block) => block.unit_id === null) ? "Resort closed" : "Dates blocked"
       );
+    },
+    onSettled: () => {
+      afterWrite("availability_blackouts");
     },
   });
 }
 
 export function useUpdateBlock() {
-  const afterBlockChange = useAfterBlockChange();
-
   return useMutation({
     mutationFn: async ({ id, changes }: { id: string; changes: BlockChanges }): Promise<Block> => {
       const { data, error } = await db.blackouts.update(id, changes);
@@ -134,23 +124,25 @@ export function useUpdateBlock() {
       return data;
     },
     onSuccess: () => {
-      afterBlockChange();
       toast.success("Block updated");
+    },
+    onSettled: () => {
+      afterWrite("availability_blackouts");
     },
   });
 }
 
 export function useDeleteBlock() {
-  const afterBlockChange = useAfterBlockChange();
-
   return useMutation({
     mutationFn: async (id: string): Promise<void> => {
       const { error } = await db.blackouts.delete(id);
       if (error) throw error;
     },
     onSuccess: () => {
-      afterBlockChange();
       toast.success("Block deleted");
+    },
+    onSettled: () => {
+      afterWrite("availability_blackouts");
     },
   });
 }
@@ -182,6 +174,12 @@ const blockConflictsQuery = (nights: BlockNights | null) =>
 
 const NO_NIGHTS: BlockNights = { unitIds: null, firstNight: "", lastNight: "" };
 
+// Tables the cancel_bookings_and_save_block RPC writes
+const CANCEL_AND_BLOCK_WRITES = [
+  "bookings",
+  "availability_blackouts",
+] as const satisfies readonly TableName[];
+
 type BlockToSave = Parameters<typeof db.blackouts.cancelAndSave>[0];
 
 /**
@@ -190,8 +188,6 @@ type BlockToSave = Parameters<typeof db.blackouts.cancelAndSave>[0];
  */
 export function useCancelBookingsAndSaveBlock() {
   const queryClient = useQueryClient();
-  const afterBlockChange = useAfterBlockChange();
-
   return useMutation({
     mutationFn: async ({
       block,
@@ -211,13 +207,14 @@ export function useCancelBookingsAndSaveBlock() {
         queryClient.setQueryData(availabilityKeys.blackouts.conflicts(nights), result.conflicts);
         return;
       }
-      afterBlockChange();
-      afterBookingCancel();
       toast.success(
         result.blocks.some((block) => block.unit_id === null)
           ? "Bookings cancelled and resort closed"
           : "Bookings cancelled and dates blocked"
       );
+    },
+    onSettled: () => {
+      afterWrite(...CANCEL_AND_BLOCK_WRITES);
     },
   });
 }

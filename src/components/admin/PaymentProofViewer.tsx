@@ -34,13 +34,16 @@ import {
   Textarea,
 } from "@/components/patterns";
 import { useAuthToken } from "@/hooks/useAuthToken";
+import { afterWrite, type TableName } from "@/lib/after-write";
 import { isPaymentReceived } from "@/lib/bookings";
-import { afterBookingPaymentChange } from "@/lib/query-invalidation";
 import { generateSignedUrl, renewSignedUrl, shouldRenewSignedUrl } from "@/lib/storage-utils";
 import type { PaymentStatus } from "@/types";
 
 // Configure PDF.js worker
 pdfjs.GlobalWorkerOptions.workerSrc = "/pdf.worker.js";
+
+// Tables POST /api/admin/verify-payment writes
+const VERIFY_PAYMENT_WRITES = ["payments"] as const satisfies readonly TableName[];
 
 interface PaymentProofViewerProps {
   bookingId: string;
@@ -156,7 +159,6 @@ export function PaymentProofViewer({
       return response.json();
     },
     onSuccess: (_data, variables) => {
-      afterBookingPaymentChange();
       onStatusChange?.(variables.action);
       setShowVerifyConfirm(false);
       setIsRejectDialogOpen(false);
@@ -165,6 +167,9 @@ export function PaymentProofViewer({
     onError: (error: Error) => {
       console.error("Payment verification error:", error);
       setError(error.message);
+    },
+    onSettled: () => {
+      afterWrite(...VERIFY_PAYMENT_WRITES);
     },
   });
 
