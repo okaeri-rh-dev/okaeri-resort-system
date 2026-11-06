@@ -209,7 +209,7 @@ export function MainLayout({ children }: MainLayoutProps) {
   return (
     <AppShell
       surface="admin"
-      brand={{ name: "Okaeri Resort", tagline: "Management System", to: "/admin/dashboard" }}
+      brand={{ name: "Okaeri Rest House", tagline: "Management System", to: "/admin/dashboard" }}
       destinations={visibleDestinations}
       navGroups={navGroups}
       navLoading={roleLoading}

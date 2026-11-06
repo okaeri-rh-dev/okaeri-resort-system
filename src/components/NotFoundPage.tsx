@@ -30,7 +30,7 @@ export function NotFoundPage() {
         </div>
 
         <div className="text-muted-foreground mt-8 text-sm">
-          <p>Okaeri Resort Management System</p>
+          <p>Okaeri Rest House Management System</p>
         </div>
       </div>
     </div>

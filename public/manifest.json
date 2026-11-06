@@ -1,6 +1,6 @@
 {
-  "name": "Okaeri Resort Management System",
-  "short_name": "Okaeri Resort",
+  "name": "Okaeri Rest House Management System",
+  "short_name": "Okaeri",
   "description": "Professional resort management platform for Philippine businesses",
   "id": "/admin",
   "start_url": "/admin",

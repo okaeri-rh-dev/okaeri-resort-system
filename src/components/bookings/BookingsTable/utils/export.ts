@@ -49,7 +49,7 @@ export const exportBookings = async (bookings: Booking[]) => {
         "Created Date",
       ],
       {
-        businessName: "Okaeri Resort",
+        businessName: "Okaeri Rest House",
         includeMetadata: true,
         philippineFormat: true,
       }

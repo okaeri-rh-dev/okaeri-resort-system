@@ -47,7 +47,7 @@ test.describe("Admin navigation form", () => {
     expect(tap?.height).toBeGreaterThanOrEqual(44);
 
     await page.getByRole("button", { name: "More" }).click();
-    const menu = page.getByRole("dialog", { name: "Okaeri Resort" });
+    const menu = page.getByRole("dialog", { name: "Okaeri Rest House" });
     for (const group of ["Bookings", "Cabins", "Money", "Admin"]) {
       await expect(menu.getByRole("list", { name: group })).toBeVisible();
     }
@@ -92,7 +92,9 @@ test.describe("Admin navigation form", () => {
 
       await page.getByRole("button", { name: "Open menu" }).click();
       await expect(
-        page.getByRole("dialog", { name: "Okaeri Resort" }).getByRole("link", { name: "Settings" })
+        page
+          .getByRole("dialog", { name: "Okaeri Rest House" })
+          .getByRole("link", { name: "Settings" })
       ).toBeVisible();
       await expectNoSidewaysScroll(page);
     });
@@ -105,7 +107,7 @@ test.describe("Admin navigation form", () => {
     const { nav, box } = await mainNavBox(page);
     expect(box.x).toBe(0);
     expect(box.width).toBeGreaterThanOrEqual(240);
-    await expect(page.getByRole("link", { name: "Okaeri Resort" })).toBeVisible();
+    await expect(page.getByRole("link", { name: "Okaeri Rest House" })).toBeVisible();
     await expect(page.getByRole("button", { name: "Open menu" })).toBeHidden();
 
     const link = await nav.getByRole("link", { name: "Booking Queue" }).boundingBox();
@@ -136,7 +138,9 @@ test.describe("Admin navigation form", () => {
 
     await page.getByRole("button", { name: "More" }).click();
     await expect(
-      page.getByRole("dialog", { name: "Okaeri Resort" }).getByRole("radiogroup", { name: "Theme" })
+      page
+        .getByRole("dialog", { name: "Okaeri Rest House" })
+        .getByRole("radiogroup", { name: "Theme" })
     ).toBeInViewport();
 
     const lastLink = page.getByRole("navigation", { name: "Menu" }).getByRole("link").last();
@@ -188,7 +192,7 @@ test.describe("Guest navigation form", () => {
 
     await expect(page.getByRole("navigation", { name: "Main" })).toBeHidden();
     await page.getByRole("button", { name: "Open menu" }).click();
-    const menu = page.getByRole("dialog", { name: "Okaeri Resort" });
+    const menu = page.getByRole("dialog", { name: "Okaeri Rest House" });
     await expect(menu.getByRole("link", { name: "Availability" })).toBeVisible();
     await expect(menu.getByRole("link", { name: "Check a booking" })).toBeVisible();
 

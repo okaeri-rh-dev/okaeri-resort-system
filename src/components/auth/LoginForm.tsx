@@ -98,7 +98,7 @@ export function LoginForm({ onSuccess, registered, confirmed }: LoginFormProps) 
     <div className="bg-background flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-bold">Okaeri Resort System</CardTitle>
+          <CardTitle className="text-2xl font-bold">Okaeri Rest House</CardTitle>
           <p className="text-muted-foreground">Sign in to continue</p>
         </CardHeader>
         <CardContent>

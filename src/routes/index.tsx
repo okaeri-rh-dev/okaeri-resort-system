@@ -43,32 +43,33 @@ function HomePage() {
 
   // Set document title and meta tags
   useEffect(() => {
-    document.title = "Okaeri Resort - Beachfront Accommodation in La Union | Check Availability";
+    document.title =
+      "Okaeri Rest House - Beachfront Accommodation in La Union | Check Availability";
 
     // Update or create meta tags
     const metaTags = [
       {
         name: "description",
         content:
-          "Okaeri Resort offers beachfront accommodations in Taboc, La Union. Check real-time availability and plan your perfect beach getaway. 3 units available.",
+          "Okaeri Rest House offers beachfront accommodations in Taboc, La Union. Check real-time availability and plan your perfect beach getaway. 3 units available.",
       },
       {
         name: "keywords",
         content:
-          "Okaeri Resort, La Union resort, beach resort, Taboc accommodations, Philippines beachfront, La Union hotels",
+          "Okaeri Rest House, La Union resort, beach resort, Taboc accommodations, Philippines beachfront, La Union hotels",
       },
-      { property: "og:title", content: "Okaeri Resort - Beachfront Resort in La Union" },
+      { property: "og:title", content: "Okaeri Rest House - Beachfront Resort in La Union" },
       {
         property: "og:description",
         content:
-          "Experience beachfront living at Okaeri Resort. Check availability for our 3 units in Taboc, La Union",
+          "Experience beachfront living at Okaeri Rest House. Check availability for our 3 units in Taboc, La Union",
       },
       { property: "og:type", content: "website" },
       { property: "og:url", content: "https://okaeri-resort.com" },
       { property: "og:image", content: "https://okaeri-resort.com/images/resort-hero.jpg" },
-      { property: "og:site_name", content: "Okaeri Resort" },
+      { property: "og:site_name", content: "Okaeri Rest House" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:title", content: "Okaeri Resort - Beachfront Resort in La Union" },
+      { name: "twitter:title", content: "Okaeri Rest House - Beachfront Resort in La Union" },
       {
         name: "twitter:description",
         content: "Check availability for our beachfront units in Taboc, La Union",
@@ -95,7 +96,7 @@ function HomePage() {
   const structuredData = {
     "@context": "https://schema.org",
     "@type": "Resort",
-    name: "Okaeri Resort",
+    name: "Okaeri Rest House",
     description: "Beachfront resort in Taboc, La Union with 3 available units",
     address: {
       "@type": "PostalAddress",

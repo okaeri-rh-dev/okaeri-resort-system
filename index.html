@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 
     <!-- SEO Meta Tags -->
-    <title>Okaeri Resort Management System - Professional Resort Operations Platform</title>
+    <title>Okaeri Rest House Management System</title>
     <meta
       name="description"
       content="Comprehensive resort management system for Philippine businesses. Handle bookings, guests, payments, and operations efficiently."
@@ -14,7 +14,7 @@
       name="keywords"
       content="resort management, booking system, philippine resort, hospitality software, hotel management, okaeri resort"
     />
-    <meta name="author" content="Okaeri Resort" />
+    <meta name="author" content="Okaeri Rest House" />
     <meta name="robots" content="index, follow" />
 
     <!-- Favicon -->
@@ -25,24 +25,24 @@
 
     <!-- Open Graph / Social Media Meta Tags -->
     <meta property="og:type" content="website" />
-    <meta property="og:title" content="Okaeri Resort Management System" />
+    <meta property="og:title" content="Okaeri Rest House Management System" />
     <meta
       property="og:description"
       content="Professional resort operations platform for Philippine businesses"
     />
     <meta property="og:image" content="/og-image.png" />
-    <meta property="og:site_name" content="Okaeri Resort" />
+    <meta property="og:site_name" content="Okaeri Rest House" />
 
     <!-- Twitter Card Meta Tags -->
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Okaeri Resort Management System" />
+    <meta name="twitter:title" content="Okaeri Rest House Management System" />
     <meta name="twitter:description" content="Professional resort operations platform" />
     <meta name="twitter:image" content="/og-image.png" />
 
     <!-- Mobile App Meta Tags -->
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-    <meta name="apple-mobile-web-app-title" content="Okaeri Resort" />
+    <meta name="apple-mobile-web-app-title" content="Okaeri" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="format-detection" content="telephone=no" />
 
@@ -82,7 +82,19 @@
     <link href="/src/index.css" rel="stylesheet" />
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <!-- Splash until React's first render replaces it -->
+      <div style="display: grid; min-height: 100dvh; place-items: center">
+        <svg
+          viewBox="16 124 480 236"
+          role="img"
+          aria-label="Okaeri Rest House"
+          style="width: min(60vw, 240px)"
+        >
+          <use href="/logo.svg#logo" />
+        </svg>
+      </div>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

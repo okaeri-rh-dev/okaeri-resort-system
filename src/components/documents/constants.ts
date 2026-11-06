@@ -8,7 +8,7 @@ export const DOCUMENT_PREFIX_MAP = {
 } as const;
 
 export const DEFAULT_LETTERHEAD: LetterheadConfig = {
-  resort_name: "Okaeri Resort",
+  resort_name: "Okaeri Rest House",
   tagline: "Your Home Away From Home",
   address_line_1: "Amita St., Brgy. Taboc",
   address_line_2: "M8QQ+HF",

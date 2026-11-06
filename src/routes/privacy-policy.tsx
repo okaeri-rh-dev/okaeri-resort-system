@@ -35,7 +35,7 @@ function PrivacyPolicyPage() {
         {/* Header */}
         <div className="mb-8 text-center">
           <h1 className="mb-2 text-3xl font-bold">Privacy Policy</h1>
-          <p className="text-muted-foreground">Okaeri Resort Data Privacy Policy</p>
+          <p className="text-muted-foreground">Okaeri Rest House Data Privacy Policy</p>
           <p className="text-muted-foreground mt-1 text-sm">
             In compliance with the Data Privacy Act of 2012 (RA 10173)
           </p>
@@ -466,7 +466,7 @@ function PrivacyPolicyPage() {
                 </p>
                 <div className="bg-muted rounded-md p-4">
                   <p className="font-semibold">Data Protection Officer</p>
-                  <p className="font-semibold">Okaeri Resort</p>
+                  <p className="font-semibold">Okaeri Rest House</p>
                   <p className="text-muted-foreground mt-2 text-sm">
                     The resort manager handles privacy requests.
                   </p>
@@ -494,7 +494,7 @@ function PrivacyPolicyPage() {
               {/* Footer */}
               <div className="bg-background rounded-lg border p-4 text-center">
                 <p className="font-medium">
-                  Thank you for trusting Okaeri Resort with your personal information
+                  Thank you for trusting Okaeri Rest House with your personal information
                 </p>
                 <p className="mt-2">
                   We are committed to protecting your privacy and handling your data responsibly in
