@@ -4,9 +4,20 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { renderHook, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi, type MockInstance } from "vitest";
 
+import { afterWrite } from "@/lib/after-write";
 import { useAnonymizeGuest, useDeleteGuest } from "@/stores/useGuestStore";
 
+vi.mock("@/lib/after-write", () => ({ afterWrite: vi.fn() }));
 vi.mock("@/hooks/useAuthToken", () => ({ getAccessToken: vi.fn(async () => "token") }));
+
+const retentionWrites = [
+  "guests",
+  "guest_assignments",
+  "bookings",
+  "booking_units",
+  "payments",
+  "audit_logs_archive",
+];
 
 // Spied per test: msw-setup patches fetch in beforeAll, after module-level stubs run
 let fetchMock: MockInstance<typeof fetch>;
@@ -24,6 +35,7 @@ const wrapper = ({ children }: { children: ReactNode }) => (
 
 describe("guest retention mutations", () => {
   beforeEach(() => {
+    vi.mocked(afterWrite).mockClear();
     fetchMock = vi.spyOn(globalThis, "fetch");
   });
 
@@ -39,6 +51,7 @@ describe("guest retention mutations", () => {
       headers: { Authorization: "Bearer token" },
     });
     expect(result.current.data).toMatchObject({ deleted_files: 2 });
+    expect(afterWrite).toHaveBeenCalledWith(...retentionWrites);
   });
 
   it("explains how to fix a 409 without the guest id", async () => {
@@ -53,6 +66,7 @@ describe("guest retention mutations", () => {
     expect(result.current.error?.message).toBe(
       "This guest has a current or upcoming booking. Cancel or finish it first."
     );
+    expect(afterWrite).toHaveBeenCalledWith(...retentionWrites);
   });
 
   it("explains a 404 without the guest id", async () => {
@@ -78,5 +92,6 @@ describe("guest retention mutations", () => {
       method: "DELETE",
       headers: { Authorization: "Bearer token" },
     });
+    expect(afterWrite).toHaveBeenCalledWith(...retentionWrites);
   });
 });

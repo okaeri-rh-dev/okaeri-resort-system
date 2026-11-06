@@ -1,6 +1,7 @@
-import { queryOptions, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { queryOptions, useMutation, useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 
+import { afterWrite } from "@/lib/after-write";
 import { paymentMethodKeys } from "@/lib/query-keys";
 import { db, handleSupabaseError, storage } from "@/lib/supabase";
 import type { PaymentMethodConfig } from "@/types";
@@ -46,16 +47,14 @@ export function useActivePaymentMethods() {
  * Hook to create a new payment method
  */
 export function useCreatePaymentMethod() {
-  const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: async (data: Omit<PaymentMethodConfig, "id" | "created_at" | "updated_at">) => {
       const { data: result, error } = await db.paymentMethods.create(data);
       if (error) throw error;
       return result as PaymentMethodConfig;
     },
+    onSettled: () => afterWrite("payment_methods"),
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: paymentMethodKeys.all });
       toast.success("Payment method created", {
         description: `${data.display_name} has been added successfully.`,
       });
@@ -72,8 +71,6 @@ export function useCreatePaymentMethod() {
  * Hook to update an existing payment method
  */
 export function useUpdatePaymentMethod() {
-  const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: async ({
       id,
@@ -86,8 +83,8 @@ export function useUpdatePaymentMethod() {
       if (error) throw error;
       return data as PaymentMethodConfig;
     },
+    onSettled: () => afterWrite("payment_methods"),
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: paymentMethodKeys.all });
       toast.success("Payment method updated", {
         description: `${data.display_name} has been updated successfully.`,
       });
@@ -104,16 +101,14 @@ export function useUpdatePaymentMethod() {
  * Hook to soft-delete (deactivate) a payment method
  */
 export function useDeletePaymentMethod() {
-  const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: async (id: string) => {
       const { data, error } = await db.paymentMethods.delete(id);
       if (error) throw error;
       return data as PaymentMethodConfig;
     },
+    onSettled: () => afterWrite("payment_methods"),
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: paymentMethodKeys.all });
       toast.success("Payment method deactivated", {
         description: `${data.display_name} has been deactivated.`,
       });
@@ -130,16 +125,14 @@ export function useDeletePaymentMethod() {
  * Hook to reactivate a deactivated payment method
  */
 export function useReactivatePaymentMethod() {
-  const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: async (id: string) => {
       const { data, error } = await db.paymentMethods.reactivate(id);
       if (error) throw error;
       return data as PaymentMethodConfig;
     },
+    onSettled: () => afterWrite("payment_methods"),
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: paymentMethodKeys.all });
       toast.success("Payment method reactivated", {
         description: `${data.display_name} has been reactivated.`,
       });
@@ -157,8 +150,6 @@ export function useReactivatePaymentMethod() {
  * Uploads to the payment-methods storage bucket and updates the record
  */
 export function useUploadQrCode() {
-  const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: async ({ id, file }: { id: string; file: File }) => {
       const ext = file.name.split(".").pop() || "png";
@@ -175,8 +166,8 @@ export function useUploadQrCode() {
       if (error) throw error;
       return data as PaymentMethodConfig;
     },
+    onSettled: () => afterWrite("payment_methods"),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: paymentMethodKeys.all });
       toast.success("QR code uploaded successfully");
     },
     onError: (error) => {
@@ -191,8 +182,6 @@ export function useUploadQrCode() {
  * Hook to delete a QR code image from a payment method
  */
 export function useDeleteQrCode() {
-  const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: async ({ id, storagePath }: { id: string; storagePath: string }) => {
       // Delete from storage
@@ -206,8 +195,8 @@ export function useDeleteQrCode() {
       if (error) throw error;
       return data as PaymentMethodConfig;
     },
+    onSettled: () => afterWrite("payment_methods"),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: paymentMethodKeys.all });
       toast.success("QR code removed");
     },
     onError: (error) => {

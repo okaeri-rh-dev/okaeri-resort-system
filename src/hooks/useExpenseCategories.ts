@@ -1,6 +1,7 @@
-import { queryOptions, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { queryOptions, useMutation, useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 
+import { afterWrite } from "@/lib/after-write";
 import { expenseCategoryKeys } from "@/lib/query-keys";
 import { db, handleSupabaseError } from "@/lib/supabase";
 import type { ExpenseCategoryConfig } from "@/types";
@@ -46,16 +47,14 @@ export function useActiveExpenseCategories() {
  * Hook to create a new expense category
  */
 export function useCreateExpenseCategory() {
-  const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: async (data: { name: string; display_order?: number; is_active?: boolean }) => {
       const { data: result, error } = await db.expenseCategories.create(data);
       if (error) throw error;
       return result as ExpenseCategoryConfig;
     },
+    onSettled: () => afterWrite("expense_categories"),
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: expenseCategoryKeys.all });
       toast.success("Category created", {
         description: `${data.name} has been added successfully.`,
       });
@@ -85,8 +84,6 @@ export function useCreateExpenseCategory() {
  * Hook to update an existing expense category
  */
 export function useUpdateExpenseCategory() {
-  const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: async ({
       id,
@@ -99,8 +96,8 @@ export function useUpdateExpenseCategory() {
       if (error) throw error;
       return data as ExpenseCategoryConfig;
     },
+    onSettled: () => afterWrite("expense_categories"),
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: expenseCategoryKeys.all });
       toast.success("Category updated", {
         description: `${data.name} has been updated successfully.`,
       });
@@ -129,16 +126,14 @@ export function useUpdateExpenseCategory() {
  * Hook to archive (soft delete) an expense category
  */
 export function useArchiveExpenseCategory() {
-  const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: async (id: string) => {
       const { data, error } = await db.expenseCategories.archive(id);
       if (error) throw error;
       return data as ExpenseCategoryConfig;
     },
+    onSettled: () => afterWrite("expense_categories"),
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: expenseCategoryKeys.all });
       toast.success("Category archived", {
         description: `${data.name} has been archived.`,
       });
@@ -155,16 +150,14 @@ export function useArchiveExpenseCategory() {
  * Hook to restore an archived expense category
  */
 export function useRestoreExpenseCategory() {
-  const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: async (id: string) => {
       const { data, error } = await db.expenseCategories.restore(id);
       if (error) throw error;
       return data as ExpenseCategoryConfig;
     },
+    onSettled: () => afterWrite("expense_categories"),
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: expenseCategoryKeys.all });
       toast.success("Category restored", {
         description: `${data.name} has been restored.`,
       });

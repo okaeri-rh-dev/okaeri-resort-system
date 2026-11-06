@@ -1,6 +1,7 @@
-import { queryOptions, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { queryOptions, useMutation, useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 
+import { afterWrite } from "@/lib/after-write";
 import { toKindLabel, type MoveDirection } from "@/lib/contact-channel";
 import { contactChannelKeys } from "@/lib/query-keys";
 import { db, handleSupabaseError } from "@/lib/supabase";
@@ -56,16 +57,14 @@ export function useActiveContactChannels() {
 }
 
 export function useCreateContactChannel() {
-  const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: async (input: ContactChannelInput): Promise<ContactChannel> => {
       const { data, error } = await db.contactChannels.create(input);
       if (error) throw error;
       return data;
     },
+    onSettled: () => afterWrite("contact_channels"),
     onSuccess: (channel) => {
-      queryClient.invalidateQueries({ queryKey: contactChannelKeys.all });
       toast.success("Contact channel added", {
         description: `${toKindLabel(channel)} is now listed.`,
       });
@@ -79,8 +78,6 @@ export function useCreateContactChannel() {
 }
 
 export function useUpdateContactChannel() {
-  const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: async ({
       id,
@@ -93,8 +90,8 @@ export function useUpdateContactChannel() {
       if (error) throw error;
       return data;
     },
+    onSettled: () => afterWrite("contact_channels"),
     onSuccess: (channel) => {
-      queryClient.invalidateQueries({ queryKey: contactChannelKeys.all });
       toast.success("Contact channel updated", {
         description: `${toKindLabel(channel)} has been updated.`,
       });
@@ -108,8 +105,6 @@ export function useUpdateContactChannel() {
 }
 
 export function useSetContactChannelActive() {
-  const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: async ({
       id,
@@ -122,8 +117,8 @@ export function useSetContactChannelActive() {
       if (error) throw error;
       return data;
     },
+    onSettled: () => afterWrite("contact_channels"),
     onSuccess: (channel) => {
-      queryClient.invalidateQueries({ queryKey: contactChannelKeys.all });
       const kindLabel = toKindLabel(channel);
       if (channel.is_active) {
         toast.success("Contact channel shown", { description: `Guests now see ${kindLabel}.` });
@@ -142,8 +137,6 @@ export function useSetContactChannelActive() {
 }
 
 export function useReorderContactChannel() {
-  const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: async ({
       channel,
@@ -155,8 +148,8 @@ export function useReorderContactChannel() {
       const { error } = await db.contactChannels.reorder(channel.id, direction);
       if (error) throw error;
     },
+    onSettled: () => afterWrite("contact_channels"),
     onSuccess: (_, { channel, direction }) => {
-      queryClient.invalidateQueries({ queryKey: contactChannelKeys.all });
       toast.success("Contact channel moved", {
         description: `${toKindLabel(channel)} moved ${direction}.`,
       });

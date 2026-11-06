@@ -3,7 +3,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
-import { invalidateAccounts } from "@/lib/query-invalidation";
+import { afterWrite, type TableName } from "@/lib/after-write";
 import { queryKeys } from "@/lib/query-keys";
 import { db } from "@/lib/supabase";
 import type { Expense, Guest, Unit } from "@/types";
@@ -11,6 +11,12 @@ import type { EntityType } from "@/types/entity-detail.types";
 
 // Payments and bookings save through their modules (src/lib/payments, src/lib/bookings)
 type EditableEntityType = Exclude<EntityType, "payment" | "booking">;
+
+const ENTITY_TABLES: Record<EditableEntityType, TableName> = {
+  unit: "units",
+  guest: "guests",
+  expense: "expenses",
+};
 
 /**
  * Mapped type for entity update data
@@ -125,16 +131,9 @@ export function useEntityEdit<T extends EditableEntityType>(
       options?.onError?.(error);
     },
 
-    // Refetch on success to ensure consistency
+    onSettled: () => afterWrite(ENTITY_TABLES[entityType]),
+
     onSuccess: (data) => {
-      // Invalidate individual entity cache
-      queryClient.invalidateQueries({ queryKey: queryKeys.entity(entityType, entityId) });
-
-      // Invalidate list caches
-      queryClient.invalidateQueries({ queryKey: queryKeys.entities(entityType) });
-
-      if (entityType === "expense") invalidateAccounts();
-
       // Show success toast
       toast.success(`${entityType} updated successfully`);
 

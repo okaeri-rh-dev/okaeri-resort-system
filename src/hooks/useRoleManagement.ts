@@ -2,6 +2,7 @@
 
 import { queryOptions, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
+import { afterWrite } from "@/lib/after-write";
 import {
   AuditRole,
   countUsersByRole,
@@ -12,7 +13,7 @@ import {
   type AppRole,
 } from "@/lib/audit-roles";
 import { logger } from "@/lib/logger";
-import { pendingUsersKeys, roleKeys } from "@/lib/query-keys";
+import { roleKeys } from "@/lib/query-keys";
 import { supabase } from "@/lib/supabase";
 import type { AuditLog } from "@/types/audit.types";
 
@@ -114,8 +115,6 @@ export function useRoleHistory(userId: string | null) {
  * Admin-only mutation
  */
 export function useGrantRole() {
-  const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: async ({
       userId,
@@ -138,12 +137,9 @@ export function useGrantRole() {
 
       return result;
     },
+    onSettled: () => afterWrite("app_roles"),
     onSuccess: (_data, variables) => {
       logger.info("Role granted successfully", { email: variables.email, role: variables.role });
-
-      // Invalidate all role queries and pending users list
-      queryClient.invalidateQueries({ queryKey: roleKeys.all });
-      queryClient.invalidateQueries({ queryKey: pendingUsersKeys.all });
     },
     onError: (error, variables) => {
       logger.error("Failed to grant role", {
@@ -206,10 +202,7 @@ export function useUpdateRole() {
       }
       logger.error("Failed to update role", { error });
     },
-    onSettled: () => {
-      // Refetch after mutation
-      queryClient.invalidateQueries({ queryKey: roleKeys.all });
-    },
+    onSettled: () => afterWrite("app_roles"),
   });
 }
 
@@ -256,9 +249,6 @@ export function useDeactivateRole() {
       }
       logger.error("Failed to deactivate role", { error });
     },
-    onSettled: () => {
-      // Refetch after mutation
-      queryClient.invalidateQueries({ queryKey: roleKeys.all });
-    },
+    onSettled: () => afterWrite("app_roles"),
   });
 }

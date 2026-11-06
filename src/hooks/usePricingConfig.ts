@@ -2,6 +2,7 @@ import { queryOptions, useMutation, useQuery, useQueryClient } from "@tanstack/r
 import { useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 
+import { afterWrite } from "@/lib/after-write";
 import { pricingConfigKeys } from "@/lib/query-keys";
 import { db, supabase } from "@/lib/supabase";
 import type { PricingConfigInput } from "@/lib/validation/pricing-schema";
@@ -171,10 +172,7 @@ export function useUpdatePricingConfig(options?: {
       console.error("[useUpdatePricingConfig] Mutation error:", error);
     },
 
-    // Always refetch after error or success to ensure cache is in sync
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: pricingConfigQuery.queryKey });
-    },
+    onSettled: () => afterWrite("pricing_config"),
 
     // Success handling
     onSuccess: (data) => {
