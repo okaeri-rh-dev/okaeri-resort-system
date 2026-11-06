@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+import type { TableName } from "@/lib/after-write";
 import type { BookingStatus } from "@/types/booking-status";
 import type { Database, Tables, TablesInsert, TablesUpdate } from "@/types/database.types";
 
@@ -50,6 +51,14 @@ function rowFrom<T>({ data, error }: Result<T>): NonNullable<T> {
   if (data === null || data === undefined) throw new Error("The booking was not returned");
   return data;
 }
+
+// Tables updateBooking writes: a new email inserts a guest, and update_booking calls set_booking_total
+export const UPDATE_BOOKING_WRITES = [
+  "bookings",
+  "guests",
+  "booking_units",
+  "payments",
+] as const satisfies readonly TableName[];
 
 export async function updateBooking(
   client: Client,

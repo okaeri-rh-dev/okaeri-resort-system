@@ -45,6 +45,7 @@ interface SupabaseUser {
   app_metadata?: Record<string, unknown>;
 }
 
+// Tables written here are listed in VERIFY_PAYMENT_WRITES (src/components/admin/PaymentProofViewer.tsx) for the client cache
 export async function onRequest(context: {
   request: CloudflareRequest;
   env: Env;

@@ -1,7 +1,17 @@
+import type { TableName } from "@/lib/after-write";
 import { supabase } from "@/lib/supabase";
 import type { AdminMultiUnitBookingCreate, MultiUnitBooking } from "@/types";
 
 // Browser only. Creates through the Worker: server price, availability re-check, availability row.
+
+// Tables POST /api/bookings/multi-unit writes; payments is the Airbnb payout
+export const BOOKING_CREATE_WRITES = [
+  "guests",
+  "bookings",
+  "booking_units",
+  "booking_unit_availability",
+  "payments",
+] as const satisfies readonly TableName[];
 
 type RouteResponse =
   | { success: true; data: MultiUnitBooking }

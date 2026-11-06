@@ -12,6 +12,7 @@ import { devtools, persist } from "zustand/middleware";
 
 import { getAccessToken } from "@/hooks/useAuthToken";
 import { SEARCH_DEBOUNCE_MS, useDebouncedValue } from "@/hooks/useDebouncedValue";
+import { afterWrite } from "@/lib/after-write";
 import {
   BOOKING_SEARCH_COLUMNS,
   cancelBooking,
@@ -19,21 +20,15 @@ import {
   filterDay,
   manilaDayStart,
   setBookingStatus,
+  UPDATE_BOOKING_WRITES,
   updateBooking,
   type BookingChanges,
 } from "@/lib/bookings";
-import { requestBooking } from "@/lib/bookings/request";
+import { BOOKING_CREATE_WRITES, requestBooking } from "@/lib/bookings/request";
 import { adaptBookingFromDB } from "@/lib/database-adapters";
 import { throwDetailLoadError } from "@/lib/detail-load-error";
 import { formatCurrency } from "@/lib/formatters";
 import { recordProofPayment } from "@/lib/payments";
-import {
-  afterBookingCancel,
-  afterBookingCreate,
-  afterBookingPaymentChange,
-  afterBookingStatusChange,
-  afterBookingUpdate,
-} from "@/lib/query-invalidation";
 import { bookingKeys } from "@/lib/query-keys";
 import { ilikeAnyFilter } from "@/lib/search-filter";
 import { db, handleSupabaseError, supabase } from "@/lib/supabase";
@@ -403,7 +398,7 @@ export const useCreateBooking = () =>
   useMutation({
     mutationFn: requestBooking,
     onSettled: () => {
-      afterBookingCreate();
+      afterWrite(...BOOKING_CREATE_WRITES);
     },
   });
 
@@ -434,7 +429,7 @@ export const useUpdateBookingStatus = () => {
       toast.error("Failed to change the booking status", { description: error.message });
     },
     onSettled: () => {
-      afterBookingStatusChange();
+      afterWrite("bookings");
     },
   });
 };
@@ -453,7 +448,7 @@ export const useUploadPaymentProof = () =>
       toast.error("Failed to record the payment proof", { description: error.message });
     },
     onSettled: () => {
-      afterBookingPaymentChange();
+      afterWrite("payments");
     },
   });
 
@@ -468,7 +463,7 @@ export const useCancelBooking = () =>
       toast.error("Failed to cancel the booking", { description: error.message });
     },
     onSettled: () => {
-      afterBookingCancel();
+      afterWrite("bookings");
     },
   });
 
@@ -483,6 +478,6 @@ export const useUpdateBooking = () =>
       toast.error("Failed to update the booking", { description: error.message });
     },
     onSettled: () => {
-      afterBookingUpdate();
+      afterWrite(...UPDATE_BOOKING_WRITES);
     },
   });
