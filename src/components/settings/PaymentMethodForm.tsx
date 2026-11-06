@@ -281,7 +281,7 @@ export function PaymentMethodForm({ method, onSuccess, onCancel }: PaymentMethod
                     size="icon"
                     className="absolute -top-2 -right-2 h-6 w-6"
                     onClick={handleQrDelete}
-                    disabled={deleteQr.isPending}
+                    disabled={deleteQr.isPending || uploadQr.isPending}
                     aria-label="Remove QR code"
                   >
                     <Trash2 className="h-3 w-3" aria-hidden="true" />
