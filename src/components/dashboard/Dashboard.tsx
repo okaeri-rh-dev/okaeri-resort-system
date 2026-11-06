@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from "react";
 
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { Link, useNavigate, useSearch } from "@tanstack/react-router";
 import { parseISO, startOfMonth } from "date-fns";
 import { ChevronRight } from "lucide-react";
@@ -8,17 +8,23 @@ import { ChevronRight } from "lucide-react";
 import { useBlockCabins } from "@/hooks/useBlocks";
 import { manilaDayOf, type ManilaDay } from "@/lib/bookings/stay";
 import { monthNumbers, pendingCount } from "@/lib/dashboard";
-import { bookingKeys, guestKeys, unitKeys } from "@/lib/query-keys";
 import { useAllBookings } from "@/stores/useBookingStore";
+import { allUnitsQuery } from "@/stores/useUnitStore";
 
 import { DashboardCalendar } from "./DashboardCalendar";
 import { DashboardHeader } from "./DashboardHeader";
 import { DayPane } from "./DayPane";
 
 export function Dashboard() {
-  const { data: bookings, isLoading, dataUpdatedAt, isFetching } = useAllBookings();
+  const {
+    data: bookings,
+    isLoading,
+    dataUpdatedAt,
+    isFetching,
+    refetch: refetchBookings,
+  } = useAllBookings();
   const { sortedUnits } = useBlockCabins();
-  const queryClient = useQueryClient();
+  const { refetch: refetchUnits } = useQuery(allUnitsQuery());
   const navigate = useNavigate();
   const { day: selectedDay } = useSearch({ strict: false });
   const today = manilaDayOf(new Date());
@@ -28,10 +34,9 @@ export function Dashboard() {
   if (selectedDay && selectedDay !== paneDay) setPaneDay(selectedDay);
 
   const refresh = useCallback(() => {
-    queryClient.invalidateQueries({ queryKey: bookingKeys.all });
-    queryClient.invalidateQueries({ queryKey: unitKeys.all });
-    queryClient.invalidateQueries({ queryKey: guestKeys.all });
-  }, [queryClient]);
+    void refetchBookings();
+    void refetchUnits();
+  }, [refetchBookings, refetchUnits]);
 
   // The pane adds no history entry. The calendar follows a day picked in another month (an outside
   // day, or the day buttons)

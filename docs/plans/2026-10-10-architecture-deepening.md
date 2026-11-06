@@ -7,7 +7,7 @@ Source: architecture review run 2026-10-10 (`/improve-codebase-architecture`), s
 1. **Entity persistence, one write path per entity** (Strong): edit page and dialog both save through one module that owns input shape → row columns, Manila dates and side effects. Start with Payment.
 2. **Admin request pipeline** (Strong): authenticate once, resolve role once (today 3× each on verify-payment), role declared per route, one error envelope.
 3. **One pricing module** (Strong): pure core over a resolved rate card + seasons; replaces 4 TS engines whose fallbacks disagree.
-4. **Invalidate by domain fact** (Strong): one table → cached-data map; mutations report what changed.
+4. [x] **Invalidate by domain fact** (Strong): one table → cached-data map; mutations report what changed. Done in #352 (`src/lib/after-write.ts`).
 5. **Payment verification module** (Worth exploring): owns Pending → Verified transitions; design inside deferred item 4 of the guardrails plan.
 6. **Stores shrink to UI state** (Worth exploring): follows 1.
 7. **One unit-occupancy definition** (Speculative): wait for guardrails deferred item 4.
@@ -83,12 +83,13 @@ Deploy status 2026-10-10: pushed to `origin/main` (up to `2e3feb0`), but GitHub 
   - [x] 8. (`e7ed7f9`, `8a63830`) Cancel/status via the module; hard delete leaves the UI
   - [x] 9. (`d7b018d`) Readers (night count, list filter, confirmation card)
   - [x] 10. Browser check, read-only prod preview, user `db push`, push, manual deploy, post-deploy normalize
-- [ ] Then 4 → 6 on the client; 3 → 2 → 8 on the server
+- [ ] Then 4 → 6 on the client; 3 → 2 → 8 on the server (4 done in #352)
 
-## Resume state (2026-10-13)
+## Resume state (2026-11-06)
 
 - Booking module (Candidate 1) done: Tasks 1-10 complete, deployed `79396f4`, post-deploy normalize found nothing to fix (2026-10-13); ticks and commits on the task lines above (the SDD ledger was scratch and was deleted 2026-10-15). Final whole-branch review done; its pre-deploy fixes and decisions are in "Booking module execution (2026-10-11)" below.
-- Next: Candidate 4 on the client (order: client 4 → 6; server 3 → 2 → 8). Grilled 2026-10-14 (rounds 1-3 below); plan `docs/plans/2026-10-14-invalidate-by-domain-fact.md`. Not started. The plan predates about 430 commits on `main` (checked 2026-11-02): re-check its call sites and key map before execution.
+- Candidate 4 done (2026-11-06): spec #352, tickets #353-#358. Every client write calls `afterWrite(...tables)`; `src/lib/query-invalidation.ts` is deleted and a `no-restricted-properties` lint rule bans direct `invalidateQueries`/`removeQueries`. The 2026-10-14 plan is superseded.
+- Next: Candidate 6 on the client (stores shrink to UI state); then server 3 → 2 → 8.
 - A concurrent session committed into this working tree on 2026-10-11 and its commit crossed with Task 1; reworded to `5998f5d`/`419d12f`. Its orphaned phone-search fix was committed as `7798f7f` (user choice). Commit with `git commit -- <paths>` while other sessions share the tree.
 
 ## Decisions & Deferrals

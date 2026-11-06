@@ -281,43 +281,6 @@ export const useDeleteUnit = () => {
 
 // Check availability
 
-// Real-time subscription for unit updates
-// NOTE: Disabled for Phase 1 - Real-time features scheduled for Phase 2
-// export const useUnitsSubscription = () => {
-//   const queryClient = useQueryClient();
-
-//   useQuery({
-//     queryKey: ["units-subscription"],
-//     queryFn: async () => {
-//       const channel = supabase
-//         .channel("units-changes")
-//         .on(
-//           "postgres_changes",
-//           {
-//             event: "*",
-//             schema: "public",
-//             table: "units",
-//           },
-//           (payload) => {
-//             // Invalidate and refetch units on any change
-//             queryClient.invalidateQueries({ queryKey: unitKeys.all });
-
-//             if (payload.eventType === "UPDATE" && payload.new) {
-//               // Update specific unit cache
-//               queryClient.setQueryData(unitKeys.detail((payload.new as Unit).unit_id), payload.new);
-//             }
-//           }
-//         )
-//         .subscribe();
-
-//       return () => {
-//         channel.unsubscribe();
-//       };
-//     },
-//     staleTime: Infinity, // Subscription should never be considered stale
-//   });
-// };
-
 // Each cabin's state on one night, keyed by unit id
 const cabinStatesQuery = (date: ManilaDay) =>
   queryOptions({

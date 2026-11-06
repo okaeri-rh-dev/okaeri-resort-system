@@ -1,5 +1,7 @@
 # Invalidate by domain fact Implementation Plan
 
+> **Superseded by #352 (2026-11-06):** built from the spec in issue #352 and its tickets (#353-#358) instead of this plan. Kept for its grilling history only.
+
 > **Out of date (2026-11-02):** written 2026-10-14 against `1b06d1b`; `main` has moved about 430 commits since. Re-check every call site, key root and file path before executing a task.
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.

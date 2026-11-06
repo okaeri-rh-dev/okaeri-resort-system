@@ -36,7 +36,6 @@ const READERS: Record<TableName, readonly KeyRoot[]> = {
     bookingKeys.all,
     guestKeys.all,
     paymentKeys.all,
-    multiUnitBookingKeys.all,
     multiUnitBookingKeys.pending,
     availabilityKeys.calendar.all,
     availabilityKeys.blackouts.all,

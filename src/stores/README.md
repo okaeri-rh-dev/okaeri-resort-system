@@ -221,13 +221,12 @@ export const useUpdateBookingMutation = () => {
       // Rollback on error
       queryClient.setQueryData(['bookings'], context.previousBookings)
     },
-    onSettled: () => {
-      // Refetch after mutation
-      queryClient.invalidateQueries(['bookings'])
-    }
+    onSettled: () => afterWrite('bookings')
   })
 }
 ```
+
+A mutation reports the tables it wrote with `afterWrite(...tables)` from `@/lib/after-write`, which refreshes every cached read of them (and of the tables their triggers write). A lint rule bans `invalidateQueries` and `removeQueries` elsewhere in `src`; a read-only refresh calls the query's `refetch()`.
 
 ## 🎯 Best Practices
 

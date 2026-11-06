@@ -368,6 +368,22 @@ export default tseslint.config([
     },
   },
 
+  // One module maps written tables to the reads they stale (src/lib/after-write.ts)
+  {
+    files: ["src/**/*.{ts,tsx}"],
+    ignores: ["src/lib/after-write.ts", "**/*.test.{ts,tsx}", "**/__tests__/**", "src/test/**"],
+    rules: {
+      "no-restricted-properties": [
+        "error",
+        ...["invalidateQueries", "removeQueries"].map((property) => ({
+          property,
+          message:
+            'Call afterWrite(...tables) from "@/lib/after-write" with the tables you wrote; a read-only refresh calls the query\'s refetch().',
+        })),
+      ],
+    },
+  },
+
   // UI handlers must surface failures, not just log them
   {
     files: ["src/components/**/*.{ts,tsx}", "src/routes/**/*.{ts,tsx}"],

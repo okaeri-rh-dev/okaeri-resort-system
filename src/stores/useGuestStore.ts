@@ -311,41 +311,6 @@ export const useDeleteGuest = () => {
   });
 };
 
-// Real-time subscription for guest updates
-// NOTE: Disabled for Phase 1 - Real-time features scheduled for Phase 2
-// export const useGuestsSubscription = () => {
-//   const queryClient = useQueryClient();
-
-//   useQuery({
-//     queryKey: ["guests-subscription"],
-//     queryFn: async () => {
-//       const channel = supabase
-//         .channel("guests-changes")
-//         .on(
-//           "postgres_changes",
-//           {
-//             event: "*",
-//             schema: "public",
-//             table: "guests",
-//           },
-//           (payload) => {
-//             queryClient.invalidateQueries({ queryKey: guestKeys.all });
-
-//             if (payload.eventType === "UPDATE" && payload.new) {
-//               queryClient.setQueryData(guestKeys.detail((payload.new as Guest).guest_id), payload.new);
-//             }
-//           }
-//         )
-//         .subscribe();
-
-//       return () => {
-//         channel.unsubscribe();
-//       };
-//     },
-//     staleTime: Infinity,
-//   });
-// };
-
 // Export guest data to CSV with Philippine business compliance
 export const useExportGuests = () => {
   return useMutation({
