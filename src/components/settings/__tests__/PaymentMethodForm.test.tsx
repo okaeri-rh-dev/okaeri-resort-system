@@ -66,18 +66,18 @@ describe("PaymentMethodForm QR code", () => {
           qr_code_url: "https://example.test/old.png",
           qr_code_storage_path: "qr-codes/gcash-0.png",
         }}
-      />,
+      />
     );
 
     await user.click(screen.getByRole("button", { name: "Remove QR code" }));
     await user.upload(
       screen.getByLabelText("Upload QR code image"),
-      new File(["qr"], "qr.png", { type: "image/png" }),
+      new File(["qr"], "qr.png", { type: "image/png" })
     );
 
     await waitFor(() => expect(upload).toHaveBeenCalled());
     await waitFor(() =>
-      expect(screen.queryByRole("img", { name: "QR Code" })).not.toBeInTheDocument(),
+      expect(screen.queryByRole("img", { name: "QR Code" })).not.toBeInTheDocument()
     );
     expect(screen.getByRole("button", { name: "Upload QR Code" })).toBeInTheDocument();
   });
@@ -93,7 +93,7 @@ describe("PaymentMethodForm QR code", () => {
 
     await user.upload(
       screen.getByLabelText("Upload QR code image"),
-      new File(["qr"], "qr.png", { type: "image/png" }),
+      new File(["qr"], "qr.png", { type: "image/png" })
     );
     await user.click(await screen.findByRole("button", { name: "Remove QR code" }));
 
@@ -110,11 +110,35 @@ describe("PaymentMethodForm QR code", () => {
           qr_code_url: "https://example.test/old.png",
           qr_code_storage_path: "qr-codes/gcash-0.png",
         }}
-      />,
+      />
     );
 
     await user.click(screen.getByRole("button", { name: "Remove QR code" }));
 
     expect(remove).toHaveBeenCalledWith({ id: "gcash", storagePath: "qr-codes/gcash-0.png" });
+  });
+
+  it("does not remove a QR code while an upload is pending", async () => {
+    vi.mocked(useUploadQrCode).mockReturnValue({
+      mutateAsync: upload,
+      isPending: true,
+    } as unknown as ReturnType<typeof useUploadQrCode>);
+    const user = userEvent.setup();
+    render(
+      <PaymentMethodForm
+        method={{
+          ...gcash,
+          qr_code_url: "https://example.test/old.png",
+          qr_code_storage_path: "qr-codes/gcash-0.png",
+        }}
+      />
+    );
+
+    const removeButton = screen.getByRole("button", { name: "Remove QR code" });
+    expect(removeButton).toBeDisabled();
+    await user.click(removeButton);
+
+    expect(remove).not.toHaveBeenCalled();
+    expect(screen.getByRole("img", { name: "QR Code" })).toBeInTheDocument();
   });
 });
