@@ -87,11 +87,10 @@ Total: ~791 lines of code across 4 components
 - Calendar validation: validateMonth function enforces navigation rules
 
 **Layout Structure:**
-1. Calendar header with icon and unit count display
-2. Month navigation controls (prev/next/today buttons)
-3. Color legend showing availability status meanings
-4. Calendar grid with day cells
-5. Footer timestamp showing last data update time
+1. Month navigation controls (prev/next/today buttons), below a screen-reader-only `h1`
+2. Color legend showing availability status meanings
+3. Calendar grid with day cells
+4. Footer timestamp showing last data update time
 
 ---
 
@@ -417,7 +416,7 @@ Total: ~791 lines of code across 4 components
 - Availability counts included in cell labels
 
 **Semantic HTML:**
-- Proper heading hierarchy (h1 for title, h2 for month)
+- Proper heading hierarchy (screen-reader-only h1, visible h2 for month)
 - Button elements for interactive controls (not divs)
 - Meaningful alt text and ARIA labels throughout
 
