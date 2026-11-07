@@ -4,13 +4,12 @@
  * @module useMultiUnitRealtime
  */
 
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useEffectEvent, useRef } from "react";
 
-import type { RealtimeChannel, RealtimePostgresChangesPayload } from "@supabase/supabase-js";
+import type { RealtimeChannel } from "@supabase/supabase-js";
 
 import { afterWrite } from "@/lib/after-write";
 import { supabase } from "@/lib/supabase";
-import type { BookingUnit, MultiUnitBooking } from "@/types";
 
 // ============================================
 // TYPES
@@ -18,9 +17,7 @@ import type { BookingUnit, MultiUnitBooking } from "@/types";
 
 export interface RealtimeSubscriptionOptions {
   enabled?: boolean;
-  onInsert?: (payload: RealtimePostgresChangesPayload<MultiUnitBooking | BookingUnit>) => void;
-  onUpdate?: (payload: RealtimePostgresChangesPayload<MultiUnitBooking | BookingUnit>) => void;
-  onDelete?: (payload: RealtimePostgresChangesPayload<MultiUnitBooking | BookingUnit>) => void;
+  onChange?: () => void;
   onError?: (error: Error) => void;
 }
 
@@ -33,8 +30,14 @@ export interface RealtimeSubscriptionOptions {
  * elsewhere shows up in an open form.
  */
 export function useMultiUnitAvailabilitySubscription(options: RealtimeSubscriptionOptions = {}) {
-  const { enabled = true, onError } = options;
+  const { enabled = true, onChange, onError } = options;
   const channelRef = useRef<RealtimeChannel | null>(null);
+
+  const handleChange = useEffectEvent(() => {
+    afterWrite("availability_blackouts");
+    onChange?.();
+  });
+  const handleError = useEffectEvent((error: Error) => onError?.(error));
 
   useEffect(() => {
     if (!enabled) return;
@@ -48,12 +51,11 @@ export function useMultiUnitAvailabilitySubscription(options: RealtimeSubscripti
           schema: "public",
           table: "availability_blackouts",
         },
-        () => afterWrite("availability_blackouts")
+        () => handleChange()
       )
       .subscribe((status) => {
         if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
-          const error = new Error("Availability subscription error");
-          onError?.(error);
+          handleError(new Error("Availability subscription error"));
         }
       });
 
@@ -65,7 +67,7 @@ export function useMultiUnitAvailabilitySubscription(options: RealtimeSubscripti
         channelRef.current = null;
       }
     };
-  }, [enabled, onError]);
+  }, [enabled]);
 
   return {
     unsubscribe: useCallback(() => {

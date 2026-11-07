@@ -2,7 +2,7 @@
  * Availability Real-Time Hook (Phase 4.5)
  *
  * Monitors availability changes that affect multi-unit bookings.
- * Alerts users when units become unavailable due to concurrent bookings.
+ * Alerts users when a block changes the availability of their selected units.
  *
  * @module useAvailabilityRealtime
  */
@@ -21,10 +21,10 @@ import {
 /**
  * Subscribe to real-time availability changes
  *
- * Monitors both bookings and blackout periods that affect availability.
+ * Monitors availability blocks (blackout periods).
  * Automatically clears availability cache and shows toast notifications.
  *
- * Use this in multi-unit booking forms to alert users of concurrent bookings.
+ * Use this in multi-unit booking forms to alert users of availability changes.
  *
  * @param checkIn - Check-in date for filtering (optional)
  * @param checkOut - Check-out date for filtering (optional)
@@ -56,11 +56,11 @@ import {
 export function useAvailabilityRealtime(
   checkIn?: string,
   checkOut?: string,
-  options?: Omit<RealtimeSubscriptionOptions, "enabled">
+  options?: Omit<RealtimeSubscriptionOptions, "enabled" | "onChange">
 ) {
   const { selectedUnits, clearAvailabilityCache } = useMultiUnitBookingStore();
 
-  // Handle concurrent bookings - use useEffectEvent to access latest values without causing re-subscriptions
+  // useEffectEvent to access latest values without causing re-subscriptions
   const handleAvailabilityChange = useEffectEvent(() => {
     // Clear cache to force re-check
     clearAvailabilityCache?.();
@@ -76,8 +76,6 @@ export function useAvailabilityRealtime(
   return useMultiUnitAvailabilitySubscription({
     ...options,
     enabled: !!checkIn && !!checkOut, // Only enable if dates are selected
-    onInsert: () => handleAvailabilityChange(),
-    onUpdate: () => handleAvailabilityChange(),
-    onDelete: () => handleAvailabilityChange(),
+    onChange: () => handleAvailabilityChange(),
   });
 }
