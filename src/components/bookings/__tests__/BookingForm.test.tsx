@@ -25,6 +25,12 @@ vi.mock("@/stores/useBookingStore", () => ({
   useCreateBooking: () => ({ mutateAsync: vi.fn(), isPending: false }),
 }));
 
+vi.mock("@/hooks/usePricingConfig", () => ({
+  usePricingConfig: () => ({
+    data: { base_rate: 3000, weekend_rate: 3500, extra_person_rate: 500, base_occupancy: 2 },
+  }),
+}));
+
 const UNIT_ID = "11111111-1111-4111-8111-111111111111";
 
 // The unit's own rates differ from pricing_config, as Cabin 1 does in seed.sql.
@@ -64,7 +70,26 @@ const PRICING_RESPONSE = {
   },
 };
 
-describe("BookingForm pricing summary", () => {
+function renderForm() {
+  return render(
+    <QueryClientProvider client={new QueryClient()}>
+      <BookingForm
+        initialData={{
+          unit_id: UNIT_ID,
+          check_in: new Date(2026, 10, 13),
+          check_out: new Date(2026, 10, 14),
+          num_guests: 4,
+          guest_name: "Test Guest",
+          email: "guest@example.com",
+          contact_number: "09171234567",
+          payment_method: "Cash",
+        }}
+      />
+    </QueryClientProvider>
+  );
+}
+
+describe("BookingForm pricing", () => {
   beforeEach(() => {
     vi.stubGlobal(
       "fetch",
@@ -76,24 +101,17 @@ describe("BookingForm pricing summary", () => {
     vi.unstubAllGlobals();
   });
 
+  it("shows pricing_config rates, not the unit's own, while picking a unit", async () => {
+    renderForm();
+
+    expect(await screen.findByText(/Base occupancy: 2 guests/)).toBeInTheDocument();
+    expect(screen.getByText(/Extra person rate: ₱500.00/)).toBeInTheDocument();
+    expect(screen.getByText("₱3,000.00/night")).toBeInTheDocument();
+  });
+
   it("shows the room-rate and extra-person lines from the pricing response", async () => {
     const user = userEvent.setup();
-    render(
-      <QueryClientProvider client={new QueryClient()}>
-        <BookingForm
-          initialData={{
-            unit_id: UNIT_ID,
-            check_in: new Date(2026, 10, 13),
-            check_out: new Date(2026, 10, 14),
-            num_guests: 4,
-            guest_name: "Test Guest",
-            email: "guest@example.com",
-            contact_number: "09171234567",
-            payment_method: "Cash",
-          }}
-        />
-      </QueryClientProvider>
-    );
+    renderForm();
 
     await screen.findByText("₱4,500.00");
     for (let step = 0; step < 3; step++) {

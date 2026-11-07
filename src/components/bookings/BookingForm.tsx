@@ -27,6 +27,7 @@ import {
 import { PricingStatusBadge } from "@/components/pricing/PricingStatusBadge";
 import { useMultiUnitAvailability } from "@/hooks/useMultiUnitBookingQueries";
 import { usePricingCalculation } from "@/hooks/usePricingCalculation";
+import { usePricingConfig } from "@/hooks/usePricingConfig";
 import { pickedDay, unavailableReason, unitNotFreeMessage } from "@/lib/bookings";
 import { formatCurrency, pluralize } from "@/lib/formatters";
 import { sanitizeBookingFormData } from "@/lib/security/sanitize";
@@ -42,7 +43,7 @@ import {
 } from "@/lib/validations";
 import { useCreateBooking } from "@/stores/useBookingStore";
 import { useUnits } from "@/stores/useUnitStore";
-import type { MultiUnitBooking } from "@/types";
+import type { MultiUnitBooking, Unit } from "@/types";
 import type { PricingResult } from "@/types/api/pricing";
 
 import { BookingSourceField, ConfirmationCodeField, PayoutField } from "./form-fields";
@@ -73,6 +74,10 @@ export function BookingForm({ onSuccess, onCancel, initialData, className }: Boo
 
   const createBookingMutation = useCreateBooking();
   const { data: units, isLoading: unitsLoading } = useUnits();
+  // Bookings are charged at pricing_config rates; a unit's own rates are only the fallback
+  const { data: pricingConfig } = usePricingConfig();
+  const baseOccupancy = (unit: Pick<Unit, "base_occupancy">) =>
+    pricingConfig?.base_occupancy ?? unit.base_occupancy;
 
   // Initialize pricing calculation hook
   const calculatePricing = usePricingCalculation({
@@ -355,14 +360,14 @@ export function BookingForm({ onSuccess, onCancel, initialData, className }: Boo
                 <SelectItem key={unit.unit_id} value={unit.unit_id} disabled={reason !== null}>
                   <div className="flex w-full items-center justify-between">
                     <span>
-                      {unit.unit_name} ({unit.unit_type}) • {unit.base_occupancy}/
+                      {unit.unit_name} ({unit.unit_type}) • {baseOccupancy(unit)}/
                       {unit.max_occupancy} guests
                     </span>
                     {reason ? (
                       <span className="text-muted-foreground ml-2 text-xs">{reason}</span>
                     ) : (
                       <StatusBadge tone="neutral" className="ml-2">
-                        {formatCurrency(unit.base_rate)}/night
+                        {formatCurrency(pricingConfig?.base_rate ?? unit.base_rate)}/night
                       </StatusBadge>
                     )}
                   </div>
@@ -405,12 +410,15 @@ export function BookingForm({ onSuccess, onCancel, initialData, className }: Boo
         description={
           selectedUnit && (
             <>
-              Base occupancy: {selectedUnit.base_occupancy} guests (included) • Max:{" "}
+              Base occupancy: {baseOccupancy(selectedUnit)} guests (included) • Max:{" "}
               {selectedUnit.max_occupancy} guests
-              {selectedUnit.max_occupancy > selectedUnit.base_occupancy && (
+              {selectedUnit.max_occupancy > baseOccupancy(selectedUnit) && (
                 <span className="mt-1 block text-xs">
-                  Extra person rate: {formatCurrency(selectedUnit.extra_person_rate)} per person per
-                  night
+                  Extra person rate:{" "}
+                  {formatCurrency(
+                    pricingConfig?.extra_person_rate ?? selectedUnit.extra_person_rate
+                  )}{" "}
+                  per person per night
                 </span>
               )}
             </>
