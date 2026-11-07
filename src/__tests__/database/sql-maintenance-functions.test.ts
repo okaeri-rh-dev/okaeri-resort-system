@@ -13,17 +13,15 @@
  * @vitest-environment node
  */
 
-import { execFileSync } from "node:child_process";
-
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
+import { psqlAvailable, runPsql } from "../setup/psql";
 import {
   testSupabaseAdmin as admin,
   createTestBooking,
   shouldRunDatabaseTests,
 } from "../setup/test-db";
 
-const PG_PASSWORD = process.env.PGPASSWORD ?? "postgres";
 const PROBE_TABLE = "maintenance_fn_probe";
 const PUBLIC_URL_PREFIX = "http://127.0.0.1:54321/storage/v1/object/public/payment-proofs/";
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -47,39 +45,6 @@ const DROPPED_OVERLOADS = [
   "monthly_archive_until(date)",
   "restore_logs_from_archive(date)",
 ];
-
-function psqlAvailable(): boolean {
-  try {
-    execFileSync("psql", ["--version"], { stdio: "ignore" });
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-function runPsql(sql: string): string[] {
-  const output = execFileSync(
-    "psql",
-    [
-      "-h",
-      "127.0.0.1",
-      "-p",
-      "54322",
-      "-U",
-      "postgres",
-      "-d",
-      "postgres",
-      "-tA",
-      "-v",
-      "ON_ERROR_STOP=1",
-    ],
-    { input: sql, env: { ...process.env, PGPASSWORD: PG_PASSWORD }, encoding: "utf8" }
-  );
-  return output
-    .split("\n")
-    .map((line) => line.trim())
-    .filter(Boolean);
-}
 
 function backdateBooking(bookingId: string, column: "updated_at", daysAgo: number) {
   runPsql(`
@@ -199,7 +164,8 @@ describe("maintenance SQL functions", () => {
   it("attaches and detaches the audit trigger", () => {
     if (!canRun) return;
     const triggerCount = `SELECT count(*) FROM pg_trigger WHERE tgrelid = 'public.${PROBE_TABLE}'::regclass AND tgname = 'audit_trigger_${PROBE_TABLE}';`;
-    runPsql(`CREATE TABLE public.${PROBE_TABLE} (id int primary key);`);
+    // Owned by postgres like the app tables, so attach_audit_trigger may alter it.
+    runPsql(`SET ROLE postgres; CREATE TABLE public.${PROBE_TABLE} (id int primary key);`);
 
     runPsql(`SELECT public.attach_audit_trigger('${PROBE_TABLE}');`);
     expect(runPsql(triggerCount)).toEqual(["1"]);
