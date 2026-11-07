@@ -385,7 +385,7 @@ Total: ~791 lines of code across 4 components
 - Day cells: `role="gridcell"` (identifies data cells)
 
 **ARIA Labels:**
-- Loading spinner: `aria-label="Loading calendar"` with `role="progressbar"`
+- Calendar region: `aria-busy="true"` during the first load
 - Navigation buttons: `aria-label="Previous month"` and `aria-label="Next month"`
 - Day cells: Full date + availability (e.g., "January 15, 2025 - 2 available")
 - Today indicator dot: `aria-label="Today"`

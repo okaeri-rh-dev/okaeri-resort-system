@@ -7,7 +7,7 @@
  * - API calls: Fetching availability data
  * - Navigation: Month navigation buttons
  * - State management: TanStack Query integration
- * - Loading states: Spinner display
+ * - Loading states: Layout with disabled controls and footer spinner
  * - Error handling: Error messages
  * - User interactions: Today button, swipe gestures
  */
@@ -74,29 +74,41 @@ describe("PublicAvailabilityCalendar", () => {
     );
   };
 
+  const waitForFirstLoad = () => screen.findByText(/^updated/i);
+
   describe("Initial Rendering", () => {
-    it("should show loading spinner on initial load", () => {
+    it("shows the calendar layout, not a spinner, during the first load", () => {
       renderComponent();
 
-      expect(screen.getByText(/loading availability calendar/i)).toBeInTheDocument();
-      expect(screen.getByRole("progressbar", { hidden: true })).toBeInTheDocument();
+      expect(screen.getByRole("heading", { level: 2, name: "January 2025" })).toBeInTheDocument();
+      expect(screen.getByText("Booked")).toBeInTheDocument();
+      expect(screen.getAllByRole("gridcell").length).toBeGreaterThan(0);
+      expect(screen.getByText("Loading…")).toBeInTheDocument();
+      expect(screen.queryByText(/loading availability calendar/i)).not.toBeInTheDocument();
+    });
+
+    it("disables navigation and day clicks during the first load", async () => {
+      server.use(http.get("*/api/public/v1/availability", () => new Promise<never>(() => {})));
+      const user = userEvent.setup();
+      renderComponent();
+
+      expect(screen.getByLabelText(/next month/i)).toBeDisabled();
+      expect(screen.getByRole("button", { name: /today/i })).toBeDisabled();
+
+      await user.click(screen.getByRole("gridcell", { name: /february 1, 2025/i }));
+      expect(screen.getByRole("heading", { level: 2, name: "January 2025" })).toBeInTheDocument();
     });
 
     it("should fetch availability data on mount", async () => {
       renderComponent();
 
-      // Wait for the calendar to render with data (MSW handles the fetch)
-      await waitFor(() => {
-        expect(screen.getByText("January 2025")).toBeInTheDocument();
-      });
+      await waitForFirstLoad();
     });
 
     it("should render calendar after data loads", async () => {
       renderComponent();
 
-      await waitFor(() => {
-        expect(screen.getByText("January 2025")).toBeInTheDocument();
-      });
+      await waitForFirstLoad();
     });
 
     it("shows the month as its top heading and leaves the page h1 to the route", async () => {
@@ -134,14 +146,12 @@ describe("PublicAvailabilityCalendar", () => {
     it("should call API with correct date range", async () => {
       renderComponent();
 
-      // MSW intercepts the request - verify component renders with data
-      await waitFor(() => {
-        expect(screen.getByText("January 2025")).toBeInTheDocument();
-      });
+      await waitForFirstLoad();
     });
 
     it("should display data from API response", async () => {
       renderComponent();
+      await waitForFirstLoad();
 
       await waitFor(() => {
         // Check that calendar renders with month name
@@ -168,9 +178,7 @@ describe("PublicAvailabilityCalendar", () => {
     it("should use TanStack Query for caching", async () => {
       renderComponent();
 
-      await waitFor(() => {
-        expect(screen.getByText("January 2025")).toBeInTheDocument();
-      });
+      await waitForFirstLoad();
 
       // MSW handles caching - verify calendar grid is populated
       const cells = screen.getAllByRole("gridcell");
@@ -193,9 +201,7 @@ describe("PublicAvailabilityCalendar", () => {
       const user = userEvent.setup();
       renderComponent();
 
-      await waitFor(() => {
-        expect(screen.getByText("January 2025")).toBeInTheDocument();
-      });
+      await waitForFirstLoad();
 
       const nextButton = screen.getByLabelText(/next month/i);
       await user.click(nextButton);
@@ -209,9 +215,7 @@ describe("PublicAvailabilityCalendar", () => {
       const user = userEvent.setup();
       renderComponent();
 
-      await waitFor(() => {
-        expect(screen.getByText("January 2025")).toBeInTheDocument();
-      });
+      await waitForFirstLoad();
 
       // Navigate to next month (February)
       const nextButton = screen.getByLabelText(/next month/i);
@@ -243,9 +247,7 @@ describe("PublicAvailabilityCalendar", () => {
       const user = userEvent.setup();
       renderComponent();
 
-      await waitFor(() => {
-        expect(screen.getByText("January 2025")).toBeInTheDocument();
-      });
+      await waitForFirstLoad();
 
       // Navigate to next month
       const nextButton = screen.getByLabelText(/next month/i);
@@ -264,7 +266,7 @@ describe("PublicAvailabilityCalendar", () => {
       });
     });
 
-    it("should show updating indicator while fetching new month", async () => {
+    it("shows Loading… in the footer while fetching a new month", async () => {
       const user = userEvent.setup();
 
       // Add a delay to MSW handler to make isFetching state observable
@@ -292,20 +294,19 @@ describe("PublicAvailabilityCalendar", () => {
 
       renderComponent();
 
-      await waitFor(() => {
-        expect(screen.getByText("January 2025")).toBeInTheDocument();
-      });
+      await waitForFirstLoad();
 
       const nextButton = screen.getByLabelText(/next month/i);
       await user.click(nextButton);
 
-      // Should show "Updating..." during fetch
       await waitFor(
         () => {
-          expect(screen.getByText(/updating/i)).toBeInTheDocument();
+          expect(screen.getByText("Loading…")).toBeInTheDocument();
         },
         { timeout: 200 }
       );
+      expect(screen.queryByText(/updating/i)).not.toBeInTheDocument();
+      expect(screen.queryByText(/^updated/i)).not.toBeInTheDocument();
     });
   });
 
@@ -370,12 +371,7 @@ describe("PublicAvailabilityCalendar", () => {
       renderComponent();
 
       // Should eventually succeed after retry
-      await waitFor(
-        () => {
-          expect(screen.getByText("January 2025")).toBeInTheDocument();
-        },
-        { timeout: 5000 }
-      );
+      await screen.findByText(/^updated/i, {}, { timeout: 5000 });
 
       // MSW handled the retry - verify calendar rendered successfully
       expect(screen.getByLabelText(/availability calendar/i)).toBeInTheDocument();
@@ -386,9 +382,7 @@ describe("PublicAvailabilityCalendar", () => {
     it("should only enable navigation to valid months", async () => {
       renderComponent();
 
-      await waitFor(() => {
-        expect(screen.getByText("January 2025")).toBeInTheDocument();
-      });
+      await waitForFirstLoad();
 
       // Previous month (December 2024) should be disabled
       const prevButton = screen.getByLabelText(/previous month/i);
@@ -403,9 +397,7 @@ describe("PublicAvailabilityCalendar", () => {
       const user = userEvent.setup();
       renderComponent();
 
-      await waitFor(() => {
-        expect(screen.getByText("January 2025")).toBeInTheDocument();
-      });
+      await waitForFirstLoad();
 
       // Click next 12 times to reach January 2026
       const nextButton = screen.getByLabelText(/next month/i);
@@ -441,11 +433,12 @@ describe("PublicAvailabilityCalendar", () => {
       });
     });
 
-    it("should announce loading state to screen readers", () => {
+    it("marks the calendar busy for screen readers during the first load", async () => {
       renderComponent();
 
-      const loadingText = screen.getByText(/loading availability calendar/i);
-      expect(loadingText).toBeInTheDocument();
+      const calendar = screen.getByRole("region", { name: "Availability" });
+      expect(calendar).toHaveAttribute("aria-busy", "true");
+      await waitFor(() => expect(calendar).toHaveAttribute("aria-busy", "false"));
     });
   });
 
@@ -453,9 +446,7 @@ describe("PublicAvailabilityCalendar", () => {
     it("should use stale-while-revalidate pattern", async () => {
       renderComponent();
 
-      await waitFor(() => {
-        expect(screen.getByText("January 2025")).toBeInTheDocument();
-      });
+      await waitForFirstLoad();
 
       // Data should be cached and displayed
       const cells = screen.getAllByRole("gridcell");
@@ -472,9 +463,7 @@ describe("PublicAvailabilityCalendar", () => {
       const user = userEvent.setup();
       renderComponent();
 
-      await waitFor(() => {
-        expect(screen.getByText("January 2025")).toBeInTheDocument();
-      });
+      await waitForFirstLoad();
 
       // Click next month
       const nextButton = screen.getByLabelText(/next month/i);
@@ -505,9 +494,7 @@ describe("PublicAvailabilityCalendar", () => {
       const user = userEvent.setup();
       renderComponent();
 
-      await waitFor(() => {
-        expect(screen.getByText("January 2025")).toBeInTheDocument();
-      });
+      await waitForFirstLoad();
 
       const nextButton = screen.getByLabelText(/next month/i);
 
@@ -532,9 +519,7 @@ describe("PublicAvailabilityCalendar", () => {
     it("should memoize month name calculation", async () => {
       const { rerender } = renderComponent();
 
-      await waitFor(() => {
-        expect(screen.getByText("January 2025")).toBeInTheDocument();
-      });
+      await waitForFirstLoad();
 
       // Re-render should not cause issues
       rerender(

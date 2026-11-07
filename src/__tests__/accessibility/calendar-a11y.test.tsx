@@ -93,7 +93,7 @@ describe("Calendar Accessibility (WCAG 2.1 AA)", () => {
       );
 
       // Wait for calendar to load
-      await screen.findByText("January 2025");
+      await screen.findByText(/^updated/i);
 
       const results = await axe(container);
       expect(results.violations).toHaveLength(0);
@@ -121,7 +121,7 @@ describe("Calendar Accessibility (WCAG 2.1 AA)", () => {
         </QueryClientProvider>
       );
 
-      await screen.findByText("January 2025");
+      await screen.findByText(/^updated/i);
 
       expect(screen.getByLabelText(/previous month/i)).toBeInTheDocument();
       expect(screen.getByLabelText(/next month/i)).toBeInTheDocument();
@@ -172,7 +172,7 @@ describe("Calendar Accessibility (WCAG 2.1 AA)", () => {
         </QueryClientProvider>
       );
 
-      await screen.findByText("January 2025");
+      await screen.findByText(/^updated/i);
 
       // Tab through interactive elements
       // Previous month button is disabled (current month), so tab skips it
@@ -192,7 +192,7 @@ describe("Calendar Accessibility (WCAG 2.1 AA)", () => {
         </QueryClientProvider>
       );
 
-      await screen.findByText("January 2025");
+      await screen.findByText(/^updated/i);
 
       const nextButton = screen.getByLabelText(/next month/i);
       nextButton.focus();
@@ -212,7 +212,7 @@ describe("Calendar Accessibility (WCAG 2.1 AA)", () => {
         </QueryClientProvider>
       );
 
-      await screen.findByText("January 2025");
+      await screen.findByText(/^updated/i);
 
       const nextButton = screen.getByLabelText(/next month/i);
       nextButton.focus();
@@ -232,7 +232,7 @@ describe("Calendar Accessibility (WCAG 2.1 AA)", () => {
         </QueryClientProvider>
       );
 
-      await screen.findByText("January 2025");
+      await screen.findByText(/^updated/i);
 
       // Tab through all interactive elements
       await user.tab(); // Previous month
@@ -273,7 +273,7 @@ describe("Calendar Accessibility (WCAG 2.1 AA)", () => {
         </QueryClientProvider>
       );
 
-      await screen.findByText("January 2025");
+      await screen.findByText(/^updated/i);
 
       const nextButton = screen.getByLabelText(/next month/i);
       await user.click(nextButton);
@@ -289,7 +289,7 @@ describe("Calendar Accessibility (WCAG 2.1 AA)", () => {
         </QueryClientProvider>
       );
 
-      await screen.findByText("January 2025");
+      await screen.findByText(/^updated/i);
 
       const prevButton = screen.getByLabelText(/previous month/i);
 
@@ -341,8 +341,10 @@ describe("Calendar Accessibility (WCAG 2.1 AA)", () => {
         </QueryClientProvider>
       );
 
-      // Loading message should be readable by screen readers
-      expect(screen.getByText(/loading availability calendar/i)).toBeInTheDocument();
+      expect(screen.getByRole("region", { name: "Availability" })).toHaveAttribute(
+        "aria-busy",
+        "true"
+      );
     });
 
     it("should announce error states", async () => {
@@ -412,7 +414,7 @@ describe("Calendar Accessibility (WCAG 2.1 AA)", () => {
         </QueryClientProvider>
       );
 
-      await screen.findByText("January 2025");
+      await screen.findByText(/^updated/i);
 
       // Navigation controls should be buttons
       expect(screen.getByRole("button", { name: /previous month/i })).toBeInTheDocument();
@@ -435,7 +437,7 @@ describe("Calendar Accessibility (WCAG 2.1 AA)", () => {
         </QueryClientProvider>
       );
 
-      await screen.findByText("January 2025");
+      await screen.findByText(/^updated/i);
 
       // Should have div as container (React component structure)
       expect(container.firstChild).toBeDefined();
@@ -465,7 +467,7 @@ describe("Calendar Accessibility (WCAG 2.1 AA)", () => {
         </QueryClientProvider>
       );
 
-      await screen.findByText("January 2025");
+      await screen.findByText(/^updated/i);
 
       // Run comprehensive accessibility audit
       const results = await axe(container);
