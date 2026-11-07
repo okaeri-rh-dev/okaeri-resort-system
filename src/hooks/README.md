@@ -24,7 +24,7 @@ React hooks shared across components. Entity CRUD (bookings, guests, payments, e
 | `useExpenseCategories.ts`       | category list, active list, create/update/archive/restore                                     |
 | `usePaymentMethods.ts`          | method list, active list, create/update/delete/reactivate, QR code upload/delete              |
 | `useMultiUnitBookingQueries.ts` | `useMultiUnitAvailability`, `useCreateMultiUnitBooking`                                       |
-| `useMultiUnitRealtime.ts`       | `useMultiUnitAvailabilitySubscription`: `afterWrite("availability_blackouts")` on block events |
+| `useMultiUnitRealtime.ts`       | `useMultiUnitAvailabilitySubscription`: `afterWrite("availability_blackouts")` and `onChange` on block events |
 | `useAvailabilityRealtime.ts`    | `useAvailabilityRealtime`: availability changes that affect multi-unit bookings               |
 | `useBlocks.ts`                  | `useBlocks` (current and upcoming, past on request), create/update/delete block mutations    |
 | `useDebouncedValue.ts`          | `useDebouncedValue`, `SEARCH_DEBOUNCE_MS`: delay list search queries until typing pauses     |

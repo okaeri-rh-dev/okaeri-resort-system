@@ -21,7 +21,7 @@ import {
 /**
  * Subscribe to real-time availability changes
  *
- * Monitors both bookings and blackout periods that affect availability.
+ * Monitors availability blocks (blackout periods).
  * Automatically clears availability cache and shows toast notifications.
  *
  * Use this in multi-unit booking forms to alert users of concurrent bookings.
@@ -76,8 +76,6 @@ export function useAvailabilityRealtime(
   return useMultiUnitAvailabilitySubscription({
     ...options,
     enabled: !!checkIn && !!checkOut, // Only enable if dates are selected
-    onInsert: () => handleAvailabilityChange(),
-    onUpdate: () => handleAvailabilityChange(),
-    onDelete: () => handleAvailabilityChange(),
+    onChange: () => handleAvailabilityChange(),
   });
 }
