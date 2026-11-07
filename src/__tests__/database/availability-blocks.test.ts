@@ -133,11 +133,14 @@ describe("availability reads honour blocks", () => {
   afterEach(async () => {
     if (!shouldRun) return;
     // Replica mode skips the lock trigger, which refuses deletes of past and running blocks.
-    runPsql(
-      `SET session_replication_role = replica; DELETE FROM public.availability_blackouts WHERE reason LIKE '${REASON_PREFIX}%';`
-    );
-    if (bookingIds.length) await admin.from("bookings").delete().in("booking_id", bookingIds);
-    bookingIds.length = 0;
+    try {
+      runPsql(
+        `SET session_replication_role = replica; DELETE FROM public.availability_blackouts WHERE reason LIKE '${REASON_PREFIX}%';`
+      );
+    } finally {
+      if (bookingIds.length) await admin.from("bookings").delete().in("booking_id", bookingIds);
+      bookingIds.length = 0;
+    }
   });
 
   afterAll(async () => {
