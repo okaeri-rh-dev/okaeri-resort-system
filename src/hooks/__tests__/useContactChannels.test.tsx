@@ -6,7 +6,7 @@ import { act, renderHook } from "@testing-library/react";
 import { toast } from "sonner";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { contactChannelKeys } from "@/lib/query-keys";
+import { afterWrite } from "@/lib/after-write";
 import { db } from "@/lib/supabase";
 
 import {
@@ -26,6 +26,8 @@ vi.mock("@/lib/supabase", () => ({
   },
   handleSupabaseError: (error: { message: string }) => error.message,
 }));
+
+vi.mock("@/lib/after-write", () => ({ afterWrite: vi.fn() }));
 
 vi.mock("sonner", () => ({
   toast: { success: vi.fn(), error: vi.fn() },
@@ -59,11 +61,10 @@ function errorResponse(code: string, message: string) {
 
 function renderWithClient<T>(hook: () => T) {
   const queryClient = new QueryClient({ defaultOptions: { mutations: { retry: false } } });
-  const invalidateQueries = vi.spyOn(queryClient, "invalidateQueries");
   const wrapper = ({ children }: { children: ReactNode }) => (
     <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
   );
-  return { ...renderHook(hook, { wrapper }), invalidateQueries };
+  return renderHook(hook, { wrapper });
 }
 
 const newChannel = { kind: "viber", value: "+639171234567", label: "Maria" } as const;
@@ -73,14 +74,14 @@ describe("useCreateContactChannel", () => {
 
   it("confirms the new channel and refreshes every contact channel list", async () => {
     vi.mocked(db.contactChannels.create).mockResolvedValue(rowResponse(channel));
-    const { result, invalidateQueries } = renderWithClient(useCreateContactChannel);
+    const { result } = renderWithClient(useCreateContactChannel);
 
     await act(() => result.current.mutateAsync(newChannel));
 
     expect(toast.success).toHaveBeenCalledWith("Contact channel added", {
       description: "Viber (Maria) is now listed.",
     });
-    expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: contactChannelKeys.all });
+    expect(afterWrite).toHaveBeenCalledWith("contact_channels");
   });
 
   it("says how to fix a duplicate when the kind and value are taken", async () => {
@@ -138,7 +139,7 @@ describe("useReorderContactChannel", () => {
 
   it("moves the channel and refreshes every contact channel list", async () => {
     vi.mocked(db.contactChannels.reorder).mockResolvedValue(voidResponse());
-    const { result, invalidateQueries } = renderWithClient(useReorderContactChannel);
+    const { result } = renderWithClient(useReorderContactChannel);
 
     await act(() => result.current.mutateAsync({ channel, direction: "down" }));
 
@@ -146,10 +147,10 @@ describe("useReorderContactChannel", () => {
     expect(toast.success).toHaveBeenCalledWith("Contact channel moved", {
       description: "Viber (Maria) moved down.",
     });
-    expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: contactChannelKeys.all });
+    expect(afterWrite).toHaveBeenCalledWith("contact_channels");
   });
 
-  it("shows the error when the move is refused", async () => {
+  it("shows the error and still refreshes the list when the move is refused", async () => {
     vi.mocked(db.contactChannels.reorder).mockResolvedValue(
       errorResponse("42501", "Only managers can reorder contact channels")
     );
@@ -162,5 +163,6 @@ describe("useReorderContactChannel", () => {
     expect(toast.error).toHaveBeenCalledWith("Could not move contact channel", {
       description: "Only managers can reorder contact channels",
     });
+    expect(afterWrite).toHaveBeenCalledWith("contact_channels");
   });
 });

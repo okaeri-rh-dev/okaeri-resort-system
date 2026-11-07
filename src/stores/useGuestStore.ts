@@ -4,9 +4,9 @@ import { devtools, persist } from "zustand/middleware";
 
 import { getAccessToken } from "@/hooks/useAuthToken";
 import { SEARCH_DEBOUNCE_MS, useDebouncedValue } from "@/hooks/useDebouncedValue";
+import { afterWrite, type TableName } from "@/lib/after-write";
 import { throwDetailLoadError } from "@/lib/detail-load-error";
 import { logger } from "@/lib/logger";
-import { afterGuestRetention, invalidateGuests } from "@/lib/query-invalidation";
 import { guestKeys } from "@/lib/query-keys";
 import { ilikeAnyFilter } from "@/lib/search-filter";
 import { db, handleSupabaseError, supabase } from "@/lib/supabase";
@@ -249,9 +249,7 @@ export const useUpdateGuest = () => {
         updateOptimistic(guestId, context.previousGuest);
       }
     },
-    onSettled: () => {
-      invalidateGuests();
-    },
+    onSettled: () => afterWrite("guests"),
   });
 };
 
@@ -259,6 +257,16 @@ const RETENTION_ERROR_BY_STATUS: Record<number, string> = {
   404: "This guest no longer exists. Refresh the page.",
   409: "This guest has a current or upcoming booking. Cancel or finish it first.",
 };
+
+// anonymize_guest and delete_guest write these (20261021000000_guest_retention.sql)
+const GUEST_RETENTION_WRITES = [
+  "guests",
+  "guest_assignments",
+  "bookings",
+  "booking_units",
+  "payments",
+  "audit_logs_archive",
+] as const satisfies readonly TableName[];
 
 async function callGuestRetention(path: string, method: "POST" | "DELETE") {
   const response = await fetch(path, {
@@ -284,9 +292,7 @@ export const useAnonymizeGuest = () =>
   useMutation({
     mutationFn: (guestId: string) =>
       callGuestRetention(`/api/admin/guests/${guestId}/anonymize`, "POST"),
-    onSuccess: () => {
-      afterGuestRetention();
-    },
+    onSettled: () => afterWrite(...GUEST_RETENTION_WRITES),
   });
 
 // Delete guest mutation: delete_guest refuses Confirmed/CheckedIn or current/future bookings (409)
@@ -301,50 +307,9 @@ export const useDeleteGuest = () => {
       removeOptimistic(guestId);
       return { guestId };
     },
-    onError: () => {
-      // Re-fetch to restore state
-      invalidateGuests();
-    },
-    onSuccess: () => {
-      afterGuestRetention();
-    },
+    onSettled: () => afterWrite(...GUEST_RETENTION_WRITES),
   });
 };
-
-// Real-time subscription for guest updates
-// NOTE: Disabled for Phase 1 - Real-time features scheduled for Phase 2
-// export const useGuestsSubscription = () => {
-//   const queryClient = useQueryClient();
-
-//   useQuery({
-//     queryKey: ["guests-subscription"],
-//     queryFn: async () => {
-//       const channel = supabase
-//         .channel("guests-changes")
-//         .on(
-//           "postgres_changes",
-//           {
-//             event: "*",
-//             schema: "public",
-//             table: "guests",
-//           },
-//           (payload) => {
-//             queryClient.invalidateQueries({ queryKey: guestKeys.all });
-
-//             if (payload.eventType === "UPDATE" && payload.new) {
-//               queryClient.setQueryData(guestKeys.detail((payload.new as Guest).guest_id), payload.new);
-//             }
-//           }
-//         )
-//         .subscribe();
-
-//       return () => {
-//         channel.unsubscribe();
-//       };
-//     },
-//     staleTime: Infinity,
-//   });
-// };
 
 // Export guest data to CSV with Philippine business compliance
 export const useExportGuests = () => {

@@ -22,6 +22,8 @@ const data = vi.hoisted(() => ({
     start_date: string;
     end_date: string;
   }[],
+  refetchBookings: vi.fn(),
+  unitFetches: 0,
 }));
 
 vi.mock("@/stores/useBookingStore", () => ({
@@ -30,6 +32,7 @@ vi.mock("@/stores/useBookingStore", () => ({
     isLoading: false,
     isFetching: false,
     dataUpdatedAt: Date.now(),
+    refetch: data.refetchBookings,
   }),
 }));
 
@@ -37,10 +40,13 @@ vi.mock("@/lib/supabase", () => ({
   db: {
     blackouts: { inDateRange: async () => ({ data: data.blocks, error: null }) },
     units: {
-      all: async () => ({
-        data: ["1", "2", "3"].map((n) => ({ unit_id: `unit-${n}`, unit_name: `Cabin ${n}` })),
-        error: null,
-      }),
+      all: async () => {
+        data.unitFetches++;
+        return {
+          data: ["1", "2", "3"].map((n) => ({ unit_id: `unit-${n}`, unit_name: `Cabin ${n}` })),
+          error: null,
+        };
+      },
     },
   },
   handleSupabaseError: (error: unknown) => String(error),
@@ -113,6 +119,7 @@ describe("Dashboard", () => {
     vi.useRealTimers();
     data.bookings = [];
     data.blocks = [];
+    data.unitFetches = 0;
   });
 
   it("opens with the day pane closed", async () => {
@@ -328,5 +335,16 @@ describe("Dashboard", () => {
 
     const pane = screen.getByRole("dialog", { name: /^Today/ });
     expect(await within(pane).findByText("Blocked: Cabin 1")).toBeVisible();
+  });
+
+  it("reloads bookings and cabins on refresh", async () => {
+    renderDashboard();
+    await screen.findByRole("button", { name: /^November 10, 2026/ });
+    await waitFor(() => expect(data.unitFetches).toBe(1));
+
+    await userEvent.setup().click(screen.getByRole("button", { name: "Refresh dashboard" }));
+
+    expect(data.refetchBookings).toHaveBeenCalled();
+    await waitFor(() => expect(data.unitFetches).toBe(2));
   });
 });

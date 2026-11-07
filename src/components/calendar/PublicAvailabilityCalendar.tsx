@@ -24,6 +24,7 @@ import { isAfter, max } from "date-fns";
 import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 
 import { Button, Callout } from "@/components/patterns";
+import { publicAvailabilityKeys } from "@/lib/query-keys";
 import {
   getMonthEnd,
   getMonthStart,
@@ -104,7 +105,7 @@ async function fetchAvailability(month: Date): Promise<AvailabilityResponse> {
 
 const publicAvailabilityQuery = (month: Date) =>
   queryOptions<AvailabilityResponse>({
-    queryKey: ["publicAvailability", month.toISOString()],
+    queryKey: publicAvailabilityKeys.month(month.toISOString()),
     queryFn: () => fetchAvailability(month),
     staleTime: 5 * 60 * 1000, // 5 minutes (matches CDN cache)
     gcTime: 10 * 60 * 1000, // 10 minutes (formerly cacheTime)

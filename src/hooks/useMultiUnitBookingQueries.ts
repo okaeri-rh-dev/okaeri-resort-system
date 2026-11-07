@@ -10,12 +10,12 @@
  * @module useMultiUnitBookingQueries
  */
 
-import { queryOptions, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { queryOptions, useMutation, useQuery } from "@tanstack/react-query";
 
+import { afterWrite } from "@/lib/after-write";
 import type { UnitAvailability } from "@/lib/bookings";
-import { requestBooking } from "@/lib/bookings/request";
-import { afterBookingCreate } from "@/lib/query-invalidation";
-import { availabilityKeys, multiUnitBookingKeys } from "@/lib/query-keys";
+import { BOOKING_CREATE_WRITES, requestBooking } from "@/lib/bookings/request";
+import { availabilityKeys } from "@/lib/query-keys";
 import { supabase } from "@/lib/supabase";
 import { useMultiUnitBookingStore } from "@/stores/useMultiUnitBookingStore";
 import type { AdminMultiUnitBookingCreate, MultiUnitBooking } from "@/types";
@@ -91,7 +91,6 @@ export const useMultiUnitAvailability = (
  * Create multi-unit booking with optimistic updates
  */
 export const useCreateMultiUnitBooking = () => {
-  const queryClient = useQueryClient();
   const { addOptimisticBooking, removeOptimisticBooking, isOnline } = useMultiUnitBookingStore();
 
   return useMutation({
@@ -99,9 +98,7 @@ export const useCreateMultiUnitBooking = () => {
       if (!isOnline) throw new OfflineBookingError();
       return requestBooking(bookingData);
     },
-    onMutate: async (newBooking) => {
-      await queryClient.cancelQueries({ queryKey: multiUnitBookingKeys.all });
-
+    onMutate: (newBooking) => {
       const optimisticBooking: MultiUnitBooking = {
         booking_id: `temp-${Date.now()}`,
         booking_reference: `BK-${Date.now()}`,
@@ -124,8 +121,6 @@ export const useCreateMultiUnitBooking = () => {
         removeOptimisticBooking(context.optimisticBooking.booking_id);
       }
     },
-    onSettled: () => {
-      afterBookingCreate();
-    },
+    onSettled: () => afterWrite(...BOOKING_CREATE_WRITES),
   });
 };

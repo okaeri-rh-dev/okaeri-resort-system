@@ -5,14 +5,7 @@
 import { queryOptions, useQuery } from "@tanstack/react-query";
 
 import { AuditRole, getUserAuditRole } from "@/lib/audit-roles";
-
-// ============================================
-// QUERY KEYS
-// ============================================
-
-export const userRoleKeys = {
-  current: ["user-role", "current"] as const,
-};
+import { userRoleKeys } from "@/lib/query-keys";
 
 const currentUserRoleQuery = queryOptions({
   queryKey: userRoleKeys.current,

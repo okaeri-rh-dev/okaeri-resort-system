@@ -3,6 +3,7 @@ import { create } from "zustand";
 import { devtools, persist } from "zustand/middleware";
 
 import { SEARCH_DEBOUNCE_MS, useDebouncedValue } from "@/hooks/useDebouncedValue";
+import { afterWrite } from "@/lib/after-write";
 import { accountKeys, transferKeys } from "@/lib/query-keys";
 import { ilikeAnyFilter } from "@/lib/search-filter";
 import { handleSupabaseError, supabase } from "@/lib/supabase";
@@ -246,10 +247,7 @@ export const useCreateTransfer = () => {
           .removeOptimisticTransfer(context.optimisticTransfer.transfer_id);
       }
     },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: transferKeys.all });
-      queryClient.invalidateQueries({ queryKey: accountKeys.balances() });
-    },
+    onSettled: () => afterWrite("account_transfers"),
   });
 };
 
@@ -273,13 +271,6 @@ export const useDeleteTransfer = () => {
       removeOptimistic(transferId);
       return { transferId };
     },
-    onError: () => {
-      queryClient.invalidateQueries({ queryKey: transferKeys.all });
-      queryClient.invalidateQueries({ queryKey: accountKeys.balances() });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: transferKeys.all });
-      queryClient.invalidateQueries({ queryKey: accountKeys.balances() });
-    },
+    onSettled: () => afterWrite("account_transfers"),
   });
 };

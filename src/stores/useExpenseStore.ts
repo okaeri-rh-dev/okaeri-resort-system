@@ -9,8 +9,8 @@ import { create } from "zustand";
 import { devtools, persist } from "zustand/middleware";
 
 import { SEARCH_DEBOUNCE_MS, useDebouncedValue } from "@/hooks/useDebouncedValue";
+import { afterWrite } from "@/lib/after-write";
 import { throwDetailLoadError } from "@/lib/detail-load-error";
-import { afterExpenseChange } from "@/lib/query-invalidation";
 import { expenseKeys } from "@/lib/query-keys";
 import { ilikeAnyFilter } from "@/lib/search-filter";
 import { uploadReceipt } from "@/lib/storage-security";
@@ -328,9 +328,7 @@ export const useCreateExpense = () => {
         useExpenseStore.getState().removeOptimisticExpense(context.optimisticExpense.expense_id);
       }
     },
-    onSettled: () => {
-      afterExpenseChange();
-    },
+    onSettled: () => afterWrite("expenses"),
   });
 };
 
@@ -395,9 +393,7 @@ export const useUpdateExpense = () => {
         updateOptimistic(expenseId, context.previousExpense);
       }
     },
-    onSettled: () => {
-      afterExpenseChange();
-    },
+    onSettled: () => afterWrite("expenses"),
   });
 };
 
@@ -417,12 +413,7 @@ export const useDeleteExpense = () => {
       removeOptimistic(expenseId);
       return { expenseId };
     },
-    onError: () => {
-      queryClient.invalidateQueries({ queryKey: expenseKeys.all });
-    },
-    onSuccess: () => {
-      afterExpenseChange();
-    },
+    onSettled: () => afterWrite("expenses"),
   });
 };
 

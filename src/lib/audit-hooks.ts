@@ -3,6 +3,7 @@
 import { queryOptions, useMutation, useQuery } from "@tanstack/react-query";
 
 import { logger } from "@/lib/logger";
+import { auditKeys } from "@/lib/query-keys";
 import { toManilaDateString } from "@/lib/timezone";
 import type {
   AuditLog,
@@ -14,32 +15,10 @@ import type {
 import { AUDIT_CACHE_CONFIG } from "./audit-constants";
 import { db } from "./supabase";
 
-// ============================================
-// QUERY KEYS
-// ============================================
-
-/**
- * Query key factory for audit logs
- * Ensures consistent cache keys across the app
- */
-export const auditKeys = {
-  all: ["audit-logs"] as const,
-  lists: () => [...auditKeys.all, "list"] as const,
-  list: (filters?: AuditLogFilters) => [...auditKeys.lists(), filters] as const,
-  details: () => [...auditKeys.all, "detail"] as const,
-  detail: (id: string) => [...auditKeys.details(), id] as const,
-  record: (tableName: string, recordId: string) =>
-    [...auditKeys.all, "record", tableName, recordId] as const,
-  stats: (filters?: AuditLogFilters) => [...auditKeys.all, "stats", filters] as const,
-  user: (email: string) => [...auditKeys.all, "user", email] as const,
-  recent: (limit: number) => [...auditKeys.lists(), "recent", limit] as const,
-  userActivity: (email: string, limit: number) => [...auditKeys.user(email), limit] as const,
-};
-
 /** The 50 newest audit rows for one record, for detail-page loaders. A failure shows an empty history, not an error page. */
 export const recentRecordAuditLogsQuery = (tableName: string, recordId: string) =>
   queryOptions({
-    queryKey: [...auditKeys.record(tableName, recordId), "recent"],
+    queryKey: auditKeys.recentForRecord(tableName, recordId),
     queryFn: async () => {
       try {
         return await db.auditLogs.recentByRecord(tableName, recordId);

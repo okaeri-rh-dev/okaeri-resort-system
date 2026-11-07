@@ -1,6 +1,7 @@
-import { queryOptions, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { queryOptions, useMutation, useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 
+import { afterWrite } from "@/lib/after-write";
 import { discountRuleKeys } from "@/lib/query-keys";
 import { db, handleSupabaseError } from "@/lib/supabase";
 import type { Database } from "@/types/database.types";
@@ -29,8 +30,6 @@ export function useDiscountRules() {
  * Hook to save all discount rules (bulk upsert)
  */
 export function useSaveDiscountRules() {
-  const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: async (rules: DiscountRuleInsert[]) => {
       // Clean up rules before saving - remove temporary IDs
@@ -45,9 +44,8 @@ export function useSaveDiscountRules() {
 
       return await db.discountRules.bulkUpsert(cleanedRules);
     },
+    onSettled: () => afterWrite("discount_rules"),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: discountRuleKeys.all });
-
       toast.success("Discount rules saved", {
         description: "All discount rule changes have been saved successfully.",
       });

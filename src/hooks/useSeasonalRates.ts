@@ -1,6 +1,7 @@
-import { queryOptions, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { queryOptions, useMutation, useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 
+import { afterWrite } from "@/lib/after-write";
 import { seasonalRateKeys } from "@/lib/query-keys";
 import { db, handleSupabaseError } from "@/lib/supabase";
 import type { Database } from "@/types/database.types";
@@ -29,8 +30,6 @@ export function useSeasonalRates() {
  * Hook to save all seasonal rates (bulk upsert)
  */
 export function useSaveSeasonalRates() {
-  const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: async (rates: SeasonalRateInsert[]) => {
       // Clean up rates before saving - remove temporary IDs
@@ -45,9 +44,8 @@ export function useSaveSeasonalRates() {
 
       return await db.seasonalRates.bulkUpsert(cleanedRates);
     },
+    onSettled: () => afterWrite("seasonal_rates"),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: seasonalRateKeys.all });
-
       toast.success("Seasonal rates saved", {
         description: "All seasonal rate changes have been saved successfully.",
       });

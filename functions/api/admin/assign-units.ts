@@ -124,6 +124,7 @@ function parseRpcError(error: RpcError): { status: number; message: string; deta
   };
 }
 
+// Tables written here are listed in ASSIGN_UNITS_WRITES (src/components/admin/UnitAssignmentInterface.tsx) for the client cache
 export async function onRequest(context: {
   request: CloudflareRequest;
   env: Env;

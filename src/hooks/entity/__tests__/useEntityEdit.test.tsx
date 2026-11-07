@@ -7,7 +7,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { queryKeys } from "@/lib/query-keys";
+import { afterWrite } from "@/lib/after-write";
 import { db } from "@/lib/supabase";
 
 import { useEntityEdit } from "../useEntityEdit";
@@ -111,6 +111,8 @@ vi.mock("@/lib/supabase", () => ({
   },
 }));
 
+vi.mock("@/lib/after-write", () => ({ afterWrite: vi.fn() }));
+
 vi.mock("sonner", () => ({
   toast: {
     success: vi.fn(),
@@ -168,6 +170,7 @@ describe("useEntityEdit", () => {
       });
 
       expect(db.units.update).toHaveBeenCalledWith(entityId, updateData);
+      expect(afterWrite).toHaveBeenCalledWith("units");
     });
   });
 
@@ -195,6 +198,7 @@ describe("useEntityEdit", () => {
       });
 
       expect(db.guests.update).toHaveBeenCalledWith(entityId, updateData);
+      expect(afterWrite).toHaveBeenCalledWith("guests");
     });
   });
 
@@ -222,6 +226,7 @@ describe("useEntityEdit", () => {
       });
 
       expect(db.expenses.update).toHaveBeenCalledWith(entityId, updateData);
+      expect(afterWrite).toHaveBeenCalledWith("expenses");
     });
 
     it("writes the app-level date field to the expense_date column", async () => {
@@ -299,41 +304,7 @@ describe("useEntityEdit", () => {
 
       expect(onError).toHaveBeenCalled();
       expect(onError.mock.calls[0][0]).toBeInstanceOf(Error);
-    });
-  });
-
-  describe("Query invalidation", () => {
-    it("invalidates entity query on success", async () => {
-      const entityId = "guest-123";
-      const updateData = { guest_name: "Invalidate Test" };
-      const updatedData = createMockGuest({ guest_id: entityId, ...updateData });
-
-      vi.mocked(db.guests.update).mockResolvedValue(createSuccessResponse(updatedData));
-
-      // Set initial data
-      queryClient.setQueryData(
-        queryKeys.entity("guest", entityId),
-        createMockGuest({ guest_id: entityId, guest_name: "Old" })
-      );
-
-      const { result } = renderHook(() => useEntityEdit("guest", entityId), {
-        wrapper: createWrapper(),
-      });
-
-      const invalidateSpy = vi.spyOn(queryClient, "invalidateQueries");
-
-      act(() => {
-        result.current.mutate(updateData);
-      });
-
-      await waitFor(() => {
-        expect(result.current.isSuccess).toBe(true);
-      });
-
-      expect(invalidateSpy).toHaveBeenCalledWith({
-        queryKey: queryKeys.entity("guest", entityId),
-      });
-      expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: queryKeys.entities("guest") });
+      expect(afterWrite).toHaveBeenCalledWith("guests");
     });
   });
 
