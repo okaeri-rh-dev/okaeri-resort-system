@@ -15,7 +15,8 @@ import {
   TableSearch,
 } from "@/components/patterns";
 import { BOOKING_SOURCES, pickedDay, type BookingSource } from "@/lib/bookings";
-import type { BookingStatus, PaymentStatus } from "@/types";
+import { statusLabel } from "@/lib/status-tone";
+import { BOOKING_STATUSES, type BookingStatus, type PaymentStatus } from "@/types";
 
 import type { BookingFiltersProps, DateRange } from "../types";
 
@@ -72,12 +73,11 @@ export const BookingFilters: React.FC<BookingFiltersProps> = ({
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Bookings</SelectItem>
-              <SelectItem value="Pending">Pending</SelectItem>
-              <SelectItem value="Confirmed">Confirmed</SelectItem>
-              <SelectItem value="CheckedIn">Checked In</SelectItem>
-              <SelectItem value="CheckedOut">Checked Out</SelectItem>
-              <SelectItem value="Cancelled">Cancelled</SelectItem>
-              <SelectItem value="NoShow">No Show</SelectItem>
+              {BOOKING_STATUSES.map((status) => (
+                <SelectItem key={status} value={status}>
+                  {statusLabel(status)}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
