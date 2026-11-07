@@ -142,12 +142,6 @@ export function PublicAvailabilityCalendar() {
     }
   };
 
-  // Enable swipe gestures for mobile navigation
-  useSwipeGesture({
-    onSwipeLeft: goToNextMonth,
-    onSwipeRight: goToPreviousMonth,
-  });
-
   // Fetch availability data with TanStack Query
   // Uses 5-minute stale time to match CDN cache duration
   const { data, isLoading, error, isFetching } = useQuery({
@@ -156,6 +150,12 @@ export function PublicAvailabilityCalendar() {
     enabled: validateMonth(currentMonth).valid,
     // Keep previous data visible while fetching new month (prevents flicker)
     placeholderData: (previousData) => previousData,
+  });
+
+  // Enable swipe gestures for mobile navigation
+  useSwipeGesture({
+    onSwipeLeft: isLoading ? undefined : goToNextMonth,
+    onSwipeRight: isLoading ? undefined : goToPreviousMonth,
   });
 
   // Navigation: Return to today's month
@@ -270,7 +270,10 @@ export function PublicAvailabilityCalendar() {
 
       {/* Last Updated Timestamp - Minimal Footer */}
       <div className="border-border bg-muted border-t px-4 py-2 text-center">
-        <p className="text-muted-foreground flex items-center justify-center gap-1 text-xs">
+        <p
+          role="status"
+          className="text-muted-foreground flex items-center justify-center gap-1 text-xs"
+        >
           {isFetching || !data ? (
             <>
               <Loader2 className="size-3 animate-spin" aria-hidden="true" />

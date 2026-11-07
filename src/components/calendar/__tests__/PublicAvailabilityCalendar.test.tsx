@@ -13,7 +13,7 @@
  */
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen, waitFor } from "@testing-library/react";
+import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -96,6 +96,15 @@ describe("PublicAvailabilityCalendar", () => {
       expect(screen.getByRole("button", { name: /today/i })).toBeDisabled();
 
       await user.click(screen.getByRole("gridcell", { name: /february 1, 2025/i }));
+      act(() => {
+        document.dispatchEvent(
+          new TouchEvent("touchstart", { touches: [{ clientX: 150, clientY: 100 } as Touch] })
+        );
+        document.dispatchEvent(
+          new TouchEvent("touchmove", { touches: [{ clientX: 50, clientY: 100 } as Touch] })
+        );
+        document.dispatchEvent(new TouchEvent("touchend"));
+      });
       expect(screen.getByRole("heading", { level: 2, name: "January 2025" })).toBeInTheDocument();
     });
 
