@@ -10,10 +10,9 @@
  * @vitest-environment node
  */
 
-import { execFileSync } from "node:child_process";
-
 import { beforeAll, describe, expect, it } from "vitest";
 
+import { psqlAvailable, runPsql } from "../setup/psql";
 import { shouldRunDatabaseTests } from "../setup/test-db";
 
 const UNAUDITED_TABLES: Record<string, string> = {
@@ -25,40 +24,9 @@ const UNAUDITED_TABLES: Record<string, string> = {
   guest_assignments: "no writers in the app or functions",
 };
 
-const PG_HOST = "127.0.0.1";
-const PG_PORT = "54322";
-const PG_USER = "postgres";
-const PG_DB = "postgres";
-const PG_PASSWORD = process.env.PGPASSWORD ?? "postgres";
-
 // tgtype bits: ROW=1, BEFORE=2, INSERT=4, DELETE=8, UPDATE=16.
 // 29 = row-level AFTER INSERT OR DELETE OR UPDATE.
 const AFTER_ROW_IUD = 29;
-
-function psqlAvailable(): boolean {
-  try {
-    execFileSync("psql", ["--version"], { stdio: "ignore" });
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-function runPsql(sql: string): string[] {
-  const output = execFileSync(
-    "psql",
-    ["-h", PG_HOST, "-p", PG_PORT, "-U", PG_USER, "-d", PG_DB, "-tA", "-v", "ON_ERROR_STOP=1"],
-    {
-      input: sql,
-      env: { ...process.env, PGPASSWORD: PG_PASSWORD },
-      encoding: "utf8",
-    }
-  );
-  return output
-    .split("\n")
-    .map((line) => line.trim())
-    .filter(Boolean);
-}
 
 const PUBLIC_BASE_TABLES = `
   SELECT c.oid, c.relname

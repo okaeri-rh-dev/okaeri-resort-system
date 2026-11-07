@@ -22,10 +22,9 @@
  * @vitest-environment node
  */
 
-import { execFileSync } from "node:child_process";
-
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 
+import { psqlAvailable, runPsql } from "../setup/psql";
 import { shouldRunDatabaseTests, testSupabaseAdmin as supabase } from "../setup/test-db";
 
 // Stable fixture UUID, valid hex only. Chosen to not collide with any
@@ -34,33 +33,6 @@ const FIXTURE_GUEST_ID = "00000000-0000-0000-0000-a0d17a000017";
 const FIXTURE_NAME = "Audit Noop Test Fixture";
 const FIXTURE_EMAIL = "audit-noop-test@example.com";
 const FIXTURE_PHONE = "+639000000017";
-
-const PG_HOST = "127.0.0.1";
-const PG_PORT = "54322";
-const PG_USER = "postgres";
-const PG_DB = "postgres";
-const PG_PASSWORD = process.env.PGPASSWORD ?? "postgres";
-
-function psqlAvailable(): boolean {
-  try {
-    execFileSync("psql", ["--version"], { stdio: "ignore" });
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-function runPsql(sql: string): string {
-  return execFileSync(
-    "psql",
-    ["-h", PG_HOST, "-p", PG_PORT, "-U", PG_USER, "-d", PG_DB, "-tA", "-v", "ON_ERROR_STOP=1"],
-    {
-      input: sql,
-      env: { ...process.env, PGPASSWORD: PG_PASSWORD },
-      encoding: "utf8",
-    }
-  );
-}
 
 async function deleteFixtureAuditAndGuest() {
   // Delete the guest row first — that fires the DELETE audit trigger,
@@ -120,10 +92,7 @@ describe("audit_trigger_func() — no-op UPDATE handling", () => {
     // psql also emits command tags (BEGIN, INSERT 0 1, UPDATE 1, ROLLBACK)
     // on stdout alongside the SELECT result, so pick out the lone numeric
     // line. One row for the INSERT, zero for the no-op UPDATE.
-    const numericLines = output
-      .split("\n")
-      .map((l) => l.trim())
-      .filter((l) => /^\d+$/.test(l));
+    const numericLines = output.filter((line) => /^\d+$/.test(line));
     expect(numericLines).toEqual(["1"]);
   });
 
