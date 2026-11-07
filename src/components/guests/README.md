@@ -308,3 +308,4 @@ describe('GuestQuickForm', () => {
 
 - [BookingForm](/src/components/bookings/README.md) - Guest selection
 - [PaymentsTable](/src/components/payments/README.md) - Payment history
+- [Dashboard](/src/components/dashboard/README.md) - Guest analytics
