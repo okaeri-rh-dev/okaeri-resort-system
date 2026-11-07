@@ -17,7 +17,8 @@ const PSQL_ARGS = [
   "-p",
   "54322",
   "-U",
-  "postgres",
+  // Newer Supabase images strip superuser from postgres; replica mode needs a superuser.
+  "supabase_admin",
   "-d",
   "postgres",
   "-tA",
@@ -31,7 +32,7 @@ const toLines = (output: string) =>
     .map((line) => line.trim())
     .filter(Boolean);
 
-/** Runs SQL as the local postgres superuser; returns non-empty output lines (-tA format). */
+/** Runs SQL as the local superuser; returns non-empty output lines (-tA format). */
 export function runPsql(sql: string): string[] {
   const output = execFileSync("psql", PSQL_ARGS, {
     input: sql,
