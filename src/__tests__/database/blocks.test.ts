@@ -18,6 +18,7 @@ import { runPsql } from "../setup/psql";
 import { createRoleClients, type RoleClients } from "../setup/role-clients";
 import {
   testSupabaseAdmin as admin,
+  cleanupBlockTestData,
   createTestGuest,
   createTestUnit,
   shouldRunDatabaseTests,
@@ -137,15 +138,7 @@ describe("blocks", () => {
 
   afterEach(async () => {
     if (!shouldRun) return;
-    // Replica mode skips the lock trigger, which refuses deletes of past and running blocks.
-    try {
-      runPsql(
-        `SET session_replication_role = replica; DELETE FROM public.availability_blackouts WHERE reason LIKE '${REASON_PREFIX}%';`
-      );
-    } finally {
-      if (bookingIds.length) await admin.from("bookings").delete().in("booking_id", bookingIds);
-      bookingIds.length = 0;
-    }
+    await cleanupBlockTestData(REASON_PREFIX, bookingIds);
   });
 
   afterAll(async () => {

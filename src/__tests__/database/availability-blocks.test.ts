@@ -17,12 +17,14 @@ import type { Database } from "@/types/database.types";
 import { runPsql, runPsqlAsync } from "../setup/psql";
 import {
   testSupabaseAdmin as admin,
+  cleanupBlockTestData,
   createTestGuest,
   createTestUnit,
   shouldRunDatabaseTests,
 } from "../setup/test-db";
 
 const REASON_PREFIX = "dbtest-availability";
+const RACE_REFERENCE = "TB-AVL-RACE";
 
 let shouldRun = false;
 // From the database clock: the public calendar refuses dates over a year ahead.
@@ -132,15 +134,8 @@ describe("availability reads honour blocks", () => {
 
   afterEach(async () => {
     if (!shouldRun) return;
-    // Replica mode skips the lock trigger, which refuses deletes of past and running blocks.
-    try {
-      runPsql(
-        `SET session_replication_role = replica; DELETE FROM public.availability_blackouts WHERE reason LIKE '${REASON_PREFIX}%';`
-      );
-    } finally {
-      if (bookingIds.length) await admin.from("bookings").delete().in("booking_id", bookingIds);
-      bookingIds.length = 0;
-    }
+    await admin.from("bookings").delete().eq("booking_reference", RACE_REFERENCE);
+    await cleanupBlockTestData(REASON_PREFIX, bookingIds);
   });
 
   afterAll(async () => {
@@ -280,8 +275,6 @@ describe("availability reads honour blocks", () => {
   });
 
   describe("write skew", () => {
-    const RACE_REFERENCE = "TB-AVL-RACE";
-
     const closureSql = `INSERT INTO public.availability_blackouts (unit_id, start_date, end_date, reason) VALUES (NULL, '2035-08-10', '2035-08-10', '${REASON_PREFIX} race');`;
 
     const guestRequestSql = () => {
@@ -311,11 +304,6 @@ describe("availability reads honour blocks", () => {
       const second = Promise.allSettled([runPsqlAsync(`BEGIN; ${secondSql} COMMIT;`)]);
       return [(await first)[0], (await second)[0]];
     }
-
-    afterEach(() => {
-      if (!shouldRun) return;
-      runPsql(`DELETE FROM public.bookings WHERE booking_reference = '${RACE_REFERENCE}';`);
-    });
 
     it.each([
       ["a resort closure, then a guest request", "closure"],

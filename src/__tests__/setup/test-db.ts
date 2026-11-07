@@ -13,7 +13,9 @@
 import { createClient } from "@supabase/supabase-js";
 
 import type { Database } from "@/types/database.types";
+
 import { isLocalSupabaseUrl } from "../../../e2e/fixtures/local-supabase-url";
+import { runPsql } from "./psql";
 
 // ✅ Use dedicated test database or local Supabase instance
 const TEST_SUPABASE_URL =
@@ -45,6 +47,30 @@ type TestBookingOverrides = {
   extra_person_charge?: number;
   subtotal?: number;
 };
+
+/**
+ * Deletes blocks whose reason starts with reasonPrefix, then the listed bookings and units.
+ * The booking and unit deletes run even when the block delete throws, so one failure
+ * does not leave bookings that break every later block seed.
+ */
+export async function cleanupBlockTestData(
+  reasonPrefix: string,
+  bookingIds: string[],
+  unitIds: string[] = []
+) {
+  try {
+    // Replica mode skips the lock trigger, which refuses deletes of past and running blocks.
+    runPsql(
+      `SET session_replication_role = replica; DELETE FROM public.availability_blackouts WHERE reason LIKE '${reasonPrefix}%';`
+    );
+  } finally {
+    if (bookingIds.length)
+      await testSupabaseAdmin.from("bookings").delete().in("booking_id", bookingIds);
+    bookingIds.length = 0;
+    if (unitIds.length) await testSupabaseAdmin.from("units").delete().in("unit_id", unitIds);
+    unitIds.length = 0;
+  }
+}
 
 /**
  * Cleanup helper - call in beforeEach/afterAll
@@ -98,31 +124,29 @@ export async function cleanupTestData(options?: { includeTestFixtures?: boolean 
     if (options?.includeTestFixtures) {
       // Delete test units by pattern (test names/codes)
       // Patterns: "Test Unit", "Perf Test", codes like "TEST-", "T1-", "T2-", "T3-", "PF"
+      // Delete by the pattern itself: an .in() list of hundreds of ids overflows the request URL.
       const { data: testUnits, error: unitsError } = await testSupabaseAdmin
         .from("units")
-        .select("unit_id")
+        .delete()
         .or(
           `unit_name.ilike.%Test Unit%,unit_name.ilike.%Perf Test%,unit_code.ilike.TEST-%,unit_code.ilike.T1-%,unit_code.ilike.T2-%,unit_code.ilike.T3-%,unit_code.ilike.PF%`
-        );
-
-      if (!unitsError && testUnits && testUnits.length > 0) {
-        const unitIds = testUnits.map((u) => u.unit_id);
-        await testSupabaseAdmin.from("units").delete().in("unit_id", unitIds);
+        )
+        .select("unit_id");
+      if (unitsError) console.error("Test unit cleanup error:", unitsError);
+      else if (testUnits.length > 0) {
         // eslint-disable-next-line no-console
-        console.log(`Cleaned up ${unitIds.length} test units`);
+        console.log(`Cleaned up ${testUnits.length} test units`);
       }
 
-      // Delete test guests by pattern (test emails)
       const { data: testGuests, error: guestsError } = await testSupabaseAdmin
         .from("guests")
-        .select("guest_id")
-        .or(`email.ilike.%test%@example.com,email.ilike.%perf-test%@example.com`);
-
-      if (!guestsError && testGuests && testGuests.length > 0) {
-        const guestIds = testGuests.map((g) => g.guest_id);
-        await testSupabaseAdmin.from("guests").delete().in("guest_id", guestIds);
+        .delete()
+        .or(`email.ilike.%test%@example.com,email.ilike.%perf-test%@example.com`)
+        .select("guest_id");
+      if (guestsError) console.error("Test guest cleanup error:", guestsError);
+      else if (testGuests.length > 0) {
         // eslint-disable-next-line no-console
-        console.log(`Cleaned up ${guestIds.length} test guests`);
+        console.log(`Cleaned up ${testGuests.length} test guests`);
       }
     }
 

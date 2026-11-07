@@ -17,6 +17,7 @@ import { runPsql, runPsqlAsync } from "../setup/psql";
 import { createRoleClients, type RoleClients } from "../setup/role-clients";
 import {
   testSupabaseAdmin as admin,
+  cleanupBlockTestData,
   createTestGuest,
   createTestUnit,
   shouldRunDatabaseTests,
@@ -141,14 +142,8 @@ describe("block conflicts", () => {
 
   afterEach(async () => {
     if (!shouldRun) return;
-    try {
-      runPsql(
-        `SET session_replication_role = replica; DELETE FROM public.availability_blackouts WHERE reason LIKE '${REASON_PREFIX}%';`
-      );
-    } finally {
-      if (bookingIds.length) await admin.from("bookings").delete().in("booking_id", bookingIds);
-      bookingIds.length = 0;
-    }
+    await admin.from("bookings").delete().eq("internal_notes", REASON_PREFIX);
+    await cleanupBlockTestData(REASON_PREFIX, bookingIds);
   });
 
   afterAll(async () => {
@@ -588,11 +583,6 @@ describe("block conflicts", () => {
       const second = Promise.allSettled([runPsqlAsync(`BEGIN; ${secondSql} COMMIT;`)]);
       return [(await first)[0], (await second)[0]];
     }
-
-    afterEach(() => {
-      if (!shouldRun) return;
-      runPsql(`DELETE FROM public.bookings WHERE internal_notes = '${REASON_PREFIX}';`);
-    });
 
     it.each([
       ["a block, then a booking", "block"],
