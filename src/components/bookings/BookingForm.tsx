@@ -27,8 +27,9 @@ import {
 import { PricingStatusBadge } from "@/components/pricing/PricingStatusBadge";
 import { useMultiUnitAvailability } from "@/hooks/useMultiUnitBookingQueries";
 import { usePricingCalculation } from "@/hooks/usePricingCalculation";
+import { usePricingConfig } from "@/hooks/usePricingConfig";
 import { pickedDay, unavailableReason, unitNotFreeMessage } from "@/lib/bookings";
-import { formatCurrency } from "@/lib/formatters";
+import { formatCurrency, pluralize } from "@/lib/formatters";
 import { sanitizeBookingFormData } from "@/lib/security/sanitize";
 import { hasProperty, isObject } from "@/lib/type-guards";
 import { cn } from "@/lib/utils";
@@ -42,7 +43,8 @@ import {
 } from "@/lib/validations";
 import { useCreateBooking } from "@/stores/useBookingStore";
 import { useUnits } from "@/stores/useUnitStore";
-import type { MultiUnitBooking } from "@/types";
+import type { MultiUnitBooking, Unit } from "@/types";
+import type { PricingResult } from "@/types/api/pricing";
 
 import { BookingSourceField, ConfirmationCodeField, PayoutField } from "./form-fields";
 import { FormSkeleton } from "./FormSkeleton";
@@ -65,27 +67,30 @@ const STEP_DESCRIPTIONS = {
 
 export function BookingForm({ onSuccess, onCancel, initialData, className }: BookingFormProps) {
   const [currentStep, setCurrentStep] = useState<FormStep>(1);
-  const [calculatedTotal, setCalculatedTotal] = useState<number>(0);
-  const [downpaymentAmount, setDownpaymentAmount] = useState<number>(0);
+  const [pricing, setPricing] = useState<PricingResult | null>(null);
+  const calculatedTotal = pricing?.total ?? 0;
+  const downpaymentAmount = pricing?.downpayment ?? 0;
   const [pricingNotice, setPricingNotice] = useState<string | null>(null);
 
   const createBookingMutation = useCreateBooking();
   const { data: units, isLoading: unitsLoading } = useUnits();
+  // Bookings are charged at pricing_config rates; a unit's own rates are only the fallback
+  const { data: pricingConfig } = usePricingConfig();
+  const baseOccupancy = (unit: Pick<Unit, "base_occupancy">) =>
+    pricingConfig?.base_occupancy ?? unit.base_occupancy;
 
   // Initialize pricing calculation hook
   const calculatePricing = usePricingCalculation({
     onSuccess: (data) => {
-      setCalculatedTotal(data.pricing.total);
-      setDownpaymentAmount(data.pricing.downpayment);
+      // A single unit_id request always returns a single-unit result
+      setPricing("subtotal" in data.pricing ? data.pricing : null);
       setPricingNotice(data.notice);
     },
     onError: (error) => {
       toast.error("Failed to calculate pricing", {
         description: error.message,
       });
-      // Fallback to zero if pricing calculation fails
-      setCalculatedTotal(0);
-      setDownpaymentAmount(0);
+      setPricing(null);
       setPricingNotice(null);
     },
   });
@@ -137,8 +142,7 @@ export function BookingForm({ onSuccess, onCancel, initialData, className }: Boo
   const handlePricingCalculation = useEffectEvent(
     (params: { unit: typeof selectedUnit; checkIn: Date; checkOut: Date; numGuests: number }) => {
       if (!params.unit || !params.checkIn || !params.checkOut) {
-        setCalculatedTotal(0);
-        setDownpaymentAmount(0);
+        setPricing(null);
         setPricingNotice(null);
         return;
       }
@@ -149,8 +153,7 @@ export function BookingForm({ onSuccess, onCancel, initialData, className }: Boo
       const nights = differenceInDays(checkOutDate, checkInDate);
 
       if (nights <= 0) {
-        setCalculatedTotal(0);
-        setDownpaymentAmount(0);
+        setPricing(null);
         setPricingNotice(null);
         return;
       }
@@ -357,14 +360,14 @@ export function BookingForm({ onSuccess, onCancel, initialData, className }: Boo
                 <SelectItem key={unit.unit_id} value={unit.unit_id} disabled={reason !== null}>
                   <div className="flex w-full items-center justify-between">
                     <span>
-                      {unit.unit_name} ({unit.unit_type}) • {unit.base_occupancy}/
+                      {unit.unit_name} ({unit.unit_type}) • {baseOccupancy(unit)}/
                       {unit.max_occupancy} guests
                     </span>
                     {reason ? (
                       <span className="text-muted-foreground ml-2 text-xs">{reason}</span>
                     ) : (
                       <StatusBadge tone="neutral" className="ml-2">
-                        {formatCurrency(unit.base_rate)}/night
+                        {formatCurrency(pricingConfig?.base_rate ?? unit.base_rate)}/night
                       </StatusBadge>
                     )}
                   </div>
@@ -407,12 +410,15 @@ export function BookingForm({ onSuccess, onCancel, initialData, className }: Boo
         description={
           selectedUnit && (
             <>
-              Base occupancy: {selectedUnit.base_occupancy} guests (included) • Max:{" "}
+              Base occupancy: {baseOccupancy(selectedUnit)} guests (included) • Max:{" "}
               {selectedUnit.max_occupancy} guests
-              {selectedUnit.max_occupancy > selectedUnit.base_occupancy && (
+              {selectedUnit.max_occupancy > baseOccupancy(selectedUnit) && (
                 <span className="mt-1 block text-xs">
-                  Extra person rate: {formatCurrency(selectedUnit.extra_person_rate)} per person per
-                  night
+                  Extra person rate:{" "}
+                  {formatCurrency(
+                    pricingConfig?.extra_person_rate ?? selectedUnit.extra_person_rate
+                  )}{" "}
+                  per person per night
                 </span>
               )}
             </>
@@ -623,55 +629,21 @@ export function BookingForm({ onSuccess, onCancel, initialData, className }: Boo
 
           <div className="space-y-2">
             <h4 className="font-medium">Pricing Breakdown</h4>
-            {selectedUnit && checkIn && checkOut && (
+            {pricing && (
               <div className="space-y-1 text-sm">
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">
-                    Room rate (
-                    {Math.ceil((checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60 * 24))}{" "}
-                    nights)
+                    Room rate ({pricing.nights} {pluralize(pricing.nights, "night")})
                   </span>
-                  <span className="tabular-nums">
-                    {formatCurrency(
-                      (() => {
-                        const nights = Math.ceil(
-                          (checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60 * 24)
-                        );
-                        let weekdayNights = 0;
-                        let weekendNights = 0;
-                        for (let i = 0; i < nights; i++) {
-                          const currentDate = new Date(checkIn);
-                          currentDate.setDate(currentDate.getDate() + i);
-                          const dayOfWeek = currentDate.getDay();
-                          if (dayOfWeek === 5 || dayOfWeek === 6) {
-                            weekendNights++;
-                          } else {
-                            weekdayNights++;
-                          }
-                        }
-                        return (
-                          weekdayNights * selectedUnit.base_rate +
-                          weekendNights * selectedUnit.weekend_rate
-                        );
-                      })()
-                    )}
-                  </span>
+                  <span className="tabular-nums">{formatCurrency(pricing.subtotal)}</span>
                 </div>
-                {numGuests > selectedUnit.base_occupancy && (
+                {pricing.extraPersons > 0 && (
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">
-                      Extra person ({numGuests - selectedUnit.base_occupancy} ×{" "}
-                      {formatCurrency(selectedUnit.extra_person_rate)})
+                      Extra person ({pricing.extraPersons} × {pricing.nights}{" "}
+                      {pluralize(pricing.nights, "night")})
                     </span>
-                    <span className="tabular-nums">
-                      {formatCurrency(
-                        (numGuests - selectedUnit.base_occupancy) *
-                          selectedUnit.extra_person_rate *
-                          Math.ceil(
-                            (checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60 * 24)
-                          )
-                      )}
-                    </span>
+                    <span className="tabular-nums">{formatCurrency(pricing.extraPersonTotal)}</span>
                   </div>
                 )}
               </div>
