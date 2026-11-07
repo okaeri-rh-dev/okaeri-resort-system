@@ -61,9 +61,9 @@ Total: ~791 lines of code across 4 components
    - Non-intrusive (doesn't interfere with scrolling)
 
 5. **Loading and Error States**
-   - Centered spinner with accessible ARIA labels during initial load
+   - Calendar layout with disabled controls and `aria-busy` during initial load
    - Error alert with user-friendly message and technical details
-   - Loading indicator for background updates (small spinner in header)
+   - "Loading…" with a small spinner in the footer while any fetch runs
    - Graceful degradation on API failures
 
 6. **Extended Date Range Fetching**
@@ -252,7 +252,7 @@ Total: ~791 lines of code across 4 components
 1. **Component Mount:**
    - PublicAvailabilityCalendar initializes with current month (Philippine Time)
    - TanStack Query triggers initial data fetch to `/api/public/v1/availability`
-   - Loading state displayed during first fetch
+   - Calendar layout without availability colours during first fetch
 
 2. **API Request:**
    - Calculate month boundaries using timezone utilities
@@ -385,7 +385,7 @@ Total: ~791 lines of code across 4 components
 - Day cells: `role="gridcell"` (identifies data cells)
 
 **ARIA Labels:**
-- Loading spinner: `aria-label="Loading calendar"` with `role="progressbar"`
+- Calendar region: `aria-busy="true"` during the first load
 - Navigation buttons: `aria-label="Previous month"` and `aria-label="Next month"`
 - Day cells: Full date + availability (e.g., "January 15, 2025 - 2 available")
 - Today indicator dot: `aria-label="Today"`
@@ -785,7 +785,7 @@ Total: ~791 lines of code across 4 components
 
 ### UX Enhancements
 
-- ⬜ **Skeleton Loading State:** Show calendar outline during initial load (perceived performance)
+- ✅ **Skeleton Loading State:** Show calendar outline during initial load (perceived performance)
 - ⬜ **Smooth Transitions:** Animate month changes for better visual continuity
 - ⬜ **Haptic Feedback:** Vibration on swipe gestures (mobile devices)
 - ⬜ **Compact Mode Toggle:** Dense calendar view for quick browsing

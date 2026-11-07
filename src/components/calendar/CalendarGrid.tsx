@@ -227,7 +227,8 @@ function DayCell({
       tabIndex={isClickable ? 0 : -1}
       className={cn(
         // Further reduced heights for desktop to prevent scrolling
-        "relative flex min-h-11 flex-col items-center justify-center rounded py-1 @lg:min-h-13 @2xl:min-h-15 @3xl:min-h-16",
+        // min-h-12 fits the day number plus the count, so rows keep their height when data arrives
+        "relative flex min-h-12 flex-col items-center justify-center rounded py-1 @lg:min-h-13 @2xl:min-h-15 @3xl:min-h-16",
         "transition-colors duration-150",
         getStatusColor(),
         isToday && "ring-primary ring-offset-card ring-2 ring-offset-1",

@@ -9,7 +9,7 @@
  * - Month navigation (previous, next, today)
  * - Color-coded availability grid
  * - Philippine Time (UTC+8) normalization
- * - Loading and error states
+ * - Loading (layout with disabled controls) and error states
  * - Date validation (no past months, max 1 year ahead)
  * - TanStack Query with stale-while-revalidate
  * - Responsive mobile layout
@@ -142,12 +142,6 @@ export function PublicAvailabilityCalendar() {
     }
   };
 
-  // Enable swipe gestures for mobile navigation
-  useSwipeGesture({
-    onSwipeLeft: goToNextMonth,
-    onSwipeRight: goToPreviousMonth,
-  });
-
   // Fetch availability data with TanStack Query
   // Uses 5-minute stale time to match CDN cache duration
   const { data, isLoading, error, isFetching } = useQuery({
@@ -158,24 +152,16 @@ export function PublicAvailabilityCalendar() {
     placeholderData: (previousData) => previousData,
   });
 
+  // Enable swipe gestures for mobile navigation
+  useSwipeGesture({
+    onSwipeLeft: isLoading ? undefined : goToNextMonth,
+    onSwipeRight: isLoading ? undefined : goToPreviousMonth,
+  });
+
   // Navigation: Return to today's month
   const goToToday = () => {
     setCurrentMonth(getTodayPhilippineTime());
   };
-
-  // Loading state
-  if (isLoading) {
-    return (
-      <div className="bg-card shadow-card flex h-96 flex-col items-center justify-center rounded-lg p-8">
-        <Loader2
-          className="text-primary mb-4 h-12 w-12 animate-spin"
-          role="progressbar"
-          aria-label="Loading calendar"
-        />
-        <p className="text-muted-foreground">Loading availability calendar...</p>
-      </div>
-    );
-  }
 
   // Error state
   if (error) {
@@ -189,7 +175,7 @@ export function PublicAvailabilityCalendar() {
     );
   }
 
-  if (!data) {
+  if (!data && !isLoading) {
     return null;
   }
 
@@ -207,7 +193,11 @@ export function PublicAvailabilityCalendar() {
   const isNextMonthValid = validateMonth(nextMonth).valid;
 
   return (
-    <div className="border-border bg-card @container overflow-hidden rounded-lg border">
+    <section
+      aria-label="Availability"
+      aria-busy={isLoading}
+      className="border-border bg-card @container overflow-hidden rounded-lg border"
+    >
       <div className="border-border bg-muted border-b">
         {/* Month Navigation - Compact */}
         <div className="bg-card px-4 py-2">
@@ -215,7 +205,7 @@ export function PublicAvailabilityCalendar() {
             {/* Previous Month Button */}
             <Button
               onClick={goToPreviousMonth}
-              disabled={!isPrevMonthValid}
+              disabled={isLoading || !isPrevMonthValid}
               variant="ghost"
               size="sm"
               className="text-foreground"
@@ -225,20 +215,12 @@ export function PublicAvailabilityCalendar() {
             </Button>
 
             {/* Current Month Display */}
-            <div className="text-center">
-              <h2 className="text-foreground text-xl font-bold">{monthName}</h2>
-              {isFetching && (
-                <span className="text-muted-foreground mt-1 flex items-center justify-center gap-1 text-xs">
-                  <Loader2 className="h-3 w-3 animate-spin" />
-                  Updating...
-                </span>
-              )}
-            </div>
+            <h2 className="text-foreground text-center text-xl font-bold">{monthName}</h2>
 
             {/* Next Month Button */}
             <Button
               onClick={goToNextMonth}
-              disabled={!isNextMonthValid}
+              disabled={isLoading || !isNextMonthValid}
               variant="ghost"
               size="sm"
               className="text-foreground"
@@ -251,6 +233,7 @@ export function PublicAvailabilityCalendar() {
           {/* Today Button - Even Smaller */}
           <Button
             onClick={goToToday}
+            disabled={isLoading}
             variant="secondary"
             size="sm"
             className="border-border mt-1.5 h-7 w-full border text-sm"
@@ -268,32 +251,48 @@ export function PublicAvailabilityCalendar() {
       {/* Calendar Grid - Reduced Padding */}
       <div className="p-2 @lg:p-3">
         <CalendarGrid
-          availability={data.availability}
+          availability={data?.availability ?? []}
           currentMonth={currentMonth}
-          onDateClick={(date) => {
-            // Navigate to the clicked date's month
-            const clickedMonth = new Date(date.getFullYear(), date.getMonth(), 1);
-            const validation = validateMonth(clickedMonth);
-            if (validation.valid) {
-              setCurrentMonth(clickedMonth);
-            }
-          }}
+          onDateClick={
+            isLoading
+              ? undefined
+              : (date) => {
+                  // Navigate to the clicked date's month
+                  const clickedMonth = new Date(date.getFullYear(), date.getMonth(), 1);
+                  const validation = validateMonth(clickedMonth);
+                  if (validation.valid) {
+                    setCurrentMonth(clickedMonth);
+                  }
+                }
+          }
         />
       </div>
 
       {/* Last Updated Timestamp - Minimal Footer */}
       <div className="border-border bg-muted border-t px-4 py-2 text-center">
-        <p className="text-muted-foreground text-xs">
-          Updated{" "}
-          {new Date(data.metadata.generatedAt).toLocaleString("en-US", {
-            month: "short",
-            day: "numeric",
-            hour: "numeric",
-            minute: "2-digit",
-            hour12: true,
-          })}
+        <p
+          role="status"
+          className="text-muted-foreground flex items-center justify-center gap-1 text-xs"
+        >
+          {isFetching || !data ? (
+            <>
+              <Loader2 className="size-3 animate-spin" aria-hidden="true" />
+              Loading…
+            </>
+          ) : (
+            <>
+              Updated{" "}
+              {new Date(data.metadata.generatedAt).toLocaleString("en-US", {
+                month: "short",
+                day: "numeric",
+                hour: "numeric",
+                minute: "2-digit",
+                hour12: true,
+              })}
+            </>
+          )}
         </p>
       </div>
-    </div>
+    </section>
   );
 }
