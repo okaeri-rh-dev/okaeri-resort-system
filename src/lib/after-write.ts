@@ -86,6 +86,8 @@ const CASCADES: Partial<Record<TableName, readonly TableName[]>> = {
   payments: ["bookings"],
   // trigger trigger_update_booking_totals
   booking_units: ["bookings"],
+  // trigger sync_booking_guest_name
+  guests: ["bookings"],
   bookings: [
     // trigger trigger_update_guest_statistics
     "guests",

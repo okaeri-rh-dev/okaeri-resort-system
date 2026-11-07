@@ -1,5 +1,6 @@
--- The bookings and payments lists read bookings.guest_name, so a guest rename
--- must reach the guest's bookings (issue 360). Anonymized bookings stay removed.
+-- Bookings keep their own guest_name copy, which the bookings and payments lists,
+-- the availability timeline and the pending queue read, so a guest rename must
+-- reach the guest's bookings (issue 360). Anonymized bookings stay removed.
 CREATE OR REPLACE FUNCTION public.sync_booking_guest_name()
 RETURNS trigger
 LANGUAGE plpgsql
@@ -18,6 +19,7 @@ $$;
 
 REVOKE ALL ON FUNCTION public.sync_booking_guest_name() FROM public, anon, authenticated;
 
+DROP TRIGGER IF EXISTS sync_booking_guest_name ON public.guests;
 CREATE TRIGGER sync_booking_guest_name
     AFTER UPDATE OF guest_name ON public.guests
     FOR EACH ROW
