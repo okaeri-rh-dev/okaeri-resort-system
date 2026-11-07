@@ -25,3 +25,11 @@ CREATE TRIGGER sync_booking_guest_name
     FOR EACH ROW
     WHEN (OLD.guest_name IS DISTINCT FROM NEW.guest_name)
     EXECUTE FUNCTION public.sync_booking_guest_name();
+
+-- Bookings of guests renamed before this trigger existed
+UPDATE public.bookings b
+SET guest_name = g.guest_name
+FROM public.guests g
+WHERE b.guest_id = g.guest_id
+  AND b.anonymized_at IS NULL
+  AND b.guest_name IS DISTINCT FROM g.guest_name;
