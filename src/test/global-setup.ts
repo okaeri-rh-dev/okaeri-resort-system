@@ -128,6 +128,27 @@ async function checkDatabaseAvailability(): Promise<boolean> {
   return false;
 }
 
+// A stack migrated by another storage-api version can lack the index behind its `on conflict`,
+// so every upload fails with 42P10 and the storage tests fail in unrelated-looking ways.
+async function storageUploadsFailWith42P10(): Promise<boolean> {
+  const bucket = createClient<Database>(TEST_SUPABASE_URL, TEST_SERVICE_KEY).storage.from(
+    "payment-proofs"
+  );
+  const probePath = `global-setup-probe-${process.pid}.png`;
+  const { error } = await bucket.upload(probePath, new Uint8Array([0]), {
+    contentType: "image/png",
+  });
+  await bucket.remove([probePath]);
+  return error?.message.includes("42P10") ?? false;
+}
+
+const STORAGE_DRIFT_MESSAGE = [
+  "Local storage uploads fail with 42P10: storage.objects lacks the unique index the running storage-api needs.",
+  "The local DB volume was migrated by a different storage-api version.",
+  "Fix: supabase stop --no-backup && supabase start",
+  "Warning: --no-backup deletes all local data.",
+].join("\n");
+
 /**
  * Global setup function - runs once before all tests
  */
@@ -150,6 +171,11 @@ export default async function globalSetup() {
   console.log("=".repeat(80) + "\n");
 
   const dbAvailable = await checkDatabaseAvailability();
+
+  if (dbAvailable && (await storageUploadsFailWith42P10())) {
+    releaseDbLock();
+    throw new Error(STORAGE_DRIFT_MESSAGE);
+  }
 
   // Seed test data if database is available
   if (dbAvailable) {
