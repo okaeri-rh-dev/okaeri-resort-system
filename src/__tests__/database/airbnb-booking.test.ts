@@ -32,8 +32,11 @@ let dayOffset = 500;
 async function newBooking(
   booking_source: StaffBookingSource,
   subtotals: number[],
-  airbnb_confirmation_code?: string,
-  { client = service, email = null }: { client?: TestClient; email?: string | null } = {}
+  {
+    airbnb_confirmation_code,
+    client = service,
+    email = null,
+  }: { airbnb_confirmation_code?: string; client?: TestClient; email?: string | null } = {}
 ) {
   dayOffset += 3;
   const checkIn = new Date(Date.now() + dayOffset * 24 * 60 * 60 * 1000);
@@ -292,22 +295,22 @@ describe("Airbnb booking", () => {
 
   it("stores its confirmation code and rejects a code already used", async () => {
     if (!shouldRun) return;
-    const booking = await newBooking("Airbnb", [4000], "HMDUPE001");
+    const booking = await newBooking("Airbnb", [4000], { airbnb_confirmation_code: "HMDUPE001" });
 
     expect(booking.airbnb_confirmation_code).toBe("HMDUPE001");
-    await expect(newBooking("Airbnb", [4000], "HMDUPE001")).rejects.toThrow(
-      DUPLICATE_CONFIRMATION_CODE_MESSAGE
-    );
+    await expect(
+      newBooking("Airbnb", [4000], { airbnb_confirmation_code: "HMDUPE001" })
+    ).rejects.toThrow(DUPLICATE_CONFIRMATION_CODE_MESSAGE);
   });
 
   it("a rejected code leaves no new guest", async () => {
     if (!shouldRun) return;
-    await newBooking("Airbnb", [4000], "HMDUPE002");
+    await newBooking("Airbnb", [4000], { airbnb_confirmation_code: "HMDUPE002" });
     const email = `dupe-${crypto.randomUUID()}@example.com`;
 
-    await expect(newBooking("Airbnb", [4000], "HMDUPE002", { email })).rejects.toThrow(
-      DUPLICATE_CONFIRMATION_CODE_MESSAGE
-    );
+    await expect(
+      newBooking("Airbnb", [4000], { airbnb_confirmation_code: "HMDUPE002", email })
+    ).rejects.toThrow(DUPLICATE_CONFIRMATION_CODE_MESSAGE);
     expect(await guestsWith(email)).toEqual([]);
   });
 
@@ -316,7 +319,7 @@ describe("Airbnb booking", () => {
     const email = `staff-${crypto.randomUUID()}@example.com`;
 
     await expect(
-      newBooking("Direct", [4000], undefined, { client: roleClients.byRole.staff, email })
+      newBooking("Direct", [4000], { client: roleClients.byRole.staff, email })
     ).rejects.toThrow(/permission denied/i);
     expect(await guestsWith(email)).toEqual([]);
   });
@@ -325,14 +328,14 @@ describe("Airbnb booking", () => {
     if (!shouldRun) return;
     const email = `new-${crypto.randomUUID()}@example.com`;
 
-    const booking = await newBooking("Airbnb", [4000], undefined, { email });
+    const booking = await newBooking("Airbnb", [4000], { email });
 
     expect(await guestsWith(email)).toEqual([{ guest_id: booking.guest_id }]);
   });
 
   it("staff add a code in an edit, but not one another booking has", async () => {
     if (!shouldRun) return;
-    await newBooking("Airbnb", [4000], "HMTAKEN01");
+    await newBooking("Airbnb", [4000], { airbnb_confirmation_code: "HMTAKEN01" });
     const booking = await newBooking("Airbnb", [4000]);
     const staff = roleClients.byRole.staff;
 
@@ -354,7 +357,7 @@ describe("Airbnb booking", () => {
 
   it("the bookings search finds a booking by its confirmation code", async () => {
     if (!shouldRun) return;
-    const booking = await newBooking("Airbnb", [4000], "HMSEARCH1");
+    const booking = await newBooking("Airbnb", [4000], { airbnb_confirmation_code: "HMSEARCH1" });
 
     const { data, error } = await roleClients.byRole.staff
       .from("bookings")
