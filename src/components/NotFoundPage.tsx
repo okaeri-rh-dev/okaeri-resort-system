@@ -1,12 +1,12 @@
 import { Link } from "@tanstack/react-router";
 import { ArrowLeft, Home } from "lucide-react";
 
-import { Button } from "@/components/patterns";
+import { BrandedScreen, Button } from "@/components/patterns";
 
 export function NotFoundPage() {
   return (
-    <div className="bg-background flex min-h-screen items-center justify-center">
-      <div className="w-full max-w-md text-center">
+    <BrandedScreen>
+      <div className="text-center">
         <div className="mb-8">
           <h1 className="text-foreground mb-4 text-6xl font-bold">404</h1>
           <h2 className="text-foreground mb-2 text-2xl font-semibold">Page Not Found</h2>
@@ -28,11 +28,7 @@ export function NotFoundPage() {
             Go Back
           </Button>
         </div>
-
-        <div className="text-muted-foreground mt-8 text-sm">
-          <p>Okaeri Rest House Management System</p>
-        </div>
       </div>
-    </div>
+    </BrandedScreen>
   );
 }

@@ -2,6 +2,7 @@ import { createFileRoute, redirect } from "@tanstack/react-router";
 
 import { SignUpForm } from "@/components/auth/SignUpForm";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { BrandedScreen } from "@/components/patterns";
 
 export const Route = createFileRoute("/sign-up")({
   beforeLoad: ({ context }) => {
@@ -18,13 +19,11 @@ export const Route = createFileRoute("/sign-up")({
 function SignUpPage() {
   return (
     <ErrorBoundary level="page">
-      <div className="bg-background flex min-h-screen items-center justify-center p-4">
-        <div className="w-full max-w-md">
-          <ErrorBoundary level="component">
-            <SignUpForm />
-          </ErrorBoundary>
-        </div>
-      </div>
+      <BrandedScreen>
+        <ErrorBoundary level="component">
+          <SignUpForm />
+        </ErrorBoundary>
+      </BrandedScreen>
     </ErrorBoundary>
   );
 }
