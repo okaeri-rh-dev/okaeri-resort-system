@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Audit Trail System provides comprehensive activity logging and viewing capabilities for the Okaeri Resort System. This module consists of ~1,585 lines of code implementing a full-featured audit log viewer with advanced filtering, diff viewing, and export capabilities.
+The Audit Trail System provides comprehensive activity logging and viewing capabilities for the Okaeri Rest House. This module consists of ~1,585 lines of code implementing a full-featured audit log viewer with advanced filtering, diff viewing, and export capabilities.
 
 ## 🏗️ Module Architecture
 

@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Units Table provides **comprehensive unit management** with advanced features including **inline editing** and each cabin's **state tonight** (Blocked, Booked or Free) for the Okaeri Resort System. This table implements the **Professional Enterprise Design System** with row selection, sortable columns, and a powerful edit mode for efficient bulk updates.
+The Units Table provides **comprehensive unit management** with advanced features including **inline editing** and each cabin's **state tonight** (Blocked, Booked or Free) for the Okaeri Rest House. This table implements the **Professional Enterprise Design System** with row selection, sortable columns, and a powerful edit mode for efficient bulk updates.
 
 ## 🏗️ Module Architecture
 

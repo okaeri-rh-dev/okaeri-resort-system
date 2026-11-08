@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Authentication Components module provides **secure login functionality** with comprehensive audit logging for the Okaeri Resort System. This simple yet secure authentication flow integrates with Supabase Auth and automatically logs all authentication attempts for security monitoring.
+The Authentication Components module provides **secure login functionality** with comprehensive audit logging for the Okaeri Rest House. This simple yet secure authentication flow integrates with Supabase Auth and automatically logs all authentication attempts for security monitoring.
 
 ## 🏗️ Module Architecture
 
@@ -113,7 +113,7 @@ try {
   <Card className="w-full max-w-md">
     <CardHeader className="text-center">
       <CardTitle className="text-2xl font-bold">
-        Okaeri Resort System
+        Okaeri Rest House
       </CardTitle>
       <p className="text-gray-600">Sign in to continue</p>
     </CardHeader>

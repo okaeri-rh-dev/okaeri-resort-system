@@ -142,7 +142,7 @@ export interface AppShellProps {
  * ```tsx
  * <AppShell
  *   surface="admin"
- *   brand={{ name: "Okaeri Resort", to: "/admin/dashboard" }}
+ *   brand={{ name: "Okaeri Rest House", to: "/admin/dashboard" }}
  *   destinations={destinations}
  *   navGroups={[{ id: "money", label: "Money", icon: Wallet }]}
  *   actions={[{ label: "Sign Out", icon: LogOut, onSelect: signOut }]}

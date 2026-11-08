@@ -2,7 +2,7 @@
 
 ## Overview
 
-The `/src/lib/` directory contains the core infrastructure and utilities that power the Okaeri Resort System. These modules provide essential services including database access, authentication, availability calculations, and security functions.
+The `/src/lib/` directory contains the core infrastructure and utilities that power the Okaeri Rest House. These modules provide essential services including database access, authentication, availability calculations, and security functions.
 
 ## 📁 Directory Structure
 

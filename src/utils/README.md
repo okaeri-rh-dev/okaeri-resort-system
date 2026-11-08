@@ -2,7 +2,7 @@
 
 ## Overview
 
-The `/src/utils/` directory contains 29 utility modules providing reusable functions for common operations throughout the Okaeri Resort System. These utilities are organized by domain and purpose, offering consistent implementations for complex business logic.
+The `/src/utils/` directory contains 29 utility modules providing reusable functions for common operations throughout the Okaeri Rest House. These utilities are organized by domain and purpose, offering consistent implementations for complex business logic.
 
 ## 📁 Directory Structure
 

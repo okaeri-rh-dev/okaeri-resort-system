@@ -151,7 +151,7 @@ Total: ~446 lines of code across 5 components
    - 3xl font size for visual prominence
 
 2. **Bank Transfer Details**
-   - Account name: "Okaeri Resort"
+   - Account name: "Okaeri Rest House"
    - Account number in monospace font for clarity
    - Bank name: "BDO Savings"
    - Icon: Building2 icon for bank identification
@@ -159,7 +159,7 @@ Total: ~446 lines of code across 5 components
 
 3. **GCash Payment Details**
    - GCash mobile number in monospace font
-   - Account name: "Okaeri Resort"
+   - Account name: "Okaeri Rest House"
    - Smartphone icon for mobile payment identification
    - Same key-value layout as bank transfer section
 
