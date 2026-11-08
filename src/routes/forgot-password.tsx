@@ -2,6 +2,7 @@ import { createFileRoute, redirect } from "@tanstack/react-router";
 
 import { ForgotPasswordForm } from "@/components/auth/ForgotPasswordForm";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { BrandedScreen } from "@/components/patterns";
 
 export const Route = createFileRoute("/forgot-password")({
   beforeLoad: ({ context }) => {
@@ -18,9 +19,9 @@ export const Route = createFileRoute("/forgot-password")({
 function ForgotPasswordPage() {
   return (
     <ErrorBoundary level="page">
-      <div className="bg-background flex min-h-screen items-center justify-center p-4">
+      <BrandedScreen>
         <ForgotPasswordForm />
-      </div>
+      </BrandedScreen>
     </ErrorBoundary>
   );
 }

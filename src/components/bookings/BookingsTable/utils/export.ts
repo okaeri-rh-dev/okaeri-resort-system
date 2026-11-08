@@ -1,3 +1,4 @@
+import { RESORT_NAME } from "@/config/settings";
 import type { Booking } from "@/types";
 
 export const exportBookings = async (bookings: Booking[]) => {
@@ -49,7 +50,7 @@ export const exportBookings = async (bookings: Booking[]) => {
         "Created Date",
       ],
       {
-        businessName: "Okaeri Rest House",
+        businessName: RESORT_NAME,
         includeMetadata: true,
         philippineFormat: true,
       }

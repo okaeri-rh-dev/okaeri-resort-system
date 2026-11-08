@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 
 import { createRouter, RouterProvider } from "@tanstack/react-router";
 
+import { PageLoader } from "@/components/patterns";
 import { clearRoleCache } from "@/lib/audit-roles";
 import { auth } from "@/lib/auth";
 import { queryClient } from "@/lib/query-client";
@@ -22,6 +23,8 @@ const router = createRouter({
   } as RouterContext,
   defaultPreload: "intent",
   defaultPreloadStaleTime: 30_000, // 30s — keep preloaded data fresh on hover→click
+  // Rendered in the nearest parent outlet: full screen above the shell, content area inside it
+  defaultPendingComponent: PageLoader,
 });
 
 // Register the router instance for type safety
@@ -97,14 +100,7 @@ function App() {
 
   // Show loading while checking authentication
   if (isAuthenticated === null) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="text-center">
-          <div className="border-primary mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-b-2"></div>
-          <p className="text-muted-foreground">Loading Okaeri Rest House...</p>
-        </div>
-      </div>
-    );
+    return <PageLoader />;
   }
 
   return (

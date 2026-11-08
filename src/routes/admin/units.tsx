@@ -4,7 +4,15 @@ import { createFileRoute, Outlet, useMatches, useNavigate } from "@tanstack/reac
 import { z } from "zod";
 
 import { ErrorBoundary } from "@/components/ErrorBoundary";
-import { Button, Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/patterns";
+import {
+  Button,
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  FormSkeleton,
+  TableSkeleton,
+} from "@/components/patterns";
 import { PricingInfoCard } from "@/components/pricing/PricingInfoCard";
 import { requireManager } from "@/lib/route-guards";
 import type { Unit } from "@/types";
@@ -82,11 +90,7 @@ function UnitsPage() {
 
         <ErrorBoundary level="component">
           <Suspense
-            fallback={
-              <div className="flex items-center justify-center py-12">
-                <div className="border-primary h-8 w-8 animate-spin rounded-full border-b-2" />
-              </div>
-            }
+            fallback={<TableSkeleton rows={6} columns={9} toolbar label="Loading cabins" />}
           >
             <UnitsTable onViewUnit={handleViewUnit} onEditUnit={handleEditUnit} />
           </Suspense>
@@ -99,13 +103,7 @@ function UnitsPage() {
               <DialogTitle>Create New Cabin</DialogTitle>
             </DialogHeader>
             <ErrorBoundary level="component">
-              <Suspense
-                fallback={
-                  <div className="flex items-center justify-center py-12">
-                    <div className="border-primary h-8 w-8 animate-spin rounded-full border-b-2" />
-                  </div>
-                }
-              >
+              <Suspense fallback={<FormSkeleton fields={4} label="Loading cabin form" />}>
                 <UnitForm
                   onSuccess={handleCreateSuccess}
                   onCancel={() => setShowCreateDialog(false)}

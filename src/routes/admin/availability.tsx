@@ -11,6 +11,7 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import {
   PageHeader,
   Skeleton,
+  TableSkeleton,
   Tabs,
   TabsContent,
   TabsList,
@@ -163,11 +164,7 @@ function AvailabilityPage() {
           <TabsContent value="units" className="space-y-4">
             <ErrorBoundary level="component">
               <Suspense
-                fallback={
-                  <div className="flex items-center justify-center py-12">
-                    <div className="border-primary h-8 w-8 animate-spin rounded-full border-b-2" />
-                  </div>
-                }
+                fallback={<TableSkeleton rows={6} columns={9} toolbar label="Loading cabins" />}
               >
                 <UnitsTable />
               </Suspense>

@@ -11,6 +11,8 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
+  FormSkeleton,
+  TableSkeleton,
 } from "@/components/patterns";
 import { requireManager } from "@/lib/route-guards";
 import type { Expense } from "@/types";
@@ -77,9 +79,7 @@ function ExpensesPage() {
         <ErrorBoundary level="component">
           <Suspense
             fallback={
-              <div className="flex items-center justify-center py-12">
-                <div className="border-primary h-8 w-8 animate-spin rounded-full border-b-2" />
-              </div>
+              <TableSkeleton rows={8} columns={6} toolbar pagination label="Loading expenses" />
             }
           >
             <ExpensesTable onViewExpense={handleViewExpense} onEditExpense={handleEditExpense} />
@@ -96,13 +96,7 @@ function ExpensesPage() {
               </DialogDescription>
             </DialogHeader>
             <ErrorBoundary level="component">
-              <Suspense
-                fallback={
-                  <div className="flex items-center justify-center py-12">
-                    <div className="border-primary h-8 w-8 animate-spin rounded-full border-b-2" />
-                  </div>
-                }
-              >
+              <Suspense fallback={<FormSkeleton fields={7} label="Loading expense form" />}>
                 <ExpenseForm
                   onSuccess={() => setShowExpenseForm(false)}
                   onCancel={() => setShowExpenseForm(false)}

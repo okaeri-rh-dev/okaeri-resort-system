@@ -21,9 +21,10 @@
 import { lazy, Suspense, useEffect } from "react";
 
 import { createFileRoute } from "@tanstack/react-router";
-import { Loader2 } from "lucide-react";
 
+import { CalendarSkeleton } from "@/components/calendar/CalendarSkeleton";
 import { ContactChannelList } from "@/components/contact-channels/ContactChannelList";
+import { RESORT_NAME } from "@/config/settings";
 import { useActiveContactChannels } from "@/hooks/useContactChannels";
 import { GuestLayout } from "@/layouts/GuestLayout";
 
@@ -43,33 +44,29 @@ function HomePage() {
 
   // Set document title and meta tags
   useEffect(() => {
-    document.title =
-      "Okaeri Rest House - Beachfront Accommodation in La Union | Check Availability";
+    document.title = `${RESORT_NAME} - Beachfront Accommodation in La Union | Check Availability`;
 
     // Update or create meta tags
     const metaTags = [
       {
         name: "description",
-        content:
-          "Okaeri Rest House offers beachfront accommodations in Taboc, La Union. Check real-time availability and plan your perfect beach getaway. 3 units available.",
+        content: `${RESORT_NAME} offers beachfront accommodations in Taboc, La Union. Check real-time availability and plan your perfect beach getaway. 3 units available.`,
       },
       {
         name: "keywords",
-        content:
-          "Okaeri Rest House, La Union resort, beach resort, Taboc accommodations, Philippines beachfront, La Union hotels",
+        content: `${RESORT_NAME}, La Union resort, beach resort, Taboc accommodations, Philippines beachfront, La Union hotels`,
       },
-      { property: "og:title", content: "Okaeri Rest House - Beachfront Resort in La Union" },
+      { property: "og:title", content: `${RESORT_NAME} - Beachfront Resort in La Union` },
       {
         property: "og:description",
-        content:
-          "Experience beachfront living at Okaeri Rest House. Check availability for our 3 units in Taboc, La Union",
+        content: `Experience beachfront living at ${RESORT_NAME}. Check availability for our 3 units in Taboc, La Union`,
       },
       { property: "og:type", content: "website" },
       { property: "og:url", content: "https://okaeri-resort.com" },
       { property: "og:image", content: "https://okaeri-resort.com/images/resort-hero.jpg" },
-      { property: "og:site_name", content: "Okaeri Rest House" },
+      { property: "og:site_name", content: RESORT_NAME },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:title", content: "Okaeri Rest House - Beachfront Resort in La Union" },
+      { name: "twitter:title", content: `${RESORT_NAME} - Beachfront Resort in La Union` },
       {
         name: "twitter:description",
         content: "Check availability for our beachfront units in Taboc, La Union",
@@ -96,7 +93,7 @@ function HomePage() {
   const structuredData = {
     "@context": "https://schema.org",
     "@type": "Resort",
-    name: "Okaeri Rest House",
+    name: RESORT_NAME,
     description: "Beachfront resort in Taboc, La Union with 3 available units",
     address: {
       "@type": "PostalAddress",
@@ -131,17 +128,7 @@ function HomePage() {
 
       <div className="flex h-full flex-col">
         <h1 className="sr-only">Okaeri availability</h1>
-        <Suspense
-          fallback={
-            <div className="border-border bg-card flex h-96 flex-col items-center justify-center rounded-lg border p-8">
-              <Loader2
-                className="text-muted-foreground mb-4 size-10 animate-spin"
-                aria-hidden="true"
-              />
-              <p className="text-muted-foreground">Loading availability calendar...</p>
-            </div>
-          }
-        >
+        <Suspense fallback={<CalendarSkeleton />}>
           <PublicAvailabilityCalendar />
         </Suspense>
 

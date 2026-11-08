@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Monitoring Infrastructure provides comprehensive quota tracking, performance monitoring, and alerting capabilities to keep the Okaeri Resort System within free tier limits while ensuring operational excellence. This module consists of 7 specialized monitoring modules totaling ~76KB of code.
+The Monitoring Infrastructure provides comprehensive quota tracking, performance monitoring, and alerting capabilities to keep the Okaeri Rest House within free tier limits while ensuring operational excellence. This module consists of 7 specialized monitoring modules totaling ~76KB of code.
 
 ## 🏗️ Module Architecture
 

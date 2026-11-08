@@ -9,7 +9,7 @@
  * - Month navigation (previous, next, today)
  * - Color-coded availability grid
  * - Philippine Time (UTC+8) normalization
- * - Loading (layout with disabled controls) and error states
+ * - Loading (layout with disabled controls, footer skeleton) and error states
  * - Date validation (no past months, max 1 year ahead)
  * - TanStack Query with stale-while-revalidate
  * - Responsive mobile layout
@@ -21,9 +21,9 @@ import { useState } from "react";
 
 import { queryOptions, useQuery } from "@tanstack/react-query";
 import { isAfter, max } from "date-fns";
-import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
-import { Button, Callout } from "@/components/patterns";
+import { Button, Callout, Skeleton } from "@/components/patterns";
 import { publicAvailabilityKeys } from "@/lib/query-keys";
 import {
   getMonthEnd,
@@ -276,8 +276,8 @@ export function PublicAvailabilityCalendar() {
         >
           {isFetching || !data ? (
             <>
-              <Loader2 className="size-3 animate-spin" aria-hidden="true" />
-              Loading…
+              <Skeleton className="h-4 w-36" aria-hidden="true" />
+              <span className="sr-only">Loading…</span>
             </>
           ) : (
             <>

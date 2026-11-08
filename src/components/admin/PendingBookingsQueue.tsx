@@ -36,6 +36,7 @@ import {
   SelectValue,
   StatusBadge,
   TableEmptyState,
+  TableSkeleton,
   type StatusTone,
 } from "@/components/patterns";
 import { isPaymentReceived } from "@/lib/bookings";
@@ -299,9 +300,7 @@ export function PendingBookingsQueue() {
           <CardDescription>Loading pending guest bookings...</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center justify-center py-8">
-            <div className="border-primary h-8 w-8 animate-spin rounded-full border-4 border-t-transparent" />
-          </div>
+          <TableSkeleton rows={5} columns={9} toolbar label="Loading pending bookings" />
         </CardContent>
       </Card>
     );

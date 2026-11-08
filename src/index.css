@@ -341,3 +341,33 @@
     transition-duration: 0.01ms !important;
   }
 }
+
+/* LogoLoader: the roof lines light up left to right; under reduced motion the roof stays lit */
+@keyframes logo-loader-roof {
+  0%,
+  100% {
+    opacity: 0.25;
+  }
+  30%,
+  60% {
+    opacity: 1;
+  }
+}
+@utility logo-loader-roof {
+  & path {
+    animation: logo-loader-roof 1.5s ease-in-out infinite;
+    opacity: 0.25;
+  }
+  & path:nth-child(2) {
+    animation-delay: 0.2s;
+  }
+  & path:nth-child(3) {
+    animation-delay: 0.4s;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    & path {
+      animation: none;
+      opacity: 1;
+    }
+  }
+}

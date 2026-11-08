@@ -56,4 +56,16 @@ describe("RoleManagementPage pending approval", () => {
     const table = screen.getByRole("table", { name: "Users awaiting approval" });
     expect(within(table).getByRole("row", { name: /new\.helper@example\.com/ })).toBeVisible();
   });
+
+  it("shows a skeleton, not a spinner, while pending users load", () => {
+    vi.mocked(usePendingUsers).mockReturnValue({
+      isLoading: true,
+    } as unknown as ReturnType<typeof usePendingUsers>);
+    const { container } = render(<RoleManagementPage />);
+
+    expect(
+      screen.getByRole("status", { name: "Loading users awaiting approval" })
+    ).toBeInTheDocument();
+    expect(container.querySelector(".animate-spin")).not.toBeInTheDocument();
+  });
 });

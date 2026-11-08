@@ -12,6 +12,8 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
+  FormSkeleton,
+  TableSkeleton,
 } from "@/components/patterns";
 import { requireManager } from "@/lib/route-guards";
 
@@ -78,9 +80,7 @@ function TransfersPage() {
         <ErrorBoundary level="component">
           <Suspense
             fallback={
-              <div className="flex items-center justify-center py-12">
-                <div className="border-primary h-8 w-8 animate-spin rounded-full border-b-2" />
-              </div>
+              <TableSkeleton rows={6} columns={8} toolbar pagination label="Loading transfers" />
             }
           >
             <TransfersTable />
@@ -97,13 +97,7 @@ function TransfersPage() {
               </DialogDescription>
             </DialogHeader>
             <ErrorBoundary level="component">
-              <Suspense
-                fallback={
-                  <div className="flex items-center justify-center py-12">
-                    <div className="border-primary h-8 w-8 animate-spin rounded-full border-b-2" />
-                  </div>
-                }
-              >
+              <Suspense fallback={<FormSkeleton fields={5} label="Loading transfer form" />}>
                 <TransferForm
                   onSuccess={() => setShowTransferForm(false)}
                   onCancel={() => setShowTransferForm(false)}

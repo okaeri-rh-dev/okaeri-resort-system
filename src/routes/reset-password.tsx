@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 
 import { ResetPasswordForm } from "@/components/auth/ResetPasswordForm";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { BrandedScreen } from "@/components/patterns";
 
 export const Route = createFileRoute("/reset-password")({
   component: ResetPasswordPage,
@@ -10,9 +11,9 @@ export const Route = createFileRoute("/reset-password")({
 function ResetPasswordPage() {
   return (
     <ErrorBoundary level="page">
-      <div className="bg-background flex min-h-screen items-center justify-center p-4">
+      <BrandedScreen>
         <ResetPasswordForm />
-      </div>
+      </BrandedScreen>
     </ErrorBoundary>
   );
 }

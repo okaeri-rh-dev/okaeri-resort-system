@@ -1,4 +1,4 @@
-// Core type definitions for Okaeri Resort System
+// Core type definitions for Okaeri Rest House
 
 import type { BookingSource } from "@/lib/bookings/source";
 

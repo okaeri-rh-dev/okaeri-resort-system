@@ -2,7 +2,7 @@
 
 ## Overview
 
-The `/src/providers/` directory contains React Context providers that manage global application state, configuration, and cross-cutting concerns for the Okaeri Resort System.
+The `/src/providers/` directory contains React Context providers that manage global application state, configuration, and cross-cutting concerns for the Okaeri Rest House.
 
 ## 📁 Directory Structure
 

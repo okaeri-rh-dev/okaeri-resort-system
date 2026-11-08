@@ -6,7 +6,7 @@
  * with payment verification and assignment guards.
  *
  * Guards (render-based):
- * - Loading guard: Shows loading spinner while fetching
+ * - Loading guard: Shows a skeleton while fetching
  * - Not found guard: Error if booking doesn't exist
  * - Payment verification guard: Blocks if payment not verified
  * - Already assigned guard: Blocks if units already assigned
@@ -14,7 +14,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { ArrowLeft, CheckCircle2, Loader2 } from "lucide-react";
+import { ArrowLeft, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { UnitAssignmentInterface } from "@/components/admin/UnitAssignmentInterface";
@@ -228,14 +228,23 @@ function LoadingState({ bookingReference }: { bookingReference?: string }) {
         </div>
       </div>
 
-      <Card>
-        <CardContent className="flex items-center justify-center py-12">
-          <div className="text-muted-foreground flex items-center gap-3">
-            <Loader2 className="h-5 w-5 animate-spin" />
-            <span className="text-sm font-medium">Loading booking details...</span>
-          </div>
-        </CardContent>
-      </Card>
+      <div role="status" aria-label="Loading booking details">
+        <Card padding="none" aria-hidden="true">
+          <CardHeader>
+            <Skeleton className="h-6 w-40" />
+          </CardHeader>
+          <CardContent className="@container">
+            <div className="grid grid-cols-2 gap-4 @lg:grid-cols-3">
+              {Array.from({ length: 6 }, (_, field) => (
+                <div key={field} className="space-y-2">
+                  <Skeleton className="h-3 w-20" />
+                  <Skeleton className="h-5 w-28" />
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

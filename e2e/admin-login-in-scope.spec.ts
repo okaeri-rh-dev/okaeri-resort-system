@@ -17,6 +17,6 @@ test.describe("admin login is in /admin scope", () => {
   test("/admin/login renders and does NOT loop (guard is escaped)", async ({ page }) => {
     await page.goto("/admin/login");
     await expect(page).toHaveURL(/\/admin\/login/); // stays put, no bounce
-    await expect(page.getByRole("heading", { level: 2, name: "Okaeri Rest House" })).toBeVisible();
+    await expect(page.getByRole("img", { name: "Okaeri Rest House" })).toBeVisible();
   });
 });

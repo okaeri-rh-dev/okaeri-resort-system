@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Bookings module is the most complex component system in the Okaeri Resort System, handling the entire booking lifecycle from creation to completion. This module consists of multiple interconnected components totaling over 2,500 lines of code.
+The Bookings module is the most complex component system in the Okaeri Rest House, handling the entire booking lifecycle from creation to completion. This module consists of multiple interconnected components totaling over 2,500 lines of code.
 
 ## 🏗️ Module Architecture
 
