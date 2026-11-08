@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { CalendarDays, Search } from "lucide-react";
 
 import { AppShell, type AppShellProps, type ShellDestination } from "@/components/patterns";
+import { RESORT_NAME } from "@/config/settings";
 import { useUIStore } from "@/stores/useUIStore";
 
 const destinations: ShellDestination[] = [
@@ -27,7 +28,7 @@ export function GuestLayout({ pageHeader, width, children }: GuestLayoutProps) {
   return (
     <AppShell
       surface="guest"
-      brand={{ name: "Okaeri Rest House", to: "/" }}
+      brand={{ name: RESORT_NAME, to: "/" }}
       destinations={destinations}
       theme={{ value: theme, onChange: setTheme }}
       pageHeader={pageHeader}

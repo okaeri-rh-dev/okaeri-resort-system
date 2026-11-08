@@ -1,3 +1,6 @@
+/** The resort's name as guests see it (GLOSSARY.md). */
+export const RESORT_NAME = "Okaeri Rest House";
+
 /**
  * TypeScript type for valid timezone values
  * In development, this accepts any string but validates at runtime

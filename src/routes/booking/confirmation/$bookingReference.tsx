@@ -7,6 +7,7 @@ import { PrintButton } from "@/components/booking-confirmation/PrintButton";
 import { StatusTimeline } from "@/components/booking-confirmation/StatusTimeline";
 import { ContactChannelList } from "@/components/contact-channels/ContactChannelList";
 import { Button, Callout, Logo } from "@/components/patterns";
+import { RESORT_NAME } from "@/config/settings";
 import { useActiveContactChannels } from "@/hooks/useContactChannels";
 import { GuestLayout } from "@/layouts/GuestLayout";
 import { readConfirmationSnapshot } from "@/lib/bookings/confirmation-snapshot";
@@ -39,7 +40,7 @@ function BookingConfirmationComponent() {
       <div>
         {/* Header */}
         <div className="mb-8 text-center">
-          <Logo label="Okaeri Rest House" className="mx-auto mb-6 hidden w-60 print:block" />
+          <Logo label={RESORT_NAME} className="mx-auto mb-6 hidden w-60 print:block" />
           <h1 className="text-success-foreground mb-2 text-3xl font-bold">Booking Confirmed!</h1>
           <p className="text-muted-foreground">
             Thank you for your booking. Your confirmation details are below.

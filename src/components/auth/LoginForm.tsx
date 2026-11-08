@@ -13,6 +13,7 @@ import {
   CardTitle,
   Input,
 } from "@/components/patterns";
+import { RESORT_NAME } from "@/config/settings";
 import { supabaseAuth } from "@/lib/supabase";
 
 interface LoginFormProps {
@@ -97,7 +98,7 @@ export function LoginForm({ onSuccess, registered, confirmed }: LoginFormProps) 
   return (
     <Card>
       <CardHeader className="text-center">
-        <CardTitle className="text-2xl font-bold">Okaeri Rest House</CardTitle>
+        <CardTitle className="text-2xl font-bold">{RESORT_NAME}</CardTitle>
         <p className="text-muted-foreground">Sign in to continue</p>
       </CardHeader>
       <CardContent>
