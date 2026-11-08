@@ -25,14 +25,6 @@ export type BookingChanges = Partial<{
   total_amount: number;
 }> & { stay?: { check_in: ManilaDay; check_out: ManilaDay } };
 
-export const BOOKING_SEARCH_COLUMNS = [
-  "guest_name",
-  "booking_reference",
-  "email",
-  "contact_number",
-  "airbnb_confirmation_code",
-];
-
 type Result<T> = { data: T | null; error: { message: string; code?: string } | null };
 
 const EXCLUSION_VIOLATION = "23P01";

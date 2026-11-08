@@ -8,14 +8,12 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import {
-  BOOKING_SEARCH_COLUMNS,
   createBooking,
   DUPLICATE_CONFIRMATION_CODE_MESSAGE,
   manilaDayOf,
   updateBooking,
   type StaffBookingSource,
 } from "@/lib/bookings";
-import { ilikeAnyFilter } from "@/lib/search-filter";
 
 import { createRoleClients, type RoleClients } from "../setup/role-clients";
 import {
@@ -313,18 +311,5 @@ describe("Airbnb booking", () => {
     if (!shouldRun) return;
     await newBooking("Airbnb", [4000]);
     await expect(newBooking("Airbnb", [4000])).resolves.toBeDefined();
-  });
-
-  it("the bookings search finds a booking by its confirmation code", async () => {
-    if (!shouldRun) return;
-    const booking = await newBooking("Airbnb", [4000], "HMSEARCH1");
-
-    const { data, error } = await roleClients.byRole.staff
-      .from("bookings")
-      .select("booking_id")
-      .or(ilikeAnyFilter(BOOKING_SEARCH_COLUMNS, "hmsearch"));
-
-    expect(error).toBeNull();
-    expect(data).toEqual([{ booking_id: booking.booking_id }]);
   });
 });

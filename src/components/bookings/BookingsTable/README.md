@@ -136,15 +136,13 @@ const {
   isLoading,
   error,
 
-  // Filter state
-  filters,
-  setFilters,
-  searchQuery,
-  setSearchQuery,
+  // URL state
+  search,
+  setSearch,
   resetFilters,
+  needsActionCount,
 
   // Actions
-  handleExport,
   handleUploadPayment,
   cancelBooking,
 } = useBookingsTable({
@@ -350,115 +348,13 @@ const columns = [
 </Card>
 ```
 
-### BookingFilters Component
+### Views, search and filters
 
-**Advanced filtering interface** with search, status filters, date ranges, and export.
+The URL holds the list state. `parseBookingsSearch` in `src/lib/bookings/list.ts` is the route's search schema, and `selectBookings` picks the view, applies the search and filters, and sorts. `useSelectedBookings` reads the URL and gives the list and the CSV export the same bookings.
 
-#### Features
-
-1. **Search**
-   - Booking reference search
-   - Guest name search
-   - Email search
-   - Phone number search
-   - Real-time filtering
-
-2. **Status Filter**
-   - Confirmed
-   - Pending
-   - Checked In
-   - Checked Out
-   - Cancelled
-   - Multi-select support
-
-3. **Date Range Filter**
-   - Check-in date range
-   - Check-out date range
-   - Calendar picker
-   - Quick presets (Today, This Week, This Month)
-
-4. **Quick Actions**
-   - Reset all filters
-   - Export to CSV
-   - Filter active indicator
-
-#### Usage
-
-```tsx
-<BookingFilters
-  filters={filters}
-  setFilters={setFilters}
-  searchQuery={searchQuery}
-  setSearchQuery={setSearchQuery}
-  resetFilters={resetFilters}
-  hasActiveFilters={hasActiveFilters}
-  onExport={handleExport}
-/>
-```
-
-#### Filter State
-
-```typescript
-interface BookingFilters {
-  status?: BookingStatus[]     // Selected statuses
-  checkInFrom?: Date           // Check-in range start
-  checkInTo?: Date             // Check-in range end
-  checkOutFrom?: Date          // Check-out range start
-  checkOutTo?: Date            // Check-out range end
-}
-```
-
-#### Filter Implementation
-
-```tsx
-// Status filter
-<FilterPopover
-  isActive={filters.status && filters.status.length > 0}
-  onClear={() => setFilters({ ...filters, status: [] })}
-  content={
-    <div className="space-y-2">
-      {['Confirmed', 'Pending', 'Checked In', 'Cancelled'].map(status => (
-        <label key={status} className="flex items-center gap-2">
-          <input
-            type="checkbox"
-            checked={filters.status?.includes(status)}
-            onChange={(e) => {
-              const newStatuses = e.target.checked
-                ? [...(filters.status || []), status]
-                : filters.status?.filter(s => s !== status)
-              setFilters({ ...filters, status: newStatuses })
-            }}
-          />
-          {status}
-        </label>
-      ))}
-    </div>
-  }
->
-  Status
-</FilterPopover>
-
-// Date range filter
-<FilterPopover
-  isActive={!!filters.checkInFrom || !!filters.checkInTo}
-  showActions={true}
-  onApply={() => console.log('Apply date filter')}
-  onClear={() => setFilters({ ...filters, checkInFrom: undefined, checkInTo: undefined })}
-  content={
-    <Calendar
-      mode="range"
-      selected={{ from: filters.checkInFrom, to: filters.checkInTo }}
-      onSelect={(range) => setFilters({
-        ...filters,
-        checkInFrom: range?.from,
-        checkInTo: range?.to,
-      })}
-    />
-  }
->
-  Check-in Date
-</FilterPopover>
-```
+- Views: All (no `view`), Upcoming, In-house, Needs action, Past, Cancelled. Each view has a fixed sort.
+- Search (`q`): guest name, email, reference, Airbnb confirmation code, and phone by digits.
+- Filters: `source`, `payment`, `cabin`, `from`, `to`. A date range matches any night of the stay.
 
 ## 🔄 Data Flow
 
@@ -466,7 +362,7 @@ interface BookingFilters {
 
 ```typescript
 // Data fetching with TanStack Query
-const { data: bookings, isLoading, error } = useBookings()
+const { data: bookings, isLoading, error } = useAllBookings()
 
 // Mutations
 const updateBookingStatus = useUpdateBookingStatus()

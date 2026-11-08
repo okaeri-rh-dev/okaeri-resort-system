@@ -19,7 +19,7 @@ import {
   Textarea,
 } from "@/components/patterns";
 import { formatCurrency } from "@/lib/formatters";
-import { useBookings } from "@/stores/useBookingStore";
+import { useAllBookings } from "@/stores/useBookingStore";
 import { useCreatePayment, useUpdatePayment } from "@/stores/usePaymentStore";
 import type { Payment } from "@/types";
 
@@ -54,7 +54,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
 
   const createPayment = useCreatePayment();
   const updatePayment = useUpdatePayment();
-  const { data: bookings = [] } = useBookings();
+  const { data: bookings = [] } = useAllBookings();
 
   // Filter out cancelled bookings
   const activeBookings = bookings.filter((b) => b.booking_status !== "Cancelled");
