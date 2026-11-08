@@ -17,7 +17,7 @@ import {
 } from "@/lib/bookings";
 import { ilikeAnyFilter } from "@/lib/search-filter";
 
-import { createRoleClients, type RoleClients } from "../setup/role-clients";
+import { createRoleClients, type RoleClients, type TestClient } from "../setup/role-clients";
 import {
   cleanupTestData,
   createTestUnit,
@@ -32,7 +32,8 @@ let dayOffset = 500;
 async function newBooking(
   booking_source: StaffBookingSource,
   subtotals: number[],
-  airbnb_confirmation_code?: string
+  airbnb_confirmation_code?: string,
+  { client = service, email = null }: { client?: TestClient; email?: string | null } = {}
 ) {
   dayOffset += 3;
   const checkIn = new Date(Date.now() + dayOffset * 24 * 60 * 60 * 1000);
@@ -46,8 +47,8 @@ async function newBooking(
       assigned_guests: 1,
     }))
   );
-  return createBooking(service, {
-    guest: { guest_name: "Airbnb Guest", email: null, contact_number: null },
+  return createBooking(client, {
+    guest: { guest_name: "Airbnb Guest", email, contact_number: null },
     check_in: manilaDayOf(checkIn.toISOString()),
     check_out: manilaDayOf(new Date(checkIn.getTime() + 24 * 60 * 60 * 1000).toISOString()),
     units,
@@ -55,6 +56,12 @@ async function newBooking(
     booking_source,
     airbnb_confirmation_code,
   });
+}
+
+async function guestsWith(email: string) {
+  const { data, error } = await service.from("guests").select("guest_id").eq("email", email);
+  if (error) throw error;
+  return data;
 }
 
 async function paymentsOf(bookingId: string) {
@@ -291,6 +298,36 @@ describe("Airbnb booking", () => {
     await expect(newBooking("Airbnb", [4000], "HMDUPE001")).rejects.toThrow(
       DUPLICATE_CONFIRMATION_CODE_MESSAGE
     );
+  });
+
+  it("a rejected code leaves no new guest", async () => {
+    if (!shouldRun) return;
+    await newBooking("Airbnb", [4000], "HMDUPE002");
+    const email = `dupe-${crypto.randomUUID()}@example.com`;
+
+    await expect(newBooking("Airbnb", [4000], "HMDUPE002", { email })).rejects.toThrow(
+      DUPLICATE_CONFIRMATION_CODE_MESSAGE
+    );
+    expect(await guestsWith(email)).toEqual([]);
+  });
+
+  it("staff cannot create a booking directly, and leave no new guest", async () => {
+    if (!shouldRun) return;
+    const email = `staff-${crypto.randomUUID()}@example.com`;
+
+    await expect(
+      newBooking("Direct", [4000], undefined, { client: roleClients.byRole.staff, email })
+    ).rejects.toThrow(/permission denied/i);
+    expect(await guestsWith(email)).toEqual([]);
+  });
+
+  it("a new email creates its guest with the booking", async () => {
+    if (!shouldRun) return;
+    const email = `new-${crypto.randomUUID()}@example.com`;
+
+    const booking = await newBooking("Airbnb", [4000], undefined, { email });
+
+    expect(await guestsWith(email)).toEqual([{ guest_id: booking.guest_id }]);
   });
 
   it("staff add a code in an edit, but not one another booking has", async () => {
