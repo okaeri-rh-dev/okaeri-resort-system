@@ -23,17 +23,10 @@ const { confirmed, cancelled } = vi.hoisted(() => ({
   cancelled: { booking_id: "b2", guest_name: "Ben Reyes", booking_status: "Cancelled" } as Booking,
 }));
 
-vi.mock("@/stores/useBookingStore", async (importOriginal) => {
-  const noopMutation = { mutate: vi.fn() };
-  const bookingsResult = { data: [confirmed, cancelled], isLoading: false, error: null };
-  return {
-    ...(await importOriginal<typeof import("@/stores/useBookingStore")>()),
-    useBookings: () => bookingsResult,
-    useCancelBooking: () => noopMutation,
-    useUpdateBookingStatus: () => noopMutation,
-    useUploadPaymentProof: () => noopMutation,
-  };
-});
+vi.mock("@/stores/useBookingStore", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/stores/useBookingStore")>()),
+  ...(await import("@/test/booking-store-stub")).bookingStoreHookStubs([confirmed, cancelled]),
+}));
 
 describe("useBookingsTable export", () => {
   beforeEach(() => {
