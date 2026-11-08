@@ -4,7 +4,7 @@ import { useCallback, useState } from "react";
 
 import { getCoreRowModel, useReactTable, type ColumnDef } from "@tanstack/react-table";
 import { format } from "date-fns";
-import { Clock, Loader2, Shield, UserPlus } from "lucide-react";
+import { Clock, Shield, UserPlus } from "lucide-react";
 
 import {
   Button,
@@ -17,6 +17,7 @@ import {
   ListCard,
   ListCardRow,
   StatusBadge,
+  TableSkeleton,
 } from "@/components/patterns";
 import { usePendingUsers, type PendingUser } from "@/hooks/usePendingUsers";
 import { type AppRole } from "@/lib/audit-roles";
@@ -141,9 +142,7 @@ export function RoleManagementPage() {
         </CardHeader>
         <CardContent>
           {isLoadingPending ? (
-            <div className="flex items-center justify-center py-6">
-              <Loader2 className="h-5 w-5 animate-spin" />
-            </div>
+            <TableSkeleton rows={3} columns={5} label="Loading users awaiting approval" />
           ) : !pendingUsers || pendingUsers.length === 0 ? (
             <p className="text-muted-foreground py-6 text-center text-sm">
               No users awaiting approval.

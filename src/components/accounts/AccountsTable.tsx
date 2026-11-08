@@ -34,6 +34,7 @@ import {
   TableEmptyState,
   TablePagination,
   TableSearch,
+  TableSkeleton,
 } from "@/components/patterns";
 import { formatCurrency, pluralize } from "@/lib/formatters";
 import { cn } from "@/lib/utils";
@@ -202,15 +203,7 @@ export const AccountsTable: React.FC<AccountsTableProps> = ({ onEditAccount }) =
   }, [filteredAccounts]);
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <div
-          role="status"
-          aria-label="Loading accounts"
-          className="border-primary size-8 animate-spin rounded-full border-b-2"
-        />
-      </div>
-    );
+    return <TableSkeleton rows={6} columns={8} toolbar pagination label="Loading accounts" />;
   }
 
   if (isError) {

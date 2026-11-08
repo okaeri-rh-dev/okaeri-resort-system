@@ -32,6 +32,7 @@ import {
   TableEmptyState,
   TablePagination,
   TableSearch,
+  TableSkeleton,
 } from "@/components/patterns";
 import { formatCurrency, pluralize } from "@/lib/formatters";
 import { useDeleteTransfer, useTransfers } from "@/stores/useTransferStore";
@@ -177,15 +178,7 @@ export const TransfersTable: React.FC<TransfersTableProps> = ({ accountId }) => 
   const totalAmount = filteredTransfers.reduce((sum, t) => sum + t.amount, 0);
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <div
-          role="status"
-          aria-label="Loading transfers"
-          className="border-primary size-8 animate-spin rounded-full border-b-2"
-        />
-      </div>
-    );
+    return <TableSkeleton rows={6} columns={8} toolbar pagination label="Loading transfers" />;
   }
 
   if (isError) {
