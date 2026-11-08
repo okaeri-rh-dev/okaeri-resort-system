@@ -76,11 +76,6 @@ export const useBookingsTable = () => {
     cancelBooking,
   });
 
-  // Export handler
-  const handleExport = useCallback(async () => {
-    await exportBookings(bookings);
-  }, [bookings]);
-
   // Apply filters
   const filteredBookings = useMemo(() => {
     let filtered = [...bookings];
@@ -153,6 +148,11 @@ export const useBookingsTable = () => {
       setTableState({ pagination: newPagination });
     },
   });
+
+  // Pre-pagination rows: filtered and sorted, across every page
+  const handleExport = useCallback(async () => {
+    await exportBookings(table.getPrePaginationRowModel().rows.map((row) => row.original));
+  }, [table]);
 
   return {
     table,

@@ -121,7 +121,7 @@ interface BookingsTableProps {
 
 4. **Export Functionality**
    - CSV export with Philippine formatting
-   - Filtered data export
+   - Exports the filtered, sorted rows across every page
    - Sanitized data output
 
 #### Usage
@@ -528,20 +528,12 @@ const uploadPaymentProof = useMutation({
 
 ### CSV Export
 
-Export filtered bookings with Philippine formatting:
+Export the rows the user sees: filtered and sorted, across every page:
 
 ```typescript
-const handleExport = useCallback(() => {
-  const filteredBookings = applyFilters(bookings, filters)
-
-  exportBookings(filteredBookings, {
-    filename: `bookings-${format(new Date(), 'yyyy-MM-dd')}`,
-    philippineFormat: true,
-    includeTimestamp: true,
-  })
-
-  toast.success(`Exported ${filteredBookings.length} bookings`)
-}, [bookings, filters])
+const handleExport = useCallback(async () => {
+  await exportBookings(table.getPrePaginationRowModel().rows.map((row) => row.original))
+}, [table])
 ```
 
 ### Export Format
@@ -559,7 +551,7 @@ BKG-2024-002,Jane Smith,Mountain Villa,Dec 23 2024,Dec 25 2024,4,"₱6,000",Pend
 - Philippine peso formatting
 - Date formatting (MMM DD YYYY)
 - Timestamp in filename
-- Filtered data only
+- Filtered and sorted rows only, across every page
 
 ## 🎨 Professional Design System
 
@@ -665,15 +657,14 @@ describe('BookingsTable', () => {
     expect(screen.getByText('Confirmed Booking')).toBeInTheDocument()
   })
 
-  it('exports filtered data', async () => {
-    const { user } = renderWithUser(<BookingsTable />)
+  // Full version: __tests__/export-filtered.test.tsx
+  it('exports only the bookings that match the active filters', async () => {
+    useBookingStore.setState({ filters: { status: 'Cancelled' } })
+    const { result } = renderHook(() => useBookingsTable())
 
-    await user.click(screen.getByText(/export/i))
+    await act(() => result.current.handleExport())
 
-    expect(mockExportBookings).toHaveBeenCalledWith(
-      expect.arrayContaining([]),
-      expect.objectContaining({ philippineFormat: true })
-    )
+    expect(exportBookings).toHaveBeenCalledWith([cancelled])
   })
 })
 ```

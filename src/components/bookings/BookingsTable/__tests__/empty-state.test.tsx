@@ -16,17 +16,10 @@ vi.mock("@tanstack/react-router", async () => ({
   useNavigate: () => vi.fn(),
 }));
 
-vi.mock("@/stores/useBookingStore", async (importOriginal) => {
-  const noopMutation = { mutate: vi.fn() };
-  const noBookings = { data: [], isLoading: false, error: null };
-  return {
-    ...(await importOriginal<typeof import("@/stores/useBookingStore")>()),
-    useBookings: () => noBookings,
-    useCancelBooking: () => noopMutation,
-    useUpdateBookingStatus: () => noopMutation,
-    useUploadPaymentProof: () => noopMutation,
-  };
-});
+vi.mock("@/stores/useBookingStore", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/stores/useBookingStore")>()),
+  ...(await import("@/test/booking-store-stub")).bookingStoreHookStubs([]),
+}));
 
 describe("BookingsTable empty state", () => {
   beforeEach(() => {
