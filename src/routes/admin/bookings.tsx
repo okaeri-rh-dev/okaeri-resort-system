@@ -15,6 +15,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  PageLoader,
   toast,
 } from "@/components/patterns";
 import { parseBookingsSearch } from "@/lib/bookings";
@@ -121,13 +122,7 @@ function BookingsPage() {
         </div>
 
         <ErrorBoundary level="component">
-          <Suspense
-            fallback={
-              <div className="flex items-center justify-center py-12">
-                <div className="border-primary h-8 w-8 animate-spin rounded-full border-b-2" />
-              </div>
-            }
-          >
+          <Suspense fallback={<PageLoader />}>
             <BookingsTable />
           </Suspense>
         </ErrorBoundary>

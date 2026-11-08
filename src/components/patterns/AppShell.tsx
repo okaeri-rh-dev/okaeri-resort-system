@@ -33,6 +33,7 @@ import type { RoutePath } from "@/types/route-path";
 
 import { Logo } from "./Logo";
 import { PageHeader, type PageHeaderProps } from "./PageHeader";
+import { ShellContentContext } from "./shell-content";
 import { DarkModeSwitch, ThemeSegments, type ShellTheme } from "./ThemeControls";
 import { CompactWindowContext, useCompactWindowQuery } from "./window-size";
 
@@ -183,7 +184,7 @@ function Content({
       )}
     >
       {pageHeader && <PageHeader {...pageHeader} surface={surface} className="mb-6" />}
-      {children}
+      <ShellContentContext.Provider value={true}>{children}</ShellContentContext.Provider>
     </div>
   );
 }

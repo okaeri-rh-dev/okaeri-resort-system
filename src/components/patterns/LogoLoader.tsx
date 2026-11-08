@@ -33,7 +33,7 @@ export interface LogoLoaderProps {
  */
 export function LogoLoader({ size = "full", className }: LogoLoaderProps) {
   return (
-    <div role="status" aria-label="Loading" className={cn("relative text-foreground", className)}>
+    <div role="status" aria-label="Loading" className={cn("text-foreground relative", className)}>
       <svg viewBox="16 124 480 236" aria-hidden="true" className={cn("block", sizes[size])}>
         <g className="logo-loader-roof fill-brand">
           {roofPaths.map((path) => (

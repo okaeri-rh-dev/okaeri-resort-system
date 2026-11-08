@@ -3,6 +3,7 @@ import { lazy, Suspense } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { PageLoader } from "@/components/patterns";
 import { dashboardSearchSchema } from "@/lib/dashboard";
 import { requireStaff } from "@/lib/route-guards";
 
@@ -24,13 +25,7 @@ function DashboardPage() {
     <ErrorBoundary level="page">
       <div className="space-y-6">
         <ErrorBoundary level="component">
-          <Suspense
-            fallback={
-              <div className="flex items-center justify-center py-12">
-                <div className="border-primary h-8 w-8 animate-spin rounded-full border-b-2" />
-              </div>
-            }
-          >
+          <Suspense fallback={<PageLoader />}>
             <Dashboard />
           </Suspense>
         </ErrorBoundary>
