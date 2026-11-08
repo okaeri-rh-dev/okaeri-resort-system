@@ -15,6 +15,7 @@ import {
   DatePicker,
   Form,
   FormField,
+  FormSkeleton,
   Input,
   NumberInput,
   Progress,
@@ -47,7 +48,6 @@ import type { MultiUnitBooking, Unit } from "@/types";
 import type { PricingResult } from "@/types/api/pricing";
 
 import { BookingSourceField, ConfirmationCodeField, PayoutField } from "./form-fields";
-import { FormSkeleton } from "./FormSkeleton";
 
 interface BookingFormProps {
   onSuccess?: (booking: MultiUnitBooking) => void;

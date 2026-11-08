@@ -3,7 +3,6 @@ import { lazy, Suspense, useState } from "react";
 import { createFileRoute, Outlet, useMatches, useNavigate } from "@tanstack/react-router";
 import { z } from "zod";
 
-import { FormSkeleton } from "@/components/bookings/FormSkeleton";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import {
   Button,
@@ -11,6 +10,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  FormSkeleton,
   TableSkeleton,
 } from "@/components/patterns";
 import { PricingInfoCard } from "@/components/pricing/PricingInfoCard";

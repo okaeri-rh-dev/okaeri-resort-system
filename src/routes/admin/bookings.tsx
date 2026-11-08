@@ -5,7 +5,6 @@ import { Building2, ChevronDown, Plus, Users } from "lucide-react";
 
 import { useSelectedBookings } from "@/components/bookings/BookingsTable/hooks/useSelectedBookings";
 import { exportBookings } from "@/components/bookings/BookingsTable/utils/export";
-import { FormSkeleton } from "@/components/bookings/FormSkeleton";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import {
   ActionMenu,
@@ -16,6 +15,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  FormSkeleton,
   TableSkeleton,
   toast,
 } from "@/components/patterns";
