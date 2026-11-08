@@ -1,6 +1,6 @@
 /**
  * Mobile Responsive Design Tests
- * Okaeri Resort Management System
+ * Okaeri Rest House
  *
  * Validates mobile-first design implementations
  * and enterprise touch interface requirements

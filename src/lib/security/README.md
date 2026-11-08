@@ -2,7 +2,7 @@
 
 ## Overview
 
-The `/src/lib/security/` directory contains critical security utilities for the Okaeri Resort System, focusing on input sanitization, XSS prevention, and data validation to protect against common web vulnerabilities.
+The `/src/lib/security/` directory contains critical security utilities for the Okaeri Rest House, focusing on input sanitization, XSS prevention, and data validation to protect against common web vulnerabilities.
 
 ## 📁 Directory Structure
 

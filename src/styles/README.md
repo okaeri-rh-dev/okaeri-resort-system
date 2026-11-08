@@ -2,7 +2,7 @@
 
 ## Overview
 
-The `/src/styles/` directory contains custom CSS stylesheets that complement the Tailwind CSS framework, providing enterprise-specific styling and mobile optimizations for the Okaeri Resort System.
+The `/src/styles/` directory contains custom CSS stylesheets that complement the Tailwind CSS framework, providing enterprise-specific styling and mobile optimizations for the Okaeri Rest House.
 
 ## 📁 Style Files
 

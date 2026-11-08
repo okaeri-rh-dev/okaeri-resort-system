@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Security Monitoring Dashboard provides **real-time security event monitoring and threat analysis** for the Okaeri Resort System. This comprehensive dashboard aggregates audit logs, identifies threat patterns, analyzes suspicious IP addresses, and enables proactive security management through automated threat scoring and IP blocking capabilities.
+The Security Monitoring Dashboard provides **real-time security event monitoring and threat analysis** for the Okaeri Rest House. This comprehensive dashboard aggregates audit logs, identifies threat patterns, analyzes suspicious IP addresses, and enables proactive security management through automated threat scoring and IP blocking capabilities.
 
 ## 🏗️ Module Architecture
 

@@ -1,7 +1,7 @@
-# Okaeri Resort System - Form Components Documentation
+# Okaeri Rest House - Form Components Documentation
 
 This document provides comprehensive documentation for all form components in
-the Okaeri Resort System, including usage examples, validation schemas, and
+the Okaeri Rest House, including usage examples, validation schemas, and
 integration patterns.
 
 ## 📋 Table of Contents
@@ -298,9 +298,7 @@ interface GuestQuickFormProps {
 const form = useForm<FormData>({
   resolver: zodResolver(schema),
   mode: "onChange", // Real-time validation
-  defaultValues: {
-    /* ... */
-  },
+  defaultValues: {/* ... */},
 });
 
 // Handle errors gracefully
@@ -526,6 +524,6 @@ function BookingWithStore() {
 
 ---
 
-This documentation covers all form components in the Okaeri Resort System. For
+This documentation covers all form components in the Okaeri Rest House. For
 additional questions or feature requests, please refer to the development team
 or create an issue in the project repository.

@@ -1,5 +1,5 @@
 /**
- * Comprehensive Date Utilities for Okaeri Resort System
+ * Comprehensive Date Utilities for Okaeri Rest House
  *
  * Handles resort timezone operations, business day calculations,
  * date range validations, booking period utilities, and calendar

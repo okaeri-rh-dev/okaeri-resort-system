@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Expenses Table provides **comprehensive expense tracking and management** for the Okaeri Resort System with advanced filtering, search, and CSV export capabilities. This table implements the **Professional Enterprise Design System** with nested card structure, monospace currency formatting, and responsive mobile cards.
+The Expenses Table provides **comprehensive expense tracking and management** for the Okaeri Rest House with advanced filtering, search, and CSV export capabilities. This table implements the **Professional Enterprise Design System** with nested card structure, monospace currency formatting, and responsive mobile cards.
 
 ## 🏗️ Module Architecture
 

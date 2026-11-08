@@ -2,7 +2,7 @@
 
 ## Overview
 
-The `/src/types/` directory contains TypeScript type definitions, interfaces, and enums that provide type safety throughout the Okaeri Resort System. These types ensure consistency, prevent runtime errors, and improve developer experience with auto-completion.
+The `/src/types/` directory contains TypeScript type definitions, interfaces, and enums that provide type safety throughout the Okaeri Rest House. These types ensure consistency, prevent runtime errors, and improve developer experience with auto-completion.
 
 ## 📁 Directory Structure
 

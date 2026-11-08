@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Entity Detail component library provides a **standardized, reusable pattern** for building detail/view pages across all entity types in the Okaeri Resort System. This architectural pattern eliminates code duplication and ensures consistent UX across bookings, guests, units, payments, and expenses.
+The Entity Detail component library provides a **standardized, reusable pattern** for building detail/view pages across all entity types in the Okaeri Rest House. This architectural pattern eliminates code duplication and ensures consistent UX across bookings, guests, units, payments, and expenses.
 
 **Impact**: Used by **15+ components** across 5 entity types, reducing per-entity implementation from ~500 lines to ~100 lines.
 

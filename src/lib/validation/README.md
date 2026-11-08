@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Validation Utilities module provides **comprehensive input validation schemas** using Zod for type-safe, runtime validation across the Okaeri Resort System. These utilities ensure data integrity, prevent security vulnerabilities, and provide clear error messages for form validation.
+The Validation Utilities module provides **comprehensive input validation schemas** using Zod for type-safe, runtime validation across the Okaeri Rest House. These utilities ensure data integrity, prevent security vulnerabilities, and provide clear error messages for form validation.
 
 All validation schemas integrate **DOMPurify sanitization** and implement **Philippine business rules** for phone numbers, dates, and currency formats.
 

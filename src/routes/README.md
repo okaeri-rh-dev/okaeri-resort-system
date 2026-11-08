@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Okaeri Resort System uses TanStack Router v1 with file-based routing for type-safe, performant navigation. Routes are automatically generated from the file structure, providing excellent developer experience with TypeScript support.
+The Okaeri Rest House uses TanStack Router v1 with file-based routing for type-safe, performant navigation. Routes are automatically generated from the file structure, providing excellent developer experience with TypeScript support.
 
 ## 📁 Route Structure
 

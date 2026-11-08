@@ -2,7 +2,7 @@
 
 ## Overview
 
-The `/src/tests/` directory contains comprehensive test suites for the Okaeri Resort System, focusing on mobile responsiveness, security validation, and critical business logic testing.
+The `/src/tests/` directory contains comprehensive test suites for the Okaeri Rest House, focusing on mobile responsiveness, security validation, and critical business logic testing.
 
 ## 📁 Directory Structure
 

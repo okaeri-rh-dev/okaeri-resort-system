@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Okaeri Resort System uses a hybrid state management approach combining **Zustand** for client-side application state and **TanStack Query** for server state management. This architecture provides optimal performance, developer experience, and data consistency.
+The Okaeri Rest House uses a hybrid state management approach combining **Zustand** for client-side application state and **TanStack Query** for server state management. This architecture provides optimal performance, developer experience, and data consistency.
 
 ## 🏗️ Architecture
 
