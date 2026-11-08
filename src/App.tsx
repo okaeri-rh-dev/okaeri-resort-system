@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 
 import { createRouter, RouterProvider } from "@tanstack/react-router";
 
+import { LogoLoader } from "@/components/patterns";
 import { clearRoleCache } from "@/lib/audit-roles";
 import { auth } from "@/lib/auth";
 import { queryClient } from "@/lib/query-client";
@@ -98,11 +99,9 @@ function App() {
   // Show loading while checking authentication
   if (isAuthenticated === null) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="text-center">
-          <div className="border-primary mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-b-2"></div>
-          <p className="text-muted-foreground">Loading Okaeri Rest House...</p>
-        </div>
+      // Same box as the index.html splash, so only the animation starts
+      <div className="grid min-h-dvh place-items-center">
+        <LogoLoader />
       </div>
     );
   }
