@@ -4,7 +4,14 @@ import { useNavigate } from "@tanstack/react-router";
 import { Clock, LogOut, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 
-import { Button, Card, CardContent, CardHeader, CardTitle } from "@/components/patterns";
+import {
+  BrandedScreen,
+  Button,
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/patterns";
 import { getUserAuditRole } from "@/lib/audit-roles";
 import { auth } from "@/lib/auth";
 
@@ -38,8 +45,8 @@ export function PendingApprovalPage({ loginPath = "/admin/login" }: { loginPath?
   };
 
   return (
-    <div className="bg-background flex min-h-screen items-center justify-center p-4">
-      <Card className="w-full max-w-md">
+    <BrandedScreen>
+      <Card>
         <CardHeader className="text-center">
           <div className="bg-warning mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full">
             <Clock className="text-warning-foreground h-6 w-6" />
@@ -75,6 +82,6 @@ export function PendingApprovalPage({ loginPath = "/admin/login" }: { loginPath?
           </div>
         </CardContent>
       </Card>
-    </div>
+    </BrandedScreen>
   );
 }

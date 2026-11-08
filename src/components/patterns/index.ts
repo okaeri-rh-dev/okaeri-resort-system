@@ -65,6 +65,7 @@ export { ActionMenu, type ActionMenuAction, type ActionMenuProps } from "./Actio
 export { TableEmptyState, type TableEmptyStateProps } from "./TableEmptyState";
 export { DataTable, type DataTableProps } from "./DataTable";
 export { Logo, type LogoProps } from "./Logo";
+export { BrandedScreen, type BrandedScreenProps } from "./BrandedScreen";
 export {
   AppShell,
   type AppShellProps,

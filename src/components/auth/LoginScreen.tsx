@@ -1,7 +1,7 @@
 import { resolveSafeRedirect } from "@/components/auth/login-utils";
 import { LoginForm } from "@/components/auth/LoginForm";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
-import { Logo } from "@/components/patterns";
+import { BrandedScreen } from "@/components/patterns";
 
 interface LoginScreenProps {
   redirectTo?: string;
@@ -21,21 +21,11 @@ export function LoginScreen({ redirectTo, registered, confirmed }: LoginScreenPr
 
   return (
     <ErrorBoundary level="page">
-      <div className="bg-background flex min-h-screen items-center justify-center">
-        <div className="w-full max-w-md space-y-8">
-          <div>
-            <h2 className="text-foreground mt-6">
-              <Logo label="Okaeri Rest House" className="mx-auto w-60" />
-            </h2>
-            <p className="text-muted-foreground mt-2 text-center text-sm">
-              Sign in to access the resort management dashboard
-            </p>
-          </div>
-          <ErrorBoundary level="component">
-            <LoginForm onSuccess={handleSuccess} registered={registered} confirmed={confirmed} />
-          </ErrorBoundary>
-        </div>
-      </div>
+      <BrandedScreen subtitle="Sign in to access the resort management dashboard">
+        <ErrorBoundary level="component">
+          <LoginForm onSuccess={handleSuccess} registered={registered} confirmed={confirmed} />
+        </ErrorBoundary>
+      </BrandedScreen>
     </ErrorBoundary>
   );
 }
