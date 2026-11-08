@@ -2,7 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 import type { TableName } from "@/lib/after-write";
 import type { BookingStatus } from "@/types/booking-status";
-import type { Database, Tables, TablesInsert, TablesUpdate } from "@/types/database.types";
+import type { Database, Tables, TablesUpdate } from "@/types/database.types";
 
 import { BlockedUnitError, isBlockedNightError } from "./availability";
 import { DuplicateConfirmationCodeError, isDuplicateConfirmationCode } from "./confirmation-code";
@@ -52,7 +52,7 @@ function rowFrom<T>({ data, error }: Result<T>): NonNullable<T> {
   return data;
 }
 
-// Tables updateBooking writes: a new email inserts a guest, and update_booking calls set_booking_total
+// Tables update_booking writes: a new email inserts a guest, and a new total calls set_booking_total
 export const UPDATE_BOOKING_WRITES = [
   "bookings",
   "guests",
@@ -69,7 +69,6 @@ export async function updateBooking(
   const update: TablesUpdate<"bookings"> = { ...columns };
 
   if (stay) Object.assign(update, toStayInstants(stay.check_in, stay.check_out));
-  if (changes.email) update.guest_id = await guestIdForEmail(client, changes.email, changes);
 
   const { error } = await client.rpc("update_booking", {
     p_booking_id: bookingId,
@@ -78,34 +77,6 @@ export async function updateBooking(
   });
   throwIfError(error);
   return rowFrom(await client.from("bookings").select().eq("booking_id", bookingId).single());
-}
-
-async function guestIdForEmail(
-  client: Client,
-  email: string,
-  changes: BookingChanges
-): Promise<string> {
-  const { data: existing, error } = await client
-    .from("guests")
-    .select("guest_id")
-    .eq("email", email)
-    .limit(1)
-    .maybeSingle();
-  if (error) throw new Error(error.message);
-  if (existing) return existing.guest_id;
-
-  const { guest_id } = rowFrom(
-    await client
-      .from("guests")
-      .insert({
-        guest_name: changes.guest_name ?? email,
-        email,
-        phone_number: changes.contact_number ?? null,
-      } satisfies TablesInsert<"guests">)
-      .select("guest_id")
-      .single()
-  );
-  return guest_id;
 }
 
 const STATUS_TRANSITIONS: Record<BookingStatus, BookingStatus[]> = {

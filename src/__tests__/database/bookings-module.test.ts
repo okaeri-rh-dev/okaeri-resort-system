@@ -247,6 +247,63 @@ describe("updateBooking", () => {
     expect(guest?.email).toBe(updated.email);
   });
 
+  it("gives the new guest the edited name and contact number", async () => {
+    if (!shouldRun) return;
+    const unit = await createTestUnit();
+    const booking = await createBooking(
+      supabase,
+      stayFor(unit.unit_id, "2026-12-20", "2026-12-22")
+    );
+
+    const updated = await updateBooking(supabase, booking.booking_id, {
+      guest_name: "New Guest",
+      email: `new-${Date.now()}@example.com`,
+      contact_number: "09171234567",
+    });
+
+    const { data: guest } = await supabase
+      .from("guests")
+      .select("guest_name, phone_number")
+      .eq("guest_id", updated.guest_id!)
+      .single();
+    expect(guest).toEqual({ guest_name: "New Guest", phone_number: "09171234567" });
+  });
+
+  it("links the existing guest when the email is known", async () => {
+    if (!shouldRun) return;
+    const unit = await createTestUnit();
+    const guest = await createTestGuest();
+    const booking = await createBooking(
+      supabase,
+      stayFor(unit.unit_id, "2026-12-20", "2026-12-22")
+    );
+
+    const updated = await updateBooking(supabase, booking.booking_id, { email: guest.email! });
+
+    expect(updated.guest_id).toBe(guest.guest_id);
+  });
+
+  it("leaves no new guest when the edit fails", async () => {
+    if (!shouldRun) return;
+    const unit = await createTestUnit();
+    const booking = await createBooking(
+      supabase,
+      stayFor(unit.unit_id, "2027-01-01", "2027-01-03")
+    );
+    await blockNight(unit.unit_id, "2027-01-05");
+    const email = `failed-${crypto.randomUUID()}@example.com`;
+
+    await expect(
+      updateBooking(supabase, booking.booking_id, {
+        email,
+        stay: { check_in: "2027-01-04", check_out: "2027-01-06" },
+      })
+    ).rejects.toThrow(BLOCKED_UNIT_MESSAGE);
+
+    const { data: guests } = await supabase.from("guests").select("guest_id").eq("email", email);
+    expect(guests).toEqual([]);
+  });
+
   it("throws when the row is not visible to the caller", async () => {
     if (!shouldRun) return;
     await expect(
