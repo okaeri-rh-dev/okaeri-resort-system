@@ -120,7 +120,6 @@ export const BOOKING_STATUS = {
   checkedIn: "checked_in",
   checkedOut: "checked_out",
   cancelled: "cancelled",
-  noShow: "no_show",
 } as const;
 
 // Payment status values

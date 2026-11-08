@@ -246,8 +246,7 @@ enum BookingStatus {
   CHECKED_IN = 'checked_in',
   CHECKED_OUT = 'checked_out',
   COMPLETED = 'completed',
-  CANCELLED = 'cancelled',
-  NO_SHOW = 'no_show'
+  CANCELLED = 'cancelled'
 }
 
 const workflowTransitions = {
@@ -257,8 +256,7 @@ const workflowTransitions = {
   ],
   [BookingStatus.CONFIRMED]: [
     BookingStatus.CHECKED_IN,
-    BookingStatus.CANCELLED,
-    BookingStatus.NO_SHOW
+    BookingStatus.CANCELLED
   ],
   [BookingStatus.CHECKED_IN]: [
     BookingStatus.CHECKED_OUT

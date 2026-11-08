@@ -31,7 +31,7 @@ export function statusTone(status: string): StatusTone {
 }
 
 /** "CheckedOut" → "Checked Out": stored statuses are PascalCase. */
-function statusLabel(status: string) {
+export function statusLabel(status: string) {
   return status.replace(/([a-z])([A-Z])/g, "$1 $2");
 }
 
