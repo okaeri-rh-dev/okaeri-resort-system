@@ -121,7 +121,7 @@ interface BookingsTableProps {
 
 4. **Export Functionality**
    - CSV export with Philippine formatting
-   - Filtered data export
+   - Exports the selected bookings across every page
    - Sanitized data output
 
 #### Usage
@@ -424,20 +424,11 @@ const uploadPaymentProof = useMutation({
 
 ### CSV Export
 
-Export filtered bookings with Philippine formatting:
+The page overflow menu exports the bookings the current view, search and filters select, in the view's sort, across every page:
 
 ```typescript
-const handleExport = useCallback(() => {
-  const filteredBookings = applyFilters(bookings, filters)
-
-  exportBookings(filteredBookings, {
-    filename: `bookings-${format(new Date(), 'yyyy-MM-dd')}`,
-    philippineFormat: true,
-    includeTimestamp: true,
-  })
-
-  toast.success(`Exported ${filteredBookings.length} bookings`)
-}, [bookings, filters])
+const { bookings } = useSelectedBookings()
+exportBookings(bookings)
 ```
 
 ### Export Format
@@ -455,7 +446,7 @@ BKG-2024-002,Jane Smith,Mountain Villa,Dec 23 2024,Dec 25 2024,4,"₱6,000",Pend
 - Philippine peso formatting
 - Date formatting (MMM DD YYYY)
 - Timestamp in filename
-- Filtered data only
+- Selected bookings only, in the view's sort, across every page
 
 ## 🎨 Professional Design System
 
@@ -559,17 +550,6 @@ describe('BookingsTable', () => {
 
     expect(screen.queryByText('Pending Booking')).not.toBeInTheDocument()
     expect(screen.getByText('Confirmed Booking')).toBeInTheDocument()
-  })
-
-  it('exports filtered data', async () => {
-    const { user } = renderWithUser(<BookingsTable />)
-
-    await user.click(screen.getByText(/export/i))
-
-    expect(mockExportBookings).toHaveBeenCalledWith(
-      expect.arrayContaining([]),
-      expect.objectContaining({ philippineFormat: true })
-    )
   })
 })
 ```

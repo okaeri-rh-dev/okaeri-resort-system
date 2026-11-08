@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-import type { Database, Tables, TablesInsert } from "@/types/database.types";
+import type { Database, Tables } from "@/types/database.types";
 
 import { BlockedUnitError, isBlockedNightError } from "./availability";
 import { DuplicateConfirmationCodeError, isDuplicateConfirmationCode } from "./confirmation-code";
@@ -44,8 +44,6 @@ export async function createBooking(
   client: Client,
   booking: NewBooking
 ): Promise<BookingWithUnits> {
-  const guestId = booking.guest.guest_id ?? (await guestIdFor(client, booking.guest));
-
   const { data: bookingId, error } = await client.rpc("create_multi_unit_booking", {
     p_booking_data: {
       guest_name: booking.guest.guest_name,
@@ -62,7 +60,7 @@ export async function createBooking(
       payment_status: "Pending",
     },
     p_units: booking.units,
-    p_guest_id: guestId,
+    p_guest_id: booking.guest.guest_id,
   });
   if (isBlockedNightError(error)) throw new BlockedUnitError();
   if (isDuplicateConfirmationCode(error)) throw new DuplicateConfirmationCodeError();
@@ -75,31 +73,4 @@ export async function createBooking(
     .single();
   if (fetchError) throw new Error(fetchError.message);
   return data;
-}
-
-async function guestIdFor(client: Client, guest: NewBooking["guest"]): Promise<string> {
-  if (guest.email) {
-    const { data, error } = await client
-      .from("guests")
-      .select("guest_id")
-      .eq("email", guest.email)
-      .limit(1)
-      .maybeSingle();
-    if (error) throw new Error(error.message);
-    if (data) return data.guest_id;
-  }
-
-  const { data, error } = await client
-    .from("guests")
-    .insert({
-      guest_name: guest.guest_name,
-      email: guest.email,
-      phone_number: guest.contact_number,
-      total_bookings: 0,
-      total_spent: 0,
-    } satisfies TablesInsert<"guests">)
-    .select("guest_id")
-    .single();
-  if (error) throw new Error(error.message);
-  return data.guest_id;
 }

@@ -24,16 +24,11 @@ vi.mock("@tanstack/react-router", async () => ({
   useSearch: () => router.search,
 }));
 
-vi.mock("@/stores/useBookingStore", async (importOriginal) => {
-  const noopMutation = { mutate: vi.fn() };
-  return {
-    ...(await importOriginal<typeof import("@/stores/useBookingStore")>()),
-    useAllBookings: () => ({ data: loaded.bookings, isLoading: false, error: null }),
-    useCancelBooking: () => noopMutation,
-    useUpdateBookingStatus: () => noopMutation,
-    useUploadPaymentProof: () => noopMutation,
-  };
-});
+vi.mock("@/stores/useBookingStore", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/stores/useBookingStore")>()),
+  ...(await import("@/test/booking-store-stub")).bookingStoreHookStubs([]),
+  useAllBookings: () => ({ data: loaded.bookings, isLoading: false, error: null }),
+}));
 
 const checkedOut = {
   booking_id: "booking-1",
