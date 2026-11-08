@@ -106,7 +106,7 @@ test.describe("Availability Calendar", () => {
       const bookingsTable = new BookingsTablePage(page);
       await bookingsTable.goto();
 
-      await bookingsTable.filterByStatus("confirmed");
+      await bookingsTable.selectView("Upcoming");
       await bookingsTable.waitForTableLoad();
 
       const rowCount = await bookingsTable.getRowCount();
@@ -175,7 +175,7 @@ test.describe("Availability Calendar", () => {
       await bookingsTable.goto();
 
       // Find a cancelled booking
-      await bookingsTable.filterByStatus("cancelled");
+      await bookingsTable.selectView("Cancelled");
       await bookingsTable.waitForTableLoad();
 
       const rowCount = await bookingsTable.getRowCount();

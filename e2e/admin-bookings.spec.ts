@@ -142,12 +142,56 @@ test.describe("Admin Bookings Management", () => {
       await expect(bookingsTable.searchInput).toHaveValue("");
     });
 
-    test("status filter is available", async ({ page }) => {
+    test("opens the All view with no view in the URL and no status filter", async ({ page }) => {
       const bookingsTable = new BookingsTablePage(page);
       await bookingsTable.goto();
 
-      // Status filter should be visible
-      await expect(bookingsTable.statusFilter).toBeVisible();
+      await expect(bookingsTable.viewTab("All")).toHaveAttribute("aria-selected", "true");
+      await expect(page.getByRole("button", { name: "Status" })).toHaveCount(0);
+    });
+
+    test("a view change and a search live in the URL", async ({ page }) => {
+      const bookingsTable = new BookingsTablePage(page);
+      await bookingsTable.goto();
+
+      await bookingsTable.selectView("Upcoming");
+      await expect(page).toHaveURL(/[?&]view=upcoming/);
+
+      // Real keystrokes: each one writes the URL, so a lost character shows here
+      await bookingsTable.searchInput.pressSequentially("Santos", { delay: 20 });
+      await expect(bookingsTable.searchInput).toHaveValue("Santos");
+      await expect(page).toHaveURL(/[?&]q=Santos/);
+      await expect(page).toHaveURL(/[?&]view=upcoming/);
+
+      await page.reload();
+      await expect(bookingsTable.viewTab("Upcoming")).toHaveAttribute("aria-selected", "true");
+      await expect(bookingsTable.searchInput).toHaveValue("Santos");
+    });
+
+    test("Back returns to the previous view", async ({ page }) => {
+      const bookingsTable = new BookingsTablePage(page);
+      await bookingsTable.goto();
+
+      await bookingsTable.selectView("Past");
+      await bookingsTable.selectView("Cancelled");
+      await expect(page).toHaveURL(/[?&]view=cancelled/);
+
+      await page.goBack();
+      await expect(page).toHaveURL(/[?&]view=past/);
+      await expect(bookingsTable.viewTab("Past")).toHaveAttribute("aria-selected", "true");
+
+      await page.goBack();
+      await expect(page).not.toHaveURL(/[?&]view=/);
+      await expect(bookingsTable.viewTab("All")).toHaveAttribute("aria-selected", "true");
+    });
+
+    test("old and broken params open the All view", async ({ page }) => {
+      await page.goto(`${ROUTES.admin.bookings}?status=NoShow&search=OKR&page=2&view=bogus`);
+      const bookingsTable = new BookingsTablePage(page);
+      await bookingsTable.waitForPageLoad();
+
+      await expect(bookingsTable.viewTab("All")).toHaveAttribute("aria-selected", "true");
+      await expect(bookingsTable.searchInput).toHaveValue("");
     });
   });
 
@@ -220,13 +264,13 @@ test.describe("Admin Bookings Management", () => {
   });
 
   test.describe("Booking Actions", () => {
-    test("export button is visible", async ({ page }) => {
+    test("CSV export lives in the page overflow menu", async ({ page }) => {
       const bookingsTable = new BookingsTablePage(page);
       await bookingsTable.goto();
 
-      // Export functionality should be available
-      // It's okay if export isn't visible - it may be in a menu
-      expect(true).toBeTruthy();
+      await expect(page.getByRole("button", { name: /export/i })).toHaveCount(0);
+      await bookingsTable.pageMenuButton.click();
+      await expect(bookingsTable.exportButton).toBeVisible();
     });
   });
 

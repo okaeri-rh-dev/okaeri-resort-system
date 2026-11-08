@@ -1,9 +1,9 @@
 import React, { useState } from "react";
 
-import { CalendarDays, Download } from "lucide-react";
+import { parseISO } from "date-fns";
+import { CalendarDays } from "lucide-react";
 
 import {
-  Button,
   FilterBar,
   FilterPopover,
   InlineCalendar,
@@ -14,174 +14,103 @@ import {
   SelectValue,
   TableSearch,
 } from "@/components/patterns";
-import { BOOKING_SOURCES, pickedDay, type BookingSource } from "@/lib/bookings";
-import { statusLabel } from "@/lib/status-tone";
-import {
-  BOOKING_STATUSES,
-  PAYMENT_STATUSES,
-  type BookingStatus,
-  type PaymentStatus,
-} from "@/types";
+import { BOOKING_SOURCES, pickedDay } from "@/lib/bookings";
+import { PAYMENT_STATUSES } from "@/types";
 
 import type { BookingFiltersProps, DateRange } from "../types";
 
+// shortcut: one value per filter until the Filters sheet (#330) brings multi-select
+const SingleSelectFilter = ({
+  label,
+  title,
+  allLabel,
+  options,
+  picked,
+  onPick,
+}: {
+  label: string;
+  title: string;
+  allLabel: string;
+  options: readonly string[];
+  picked: string[] | undefined;
+  onPick: (picked: string[] | undefined) => void;
+}) => {
+  const current = options.find((option) => option.toLowerCase() === picked?.[0]);
+  return (
+    <FilterPopover
+      isActive={!!current}
+      badgeLabel={current}
+      content={
+        <div className="space-y-2">
+          <div className="text-sm font-medium">{title}</div>
+          <Select
+            value={current ?? "all"}
+            onValueChange={(value: string) =>
+              onPick(value === "all" ? undefined : [value.toLowerCase()])
+            }
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{allLabel}</SelectItem>
+              {options.map((option) => (
+                <SelectItem key={option} value={option}>
+                  {option}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      }
+    >
+      {label}
+    </FilterPopover>
+  );
+};
+
 export const BookingFilters: React.FC<BookingFiltersProps> = ({
-  filters,
-  setFilters,
-  searchQuery,
-  setSearchQuery,
+  search,
+  setSearch,
   resetFilters,
   hasActiveFilters,
-  onExport,
   resultCount,
   totalCount,
 }) => {
-  const [dateRange, setDateRange] = useState<DateRange>({
-    from: undefined,
-    to: undefined,
-  });
   const [tempDateRange, setTempDateRange] = useState<DateRange>({
     from: undefined,
     to: undefined,
   });
   const [dateFilterOpen, setDateFilterOpen] = useState(false);
 
-  // Count active filter types (excluding search)
-  const activeFilterCount = (): number => {
-    let count = 0;
-    if (filters.status !== undefined) count++;
-    if (filters.payment_status !== undefined) count++;
-    if (filters.date_from !== undefined || filters.date_to !== undefined) count++;
-    if (filters.booking_source !== undefined) count++;
-    return count;
-  };
-
-  // Filter controls (shared between mobile and desktop)
-  const StatusFilter = () => (
-    <FilterPopover
-      isActive={!!filters.status}
-      badgeLabel={filters.status && statusLabel(filters.status)}
-      content={
-        <div className="space-y-2">
-          <div className="text-sm font-medium">Booking Status</div>
-          <Select
-            value={filters.status || "all"}
-            onValueChange={(value: string) =>
-              setFilters({
-                ...filters,
-                status: value === "all" ? undefined : (value as BookingStatus),
-              })
-            }
-          >
-            <SelectTrigger className="w-full">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Bookings</SelectItem>
-              {BOOKING_STATUSES.map((status) => (
-                <SelectItem key={status} value={status}>
-                  {statusLabel(status)}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      }
-    >
-      Status
-    </FilterPopover>
-  );
-
-  const PaymentFilter = () => (
-    <FilterPopover
-      isActive={!!filters.payment_status}
-      badgeLabel={filters.payment_status}
-      content={
-        <div className="space-y-2">
-          <div className="text-sm font-medium">Payment Status</div>
-          <Select
-            value={filters.payment_status || "all"}
-            onValueChange={(value: string) =>
-              setFilters({
-                ...filters,
-                payment_status: value === "all" ? undefined : (value as PaymentStatus),
-              })
-            }
-          >
-            <SelectTrigger className="w-full">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Payments</SelectItem>
-              {PAYMENT_STATUSES.map((status) => (
-                <SelectItem key={status} value={status}>
-                  {status}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      }
-    >
-      Payment
-    </FilterPopover>
-  );
-
-  const SourceFilter = () => (
-    <FilterPopover
-      isActive={!!filters.booking_source}
-      badgeLabel={filters.booking_source}
-      content={
-        <div className="space-y-2">
-          <div className="text-sm font-medium">Booking Source</div>
-          <Select
-            value={filters.booking_source || "all"}
-            onValueChange={(value: string) =>
-              setFilters({
-                ...filters,
-                booking_source: value === "all" ? undefined : (value as BookingSource),
-              })
-            }
-          >
-            <SelectTrigger className="w-full">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Sources</SelectItem>
-              {BOOKING_SOURCES.map((source) => (
-                <SelectItem key={source} value={source}>
-                  {source}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      }
-    >
-      Source
-    </FilterPopover>
-  );
+  const activeFilterCount = [
+    search.payment,
+    search.source,
+    search.from || search.to,
+    search.cabin,
+  ].filter(Boolean).length;
 
   const DateFilter = () => (
     <FilterPopover
-      isActive={!!(filters.date_from || filters.date_to)}
+      isActive={!!(search.from || search.to)}
       open={dateFilterOpen}
       onOpenChange={(open) => {
         setDateFilterOpen(open);
         if (open) {
-          setTempDateRange(dateRange);
+          setTempDateRange({
+            from: search.from ? parseISO(search.from) : undefined,
+            to: search.to ? parseISO(search.to) : undefined,
+          });
         }
       }}
       fitContent
       showActions
       onApply={() => {
-        setDateRange(tempDateRange);
         const fromDate = tempDateRange?.from;
         const toDate = tempDateRange?.to || fromDate;
-        setFilters({
-          ...filters,
-          date_from: fromDate ? pickedDay(fromDate) : undefined,
-          date_to: toDate ? pickedDay(toDate) : undefined,
+        setSearch({
+          from: fromDate ? pickedDay(fromDate) : undefined,
+          to: toDate ? pickedDay(toDate) : undefined,
         });
       }}
       onClear={() => {
@@ -214,7 +143,7 @@ export const BookingFilters: React.FC<BookingFiltersProps> = ({
           </>
         ) : (
           <>
-            <span className="text-foreground font-medium">{totalCount}</span> bookings
+            <span className="text-foreground font-medium">{resultCount}</span> bookings
           </>
         )}
       </span>
@@ -224,28 +153,35 @@ export const BookingFilters: React.FC<BookingFiltersProps> = ({
     <FilterBar
       search={
         <TableSearch
-          value={searchQuery}
-          onChange={setSearchQuery}
+          value={search.q ?? ""}
+          onChange={(q) => setSearch({ q })}
           placeholder="Search bookings..."
         />
       }
       filters={
         <>
-          <StatusFilter />
-          <PaymentFilter />
-          <SourceFilter />
+          <SingleSelectFilter
+            label="Payment"
+            title="Payment Status"
+            allLabel="All Payments"
+            options={PAYMENT_STATUSES}
+            picked={search.payment}
+            onPick={(payment) => setSearch({ payment: payment as typeof search.payment })}
+          />
+          <SingleSelectFilter
+            label="Source"
+            title="Booking Source"
+            allLabel="All Sources"
+            options={BOOKING_SOURCES}
+            picked={search.source}
+            onPick={(source) => setSearch({ source: source as typeof search.source })}
+          />
           <DateFilter />
         </>
       }
-      activeFilterCount={activeFilterCount()}
+      activeFilterCount={activeFilterCount}
       onClearFilters={hasActiveFilters ? resetFilters : undefined}
       summary={<ResultCount />}
-      actions={
-        <Button variant="outline" size="sm" onClick={onExport}>
-          <Download className="mr-1 h-3 w-3" />
-          Export CSV
-        </Button>
-      }
     />
   );
 };

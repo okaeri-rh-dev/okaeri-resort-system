@@ -1,6 +1,6 @@
 import { expect, type Locator, type Page } from "@playwright/test";
 
-import { BOOKING_STATUS, ROUTES, TIMEOUTS } from "../fixtures/test-data";
+import { ROUTES, TIMEOUTS } from "../fixtures/test-data";
 
 /**
  * Page Object Model for the Admin Bookings Table
@@ -18,7 +18,7 @@ export class BookingsTablePage {
 
   // Search and filters
   readonly searchInput: Locator;
-  readonly statusFilter: Locator;
+  readonly viewTabs: Locator;
   readonly dateRangeFilter: Locator;
   readonly clearFiltersButton: Locator;
 
@@ -36,6 +36,7 @@ export class BookingsTablePage {
 
   // Action buttons
   readonly newBookingButton: Locator;
+  readonly pageMenuButton: Locator;
   readonly exportButton: Locator;
   readonly refreshButton: Locator;
 
@@ -53,8 +54,7 @@ export class BookingsTablePage {
 
     // Search and filters - BookingFilters component uses FilterPopover
     this.searchInput = page.getByPlaceholder(/^search/i);
-    // Status filter is a FilterPopover trigger button with text "Status"
-    this.statusFilter = page.getByRole("button", { name: "Status" });
+    this.viewTabs = page.getByRole("tablist", { name: "Booking views" });
     // Date filter is a FilterPopover trigger
     this.dateRangeFilter = page.getByRole("button", { name: "Dates" });
     this.clearFiltersButton = page.getByRole("button", {
@@ -76,7 +76,8 @@ export class BookingsTablePage {
 
     // Action buttons
     this.newBookingButton = page.getByRole("button", { name: /new booking/i });
-    this.exportButton = page.getByRole("button", { name: /export/i });
+    this.pageMenuButton = page.getByRole("button", { name: "More booking actions" });
+    this.exportButton = page.getByRole("menuitem", { name: "Export CSV" });
     this.refreshButton = page.getByRole("button", { name: /refresh/i });
 
     // Pagination - TablePagination component
@@ -136,22 +137,13 @@ export class BookingsTablePage {
     await this.waitForTableLoad();
   }
 
-  /**
-   * Filter by booking status
-   * Uses FilterPopover which opens a Select inside a popover
-   */
-  async filterByStatus(status: keyof typeof BOOKING_STATUS | string) {
-    // Click the Status filter popover trigger
-    await this.statusFilter.click();
-    // Wait for popover to open
-    await this.page.waitForTimeout(200);
-    // Click the Select trigger inside the popover
-    const selectTrigger = this.page.locator('[role="combobox"]').first();
-    await selectTrigger.click();
-    // Select the status option
-    await this.page.getByRole("option", { name: new RegExp(status, "i") }).click();
-    // Click outside to close popover
-    await this.page.keyboard.press("Escape");
+  viewTab(name: string | RegExp): Locator {
+    return this.viewTabs.getByRole("tab", { name });
+  }
+
+  async selectView(name: string | RegExp) {
+    await this.viewTab(name).click();
+    await expect(this.viewTab(name)).toHaveAttribute("aria-selected", "true");
     await this.waitForTableLoad();
   }
 
@@ -312,6 +304,7 @@ export class BookingsTablePage {
    * Export bookings data
    */
   async exportBookings() {
+    await this.pageMenuButton.click();
     await this.exportButton.click();
   }
 

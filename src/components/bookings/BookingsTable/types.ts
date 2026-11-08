@@ -1,4 +1,5 @@
-import type { Booking, BookingFilters, BookingStatus } from "@/types";
+import type { BookingsSearch } from "@/lib/bookings";
+import type { Booking, BookingStatus } from "@/types";
 
 export interface BookingsTableProps {
   className?: string;
@@ -16,13 +17,10 @@ export interface BookingCardProps {
 }
 
 export interface BookingFiltersProps {
-  filters: BookingFilters;
-  setFilters: (filters: BookingFilters) => void;
-  searchQuery: string;
-  setSearchQuery: (query: string) => void;
+  search: BookingsSearch;
+  setSearch: (next: Partial<BookingsSearch>) => void;
   resetFilters: () => void;
   hasActiveFilters: boolean;
-  onExport: () => void;
   /** Number of bookings after filtering */
   resultCount?: number;
   /** Total number of bookings before filtering */
