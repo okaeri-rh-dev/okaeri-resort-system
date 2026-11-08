@@ -1,5 +1,7 @@
 import type { ReactNode } from "react";
 
+import { RESORT_NAME } from "@/config/settings";
+
 import { Logo } from "./Logo";
 
 export interface BrandedScreenProps {
@@ -25,7 +27,7 @@ export function BrandedScreen({ subtitle, children }: BrandedScreenProps) {
     <div className="bg-background flex min-h-screen items-center justify-center p-4">
       <div className="w-full max-w-md space-y-8">
         <div className="text-foreground mt-6">
-          <Logo label="Okaeri Rest House" className="mx-auto w-60" />
+          <Logo label={RESORT_NAME} className="mx-auto w-60" />
           {subtitle && <p className="text-muted-foreground mt-2 text-center text-sm">{subtitle}</p>}
         </div>
         {children}

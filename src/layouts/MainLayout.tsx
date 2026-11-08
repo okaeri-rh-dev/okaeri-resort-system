@@ -28,6 +28,7 @@ import {
   type ShellGroup,
 } from "@/components/patterns";
 import { InstallBanner } from "@/components/pwa/InstallBanner";
+import { RESORT_NAME } from "@/config/settings";
 import { AuditRole, clearRoleCache } from "@/lib/audit-roles";
 import { auth } from "@/lib/auth";
 import { logger } from "@/lib/logger";
@@ -209,7 +210,7 @@ export function MainLayout({ children }: MainLayoutProps) {
   return (
     <AppShell
       surface="admin"
-      brand={{ name: "Okaeri Rest House", tagline: "Management System", to: "/admin/dashboard" }}
+      brand={{ name: RESORT_NAME, tagline: "Management System", to: "/admin/dashboard" }}
       destinations={visibleDestinations}
       navGroups={navGroups}
       navLoading={roleLoading}

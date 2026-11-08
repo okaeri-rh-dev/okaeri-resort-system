@@ -4,7 +4,6 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Plus } from "lucide-react";
 import { z } from "zod";
 
-import { FormSkeleton } from "@/components/bookings/FormSkeleton";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import {
   Button,
@@ -13,6 +12,7 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
+  FormSkeleton,
   TableSkeleton,
   Tabs,
   TabsContent,

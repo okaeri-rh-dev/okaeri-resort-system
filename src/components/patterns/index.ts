@@ -54,6 +54,7 @@ export { DetailPageLayout, type Breadcrumb, type DetailPageLayoutProps } from ".
 export { DetailSection, type DetailSectionProps } from "./DetailSection";
 export { DetailField, type DetailFieldProps } from "./DetailField";
 export { TableSkeleton, type TableSkeletonProps } from "./TableSkeleton";
+export { FormSkeleton, type FormSkeletonProps } from "./FormSkeleton";
 export { SortableHeader, type SortableHeaderProps } from "./SortableHeader";
 export { TableSearch, type TableSearchProps } from "./TableSearch";
 export { FilterPopover, type FilterPopoverProps } from "./FilterPopover";

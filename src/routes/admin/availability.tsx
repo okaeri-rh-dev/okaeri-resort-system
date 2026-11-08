@@ -10,8 +10,8 @@ import { LoadErrorCallout } from "@/components/blocks/LoadErrorCallout";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import {
   PageHeader,
-  PageLoader,
   Skeleton,
+  TableSkeleton,
   Tabs,
   TabsContent,
   TabsList,
@@ -163,7 +163,9 @@ function AvailabilityPage() {
 
           <TabsContent value="units" className="space-y-4">
             <ErrorBoundary level="component">
-              <Suspense fallback={<PageLoader />}>
+              <Suspense
+                fallback={<TableSkeleton rows={6} columns={9} toolbar label="Loading cabins" />}
+              >
                 <UnitsTable />
               </Suspense>
             </ErrorBoundary>
