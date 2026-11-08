@@ -1,5 +1,14 @@
 import { withErrorBoundary } from "@/components/ErrorBoundary";
-import { DataTable, TableEmptyState, TablePagination, TableSkeleton } from "@/components/patterns";
+import {
+  DataTable,
+  TableEmptyState,
+  TablePagination,
+  TableSkeleton,
+  Tabs,
+  TabsList,
+  TabsTrigger,
+} from "@/components/patterns";
+import { BOOKING_VIEWS, isBookingView, type BookingView } from "@/lib/bookings";
 import { cn } from "@/lib/utils";
 
 import { BookingCard } from "./components/BookingCard";
@@ -7,22 +16,29 @@ import { BookingFilters } from "./components/BookingFilters";
 import { useBookingsTable } from "./hooks/useBookingsTable";
 import type { BookingsTableProps } from "./types";
 
+const VIEW_LABELS: Record<BookingView | "all", string> = {
+  all: "All",
+  upcoming: "Upcoming",
+  "in-house": "In-house",
+  "needs-action": "Needs action",
+  past: "Past",
+  cancelled: "Cancelled",
+};
+
 function BookingsTableComponent({ className }: BookingsTableProps) {
   const {
     table,
     bookings,
+    needsActionCount,
     totalCount,
     filteredCount,
     hasActiveFilters,
     isLoading,
     isPlaceholderData,
     error,
-    filters,
-    setFilters,
-    searchQuery,
-    setSearchQuery,
+    search,
+    setSearch,
     resetFilters,
-    handleExport,
     handleUploadPayment,
     cancelBooking,
     updateBookingStatus,
@@ -43,15 +59,27 @@ function BookingsTableComponent({ className }: BookingsTableProps) {
 
   return (
     <div className={cn("space-y-4", className)}>
-      {/* Filters */}
+      <Tabs
+        value={search.view ?? "all"}
+        onValueChange={(view) => setSearch({ view: isBookingView(view) ? view : undefined })}
+      >
+        {/* Wraps into chips on a phone instead of scrolling sideways */}
+        <TabsList aria-label="Booking views" className="h-auto flex-wrap justify-start">
+          {(["all", ...BOOKING_VIEWS] as const).map((view) => (
+            <TabsTrigger key={view} value={view}>
+              {view === "needs-action" && needsActionCount > 0
+                ? `${VIEW_LABELS[view]} · ${needsActionCount}`
+                : VIEW_LABELS[view]}
+            </TabsTrigger>
+          ))}
+        </TabsList>
+      </Tabs>
+
       <BookingFilters
-        filters={filters}
-        setFilters={setFilters}
-        searchQuery={searchQuery}
-        setSearchQuery={setSearchQuery}
+        search={search}
+        setSearch={setSearch}
         resetFilters={resetFilters}
         hasActiveFilters={hasActiveFilters}
-        onExport={handleExport}
         resultCount={filteredCount}
         totalCount={totalCount}
       />
@@ -69,18 +97,24 @@ function BookingsTableComponent({ className }: BookingsTableProps) {
           />
         )}
         emptyState={
-          hasActiveFilters ? (
-            <TableEmptyState
-              variant="no-results"
-              title="No bookings found"
-              description="No bookings match your current filters. Try adjusting your search."
-              action={{ label: "Clear Filters", onClick: resetFilters }}
-            />
-          ) : (
+          totalCount === 0 ? (
             <TableEmptyState
               variant="no-data"
               title="No bookings yet"
               description="Get started by creating your first booking."
+            />
+          ) : (
+            <TableEmptyState
+              variant="no-results"
+              title="No bookings found"
+              description={
+                hasActiveFilters
+                  ? "No bookings match your current filters. Try adjusting your search."
+                  : "No bookings in this view."
+              }
+              action={
+                hasActiveFilters ? { label: "Clear Filters", onClick: resetFilters } : undefined
+              }
             />
           )
         }

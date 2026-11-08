@@ -200,16 +200,11 @@ describe("Mobile Responsive Design", () => {
     beforeEach(() => {
       // Mock the hooks
       vi.mock("../../stores/useBookingStore", () => ({
-        useBookings: mockUseBookings,
+        useAllBookings: mockUseBookings,
         useUpdateBookingStatus: () => ({ mutate: vi.fn() }),
         useUploadPaymentProof: () => ({ mutate: vi.fn() }),
         useCancelBooking: () => ({ mutate: vi.fn() }),
         useBookingStore: () => ({
-          filters: {},
-          setFilters: vi.fn(),
-          resetFilters: vi.fn(),
-          searchQuery: "",
-          setSearchQuery: vi.fn(),
           tableState: { pagination: { pageIndex: 0, pageSize: 10 } },
           setTableState: vi.fn(),
         }),
@@ -426,8 +421,8 @@ describe("Mobile Responsive Design", () => {
         error: null,
       });
 
-      const { useBookings } = await import("../../stores/useBookingStore");
-      vi.mocked(useBookings).mockImplementation(mockLoadingBookings);
+      const { useAllBookings } = await import("../../stores/useBookingStore");
+      vi.mocked(useAllBookings).mockImplementation(mockLoadingBookings);
 
       render(
         <TestWrapper>

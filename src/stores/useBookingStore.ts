@@ -1,5 +1,4 @@
 import {
-  keepPreviousData,
   queryOptions,
   useMutation,
   useQuery,
@@ -11,14 +10,9 @@ import { create } from "zustand";
 import { devtools, persist } from "zustand/middleware";
 
 import { getAccessToken } from "@/hooks/useAuthToken";
-import { SEARCH_DEBOUNCE_MS, useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { afterWrite } from "@/lib/after-write";
 import {
-  BOOKING_SEARCH_COLUMNS,
   cancelBooking,
-  dayAfter,
-  filterDay,
-  manilaDayStart,
   setBookingStatus,
   UPDATE_BOOKING_WRITES,
   updateBooking,
@@ -30,9 +24,8 @@ import { throwDetailLoadError } from "@/lib/detail-load-error";
 import { formatCurrency } from "@/lib/formatters";
 import { recordProofPayment } from "@/lib/payments";
 import { bookingKeys } from "@/lib/query-keys";
-import { ilikeAnyFilter } from "@/lib/search-filter";
 import { db, handleSupabaseError, supabase } from "@/lib/supabase";
-import type { Booking, BookingFilters, BookingStatus, TableState } from "@/types";
+import type { Booking, BookingStatus, TableState } from "@/types";
 
 // import { useWorkflowStore } from "./useWorkflowStore"; // Phase 3-4
 
@@ -57,18 +50,9 @@ const CLEANUP_INTERVAL = 60 * 1000; // 1 minute
 interface BookingStore {
   // Local state
   selectedBooking: Booking | null;
-  filters: BookingFilters;
-  sortBy: "date" | "status" | "amount" | "guest";
-  sortOrder: "asc" | "desc";
-  searchQuery: string;
 
   // Actions
   setSelectedBooking: (booking: Booking | null) => void;
-  setFilters: (filters: BookingFilters) => void;
-  resetFilters: () => void;
-  setSortBy: (sortBy: "date" | "status" | "amount" | "guest") => void;
-  setSortOrder: (order: "asc" | "desc") => void;
-  setSearchQuery: (query: string) => void;
 
   // Optimistic updates with TTL
   optimisticBookings: Map<string, OptimisticEntry>;
@@ -94,10 +78,6 @@ export const useBookingStore = create<BookingStore>()(
       (set, get) => ({
         // Initial state
         selectedBooking: null,
-        filters: {},
-        sortBy: "date",
-        sortOrder: "desc",
-        searchQuery: "",
         optimisticBookings: new Map(),
         cleanupInterval: null,
         tableState: {
@@ -106,16 +86,6 @@ export const useBookingStore = create<BookingStore>()(
 
         // Actions
         setSelectedBooking: (booking) => set({ selectedBooking: booking }),
-
-        setFilters: (filters) => set({ filters }),
-
-        resetFilters: () => set({ filters: {}, searchQuery: "" }),
-
-        setSortBy: (sortBy) => set({ sortBy }),
-
-        setSortOrder: (order) => set({ sortOrder: order }),
-
-        setSearchQuery: (query) => set({ searchQuery: query }),
 
         addOptimisticBooking: (booking) =>
           set((state) => {
@@ -223,9 +193,6 @@ export const useBookingStore = create<BookingStore>()(
         },
         partialize: (state) =>
           ({
-            filters: state.filters,
-            sortBy: state.sortBy,
-            sortOrder: state.sortOrder,
             tableState: state.tableState,
           }) as BookingStore,
       }
@@ -284,35 +251,15 @@ const cachedBooking = (queryClient: QueryClient, bookingId: string): Booking | u
   return row ? adaptBookingFromDB(row) : undefined;
 };
 
-// Fetch all bookings with filters
-const bookingListQuery = ({
-  filters,
-  searchQuery,
-  sortBy,
-  sortOrder,
-}: Pick<BookingStore, "filters" | "searchQuery" | "sortBy" | "sortOrder">) =>
+// Every booking; the bookings list selects from it in the browser (src/lib/bookings/list.ts)
+const bookingListQuery = () =>
   queryOptions({
-    queryKey: bookingKeys.list({ filters, searchQuery, sortBy, sortOrder }),
+    queryKey: bookingKeys.lists(),
     queryFn: async () => {
-      // Handle unit_id filter via junction table
-      let bookingIdsForUnit: string[] | null = null;
-      if (filters.unit_id) {
-        const { data: bookingUnits, error: unitError } = await supabase
-          .from("booking_units")
-          .select("booking_id")
-          .eq("unit_id", filters.unit_id);
-
-        if (unitError) throw new Error(handleSupabaseError(unitError));
-
-        bookingIdsForUnit = bookingUnits?.map((bu) => bu.booking_id) || [];
-
-        // Early return if no bookings found for this unit
-        if (bookingIdsForUnit.length === 0) {
-          return [];
-        }
-      }
-
-      let query = supabase.from("bookings").select(`
+      const query = supabase
+        .from("bookings")
+        .select(
+          `
         *,
         booking_units(
           *,
@@ -320,42 +267,9 @@ const bookingListQuery = ({
         ),
         guest:guests(*),
         payments(amount, status)
-      `);
-
-      // Apply filters
-      if (filters.status) {
-        query = query.eq("booking_status", filters.status);
-      }
-      if (filters.payment_status) {
-        query = query.eq("payment_status", filters.payment_status);
-      }
-      if (bookingIdsForUnit) {
-        query = query.in("booking_id", bookingIdsForUnit);
-      }
-      if (filters.guest_id) {
-        query = query.eq("guest_id", filters.guest_id);
-      }
-      if (filters.date_from) {
-        query = query.gte("check_in", manilaDayStart(filterDay(filters.date_from)));
-      }
-      if (filters.date_to) {
-        query = query.lt("check_in", manilaDayStart(dayAfter(filterDay(filters.date_to))));
-      }
-      if (searchQuery) {
-        query = query.or(ilikeAnyFilter(BOOKING_SEARCH_COLUMNS, searchQuery));
-      }
-
-      // Apply sorting
-      const sortColumn =
-        sortBy === "date"
-          ? "created_at"
-          : sortBy === "status"
-            ? "booking_status"
-            : sortBy === "amount"
-              ? "total_amount"
-              : "guest_name";
-
-      query = query.order(sortColumn, { ascending: sortOrder === "asc" });
+      `
+        )
+        .order("created_at", { ascending: false });
 
       const { data, error } = await query;
 
@@ -377,19 +291,7 @@ const bookingListQuery = ({
     // Removed refetchInterval - manual refresh preferred for dashboard
   });
 
-export const useBookings = () => {
-  const { filters, searchQuery, sortBy, sortOrder } = useBookingStore();
-  const debouncedSearchQuery = useDebouncedValue(searchQuery, SEARCH_DEBOUNCE_MS);
-
-  return useQuery({
-    ...bookingListQuery({ filters, searchQuery: debouncedSearchQuery, sortBy, sortOrder }),
-    placeholderData: keepPreviousData,
-  });
-};
-
-/** Every booking, whatever the Bookings page filters are. */
-export const useAllBookings = () =>
-  useQuery(bookingListQuery({ filters: {}, searchQuery: "", sortBy: "date", sortOrder: "desc" }));
+export const useAllBookings = () => useQuery(bookingListQuery());
 
 // Fetch single booking
 

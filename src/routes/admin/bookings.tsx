@@ -2,10 +2,12 @@ import { lazy, Suspense, useState } from "react";
 
 import { createFileRoute, Link, Outlet, useMatches } from "@tanstack/react-router";
 import { Building2, ChevronDown, Plus, Users } from "lucide-react";
-import { z } from "zod";
 
+import { useSelectedBookings } from "@/components/bookings/BookingsTable/hooks/useSelectedBookings";
+import { exportBookings } from "@/components/bookings/BookingsTable/utils/export";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import {
+  ActionMenu,
   Button,
   Dialog,
   DialogContent,
@@ -13,7 +15,9 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  toast,
 } from "@/components/patterns";
+import { parseBookingsSearch } from "@/lib/bookings";
 import { requireStaff } from "@/lib/route-guards";
 
 // Lazy load heavy components
@@ -24,19 +28,28 @@ const BookingForm = lazy(() =>
   import("@/components/bookings/BookingForm").then((m) => ({ default: m.BookingForm }))
 );
 
-const bookingsSearchSchema = z.object({
-  status: z.string().optional(),
-  search: z.string().optional(),
-  page: z.number().optional(),
-});
-
 export const Route = createFileRoute("/admin/bookings")({
-  validateSearch: bookingsSearchSchema,
+  validateSearch: parseBookingsSearch,
   beforeLoad: async () => {
     await requireStaff();
   },
   component: BookingsPage,
 });
+
+function BookingsPageMenu() {
+  const { bookings } = useSelectedBookings();
+  return (
+    <ActionMenu
+      label="More booking actions"
+      actions={[
+        {
+          label: "Export CSV",
+          onClick: () => void exportBookings(bookings).catch(() => toast.error("Export failed")),
+        },
+      ]}
+    />
+  );
+}
 
 function BookingsPage() {
   const matches = useMatches();
@@ -65,43 +78,46 @@ function BookingsPage() {
             <h1 className="text-3xl font-bold tracking-tight">Bookings</h1>
             <p className="text-muted-foreground">Manage all resort bookings and reservations</p>
           </div>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button>
-                <Plus className="mr-2 h-4 w-4" />
-                New Booking
-                <ChevronDown className="ml-2 h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-64">
-              <DropdownMenuItem
-                onClick={() => setShowBookingForm(true)}
-                className="flex cursor-pointer flex-col items-start gap-1 p-3"
-              >
-                <div className="flex items-center gap-2">
-                  <Building2 className="h-4 w-4" />
-                  <span className="font-medium">Single Cabin Booking</span>
-                </div>
-                <span className="text-muted-foreground ml-6 text-xs">
-                  Book one cabin for a guest
-                </span>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild className="cursor-pointer p-0">
-                <Link
-                  to="/admin/bookings/new-multi"
-                  className="flex flex-col items-start gap-1 p-3"
+          <div className="flex items-center gap-2">
+            <BookingsPageMenu />
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button>
+                  <Plus className="mr-2 h-4 w-4" />
+                  New Booking
+                  <ChevronDown className="ml-2 h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-64">
+                <DropdownMenuItem
+                  onClick={() => setShowBookingForm(true)}
+                  className="flex cursor-pointer flex-col items-start gap-1 p-3"
                 >
                   <div className="flex items-center gap-2">
-                    <Users className="h-4 w-4" />
-                    <span className="font-medium">Multi-Cabin Booking</span>
+                    <Building2 className="h-4 w-4" />
+                    <span className="font-medium">Single Cabin Booking</span>
                   </div>
                   <span className="text-muted-foreground ml-6 text-xs">
-                    Book multiple cabins for groups or events
+                    Book one cabin for a guest
                   </span>
-                </Link>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild className="cursor-pointer p-0">
+                  <Link
+                    to="/admin/bookings/new-multi"
+                    className="flex flex-col items-start gap-1 p-3"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Users className="h-4 w-4" />
+                      <span className="font-medium">Multi-Cabin Booking</span>
+                    </div>
+                    <span className="text-muted-foreground ml-6 text-xs">
+                      Book multiple cabins for groups or events
+                    </span>
+                  </Link>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
 
         <ErrorBoundary level="component">

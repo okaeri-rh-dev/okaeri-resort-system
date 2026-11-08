@@ -2,7 +2,7 @@
 
 import type { BookingSource } from "@/lib/bookings/source";
 
-import type { BookingStatus, PaymentStatus } from "./booking-status";
+import type { BookingStatus } from "./booking-status";
 
 // ============================================
 // UNIT TYPES
@@ -266,17 +266,6 @@ export interface BookingFormData {
 // ============================================
 // FILTER TYPES
 // ============================================
-export interface BookingFilters {
-  status?: BookingStatus;
-  payment_status?: PaymentStatus;
-  unit_id?: string;
-  guest_id?: string;
-  date_from?: string;
-  date_to?: string;
-  search?: string;
-  booking_source?: BookingSource;
-}
-
 export interface UnitFilters {
   type?: UnitType;
   min_rate?: number;

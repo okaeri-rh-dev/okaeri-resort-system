@@ -52,8 +52,6 @@ export const unitKeys = {
 export const bookingKeys = {
   all: ["bookings"] as const,
   lists: () => [...bookingKeys.all, "list"] as const,
-  list: (params: { filters: object; searchQuery: string; sortBy: string; sortOrder: string }) =>
-    [...bookingKeys.lists(), params] as const,
   details: () => [...bookingKeys.all, "detail"] as const,
   detail: (bookingId: string) => [...bookingKeys.details(), bookingId] as const,
   // The /api/admin/bookings/:id response, a different shape from detail(); under it so invalidating detail covers both

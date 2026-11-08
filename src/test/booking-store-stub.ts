@@ -11,7 +11,7 @@ export function bookingStoreHookStubs(bookings: Booking[]) {
   const noopMutation = { mutate: vi.fn() };
   const bookingsResult = { data: bookings, isLoading: false, error: null };
   return {
-    useBookings: () => bookingsResult,
+    useAllBookings: () => bookingsResult,
     useCancelBooking: () => noopMutation,
     useUpdateBookingStatus: () => noopMutation,
     useUploadPaymentProof: () => noopMutation,

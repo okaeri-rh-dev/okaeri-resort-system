@@ -54,7 +54,7 @@ test.describe("Pricing Integrity", () => {
       const bookingsTable = new BookingsTablePage(page);
 
       // Find a confirmed booking
-      await bookingsTable.filterByStatus("confirmed");
+      await bookingsTable.selectView("Upcoming");
       await bookingsTable.waitForTableLoad();
 
       const rowCount = await bookingsTable.getRowCount();
