@@ -4,6 +4,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Plus } from "lucide-react";
 import { z } from "zod";
 
+import { FormSkeleton } from "@/components/bookings/FormSkeleton";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import {
   Button,
@@ -12,6 +13,7 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
+  TableSkeleton,
   Tabs,
   TabsContent,
   TabsList,
@@ -74,12 +76,6 @@ export const Route = createFileRoute("/admin/settings")({
   validateSearch: settingsSearchSchema,
   component: SettingsPage,
 });
-
-const LoadingSpinner = () => (
-  <div className="flex items-center justify-center py-12">
-    <div className="border-primary h-8 w-8 animate-spin rounded-full border-b-2" />
-  </div>
-);
 
 function SettingsPage() {
   const { tab = DEFAULT_TAB } = Route.useSearch();
@@ -170,7 +166,11 @@ function SettingsPage() {
 
             {/* Payment Methods Table */}
             <ErrorBoundary level="component">
-              <Suspense fallback={<LoadingSpinner />}>
+              <Suspense
+                fallback={
+                  <TableSkeleton rows={4} columns={7} toolbar label="Loading payment methods" />
+                }
+              >
                 <PaymentMethodsTable onEditMethod={handleEditMethod} />
               </Suspense>
             </ErrorBoundary>
@@ -193,7 +193,11 @@ function SettingsPage() {
 
             {/* Expense Categories Table */}
             <ErrorBoundary level="component">
-              <Suspense fallback={<LoadingSpinner />}>
+              <Suspense
+                fallback={
+                  <TableSkeleton rows={4} columns={4} toolbar label="Loading expense categories" />
+                }
+              >
                 <ExpenseCategoriesTable onEditCategory={handleEditCategory} />
               </Suspense>
             </ErrorBoundary>
@@ -214,7 +218,9 @@ function SettingsPage() {
             </div>
 
             <ErrorBoundary level="component">
-              <Suspense fallback={<LoadingSpinner />}>
+              <Suspense
+                fallback={<TableSkeleton rows={4} columns={6} label="Loading contact channels" />}
+              >
                 <ContactChannelsTable onEditChannel={handleEditChannel} />
               </Suspense>
             </ErrorBoundary>
@@ -235,7 +241,7 @@ function SettingsPage() {
               </DialogDescription>
             </DialogHeader>
             <ErrorBoundary level="component">
-              <Suspense fallback={<LoadingSpinner />}>
+              <Suspense fallback={<FormSkeleton fields={10} label="Loading payment method form" />}>
                 <PaymentMethodForm
                   method={editingMethod || undefined}
                   onSuccess={handleCloseForm}
@@ -260,7 +266,9 @@ function SettingsPage() {
               </DialogDescription>
             </DialogHeader>
             <ErrorBoundary level="component">
-              <Suspense fallback={<LoadingSpinner />}>
+              <Suspense
+                fallback={<FormSkeleton fields={2} label="Loading expense category form" />}
+              >
                 <ExpenseCategoryForm
                   category={editingCategory || undefined}
                   onSuccess={handleCloseCategoryForm}
@@ -282,7 +290,7 @@ function SettingsPage() {
               </DialogDescription>
             </DialogHeader>
             <ErrorBoundary level="component">
-              <Suspense fallback={<LoadingSpinner />}>
+              <Suspense fallback={<FormSkeleton fields={4} label="Loading contact channel form" />}>
                 <ContactChannelForm
                   key={editingChannel?.id ?? "new"}
                   channel={editingChannel ?? undefined}

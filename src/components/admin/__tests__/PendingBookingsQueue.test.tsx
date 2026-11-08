@@ -89,4 +89,15 @@ describe("PendingBookingsQueue", () => {
     expect(within(table).getByRole("columnheader", { name: "Urgency" })).toBeVisible();
     expect(within(table).getByRole("row", { name: /OKR-1042/ })).toBeVisible();
   });
+
+  it("shows a skeleton, not a spinner, while the queue loads", () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(() => new Promise<never>(() => {}))
+    );
+    renderQueue();
+
+    expect(screen.getByRole("status", { name: "Loading pending bookings" })).toBeInTheDocument();
+    expect(document.querySelector(".animate-spin")).not.toBeInTheDocument();
+  });
 });

@@ -7,7 +7,7 @@
  * - API calls: Fetching availability data
  * - Navigation: Month navigation buttons
  * - State management: TanStack Query integration
- * - Loading states: Layout with disabled controls and footer spinner
+ * - Loading states: Layout with disabled controls and footer skeleton
  * - Error handling: Error messages
  * - User interactions: Today button, swipe gestures
  */
@@ -85,6 +85,7 @@ describe("PublicAvailabilityCalendar", () => {
       expect(screen.getAllByRole("gridcell").length).toBeGreaterThan(0);
       expect(screen.getByText("Loading…")).toBeInTheDocument();
       expect(screen.queryByText(/loading availability calendar/i)).not.toBeInTheDocument();
+      expect(document.querySelector(".animate-spin")).not.toBeInTheDocument();
     });
 
     it("disables navigation and day clicks during the first load", async () => {

@@ -21,8 +21,8 @@
 import { lazy, Suspense, useEffect } from "react";
 
 import { createFileRoute } from "@tanstack/react-router";
-import { Loader2 } from "lucide-react";
 
+import { CalendarSkeleton } from "@/components/calendar/CalendarSkeleton";
 import { ContactChannelList } from "@/components/contact-channels/ContactChannelList";
 import { useActiveContactChannels } from "@/hooks/useContactChannels";
 import { GuestLayout } from "@/layouts/GuestLayout";
@@ -131,17 +131,7 @@ function HomePage() {
 
       <div className="flex h-full flex-col">
         <h1 className="sr-only">Okaeri availability</h1>
-        <Suspense
-          fallback={
-            <div className="border-border bg-card flex h-96 flex-col items-center justify-center rounded-lg border p-8">
-              <Loader2
-                className="text-muted-foreground mb-4 size-10 animate-spin"
-                aria-hidden="true"
-              />
-              <p className="text-muted-foreground">Loading availability calendar...</p>
-            </div>
-          }
-        >
+        <Suspense fallback={<CalendarSkeleton />}>
           <PublicAvailabilityCalendar />
         </Suspense>
 

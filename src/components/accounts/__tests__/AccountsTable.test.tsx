@@ -37,7 +37,12 @@ function account(overrides: Partial<AccountWithBalance>): AccountWithBalance {
 
 const balances = [
   account({ account_id: "gcash", account_name: "GCash Wallet", display_order: 2 }),
-  account({ account_id: "old", account_name: "Closed Savings", is_active: false, display_order: 0 }),
+  account({
+    account_id: "old",
+    account_name: "Closed Savings",
+    is_active: false,
+    display_order: 0,
+  }),
   account({ account_id: "bdo", account_name: "BDO Payroll", display_order: 1 }),
 ];
 
@@ -74,5 +79,16 @@ describe("AccountsTable", () => {
     await userEvent.click(screen.getByRole("switch", { name: "Show inactive" }));
 
     expect(renderedNames()).toEqual(["Closed Savings", "BDO Payroll", "GCash Wallet"]);
+  });
+
+  it("shows a table-shaped skeleton, not a spinner, while balances load", () => {
+    vi.mocked(useAccountBalances).mockReturnValue({
+      isLoading: true,
+    } as unknown as ReturnType<typeof useAccountBalances>);
+    const { container } = render(<AccountsTable />);
+
+    expect(screen.getByRole("status", { name: "Loading accounts" })).toBeInTheDocument();
+    expect(container.querySelector(".animate-spin")).not.toBeInTheDocument();
+    expect(container.querySelector(".animate-pulse")).toBeInTheDocument();
   });
 });

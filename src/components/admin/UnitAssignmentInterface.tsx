@@ -35,6 +35,7 @@ import {
   CardHeader,
   CardTitle,
   Checkbox,
+  Skeleton,
 } from "@/components/patterns";
 import { getAccessToken, useAuthToken } from "@/hooks/useAuthToken";
 import { afterWrite, type TableName } from "@/lib/after-write";
@@ -441,12 +442,31 @@ export function UnitAssignmentInterface({
 
 function LoadingCard({ label }: { label: string }) {
   return (
-    <Card role="status">
-      <CardContent className="text-muted-foreground flex items-center justify-center gap-3 py-12">
-        <Loader2 className="size-5 animate-spin" aria-hidden="true" />
-        <span className="text-sm font-medium">{label}</span>
-      </CardContent>
-    </Card>
+    <div role="status" aria-label={label} className="space-y-4">
+      <div aria-hidden="true" className="space-y-4">
+        <Skeleton className="h-12 w-full" />
+        <Card padding="none" className="overflow-hidden">
+          <CardHeader className="border-b p-4">
+            <Skeleton className="h-5 w-48" />
+            <Skeleton className="h-4 w-full max-w-md" />
+          </CardHeader>
+          <CardContent className="@container p-4">
+            <div className="grid grid-cols-1 gap-3 @lg:grid-cols-2 @3xl:grid-cols-3">
+              {Array.from({ length: 3 }, (_, unit) => (
+                <div key={unit} className="border-border space-y-2 rounded-lg border-2 p-4">
+                  <Skeleton className="h-6 w-28" />
+                  <Skeleton className="h-4 w-20" />
+                  <div className="space-y-2 border-t pt-3">
+                    <Skeleton className="h-3 w-full" />
+                    <Skeleton className="h-3 w-full" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
   );
 }
 
