@@ -113,6 +113,39 @@ describe("changing a booking's total", () => {
     expect(data.special_requests).not.toBe("Saved with the total");
   });
 
+  it("a rejected total also rejects the new guest saved with it", async () => {
+    if (!shouldRun) return;
+    const bookingId = await twoCabinBooking();
+    const email = `rejected-${crypto.randomUUID()}@example.com`;
+
+    await expect(
+      updateBooking(roleClients.byRole.staff, bookingId, { email, total_amount: 1000 })
+    ).rejects.toThrow(/only a manager/i);
+
+    const { data, error } = await admin.from("guests").select("guest_id").eq("email", email);
+    if (error) throw error;
+    expect(data).toEqual([]);
+  });
+
+  it("staff can move a booking to a new guest", async () => {
+    if (!shouldRun) return;
+    const bookingId = await twoCabinBooking();
+    const email = `staff-${crypto.randomUUID()}@example.com`;
+
+    const updated = await updateBooking(roleClients.byRole.staff, bookingId, {
+      guest_name: "Staff Guest",
+      email,
+    });
+
+    const { data, error } = await admin
+      .from("guests")
+      .select("guest_id")
+      .eq("email", email)
+      .single();
+    if (error) throw error;
+    expect(updated.guest_id).toBe(data.guest_id);
+  });
+
   it("payment status follows the new total", async () => {
     if (!shouldRun) return;
     const bookingId = await twoCabinBooking();
