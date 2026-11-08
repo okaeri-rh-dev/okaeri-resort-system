@@ -52,7 +52,7 @@ function rowFrom<T>({ data, error }: Result<T>): NonNullable<T> {
   return data;
 }
 
-// Tables update_booking writes: a new email inserts a guest, and a new total calls set_booking_total
+// Tables updateBooking writes: an email with no guest inserts one, and a new total calls set_booking_total
 export const UPDATE_BOOKING_WRITES = [
   "bookings",
   "guests",
