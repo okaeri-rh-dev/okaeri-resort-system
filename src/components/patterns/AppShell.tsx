@@ -489,8 +489,8 @@ function AdminShell({
 
   return (
     <CurrentDestinationContext.Provider value={current}>
-      <div className="bg-background medium:flex-row flex h-dvh flex-col">
-        <header className="bg-card border-border medium:hidden flex h-14 shrink-0 items-center justify-between border-b px-4">
+      <div className="bg-background medium:flex-row flex h-dvh flex-col print:block print:h-auto">
+        <header className="bg-card border-border medium:hidden flex h-14 shrink-0 items-center justify-between border-b px-4 print:hidden">
           <Link
             to={brand.to}
             className="font-display text-foreground flex items-center gap-2 text-lg font-bold"
@@ -514,7 +514,7 @@ function AdminShell({
           className={cn(
             "bg-sidebar text-sidebar-foreground border-sidebar-border safe-area-bottom fixed inset-x-0 bottom-0 z-40 border-t",
             "medium:static medium:flex medium:h-full medium:w-20 medium:shrink-0 medium:flex-col medium:overflow-y-auto medium:border-t-0 medium:border-r",
-            "large:w-72"
+            "large:w-72 print:hidden"
           )}
         >
           <div className="medium:block large:px-6 large:pt-6 large:pb-2 hidden px-2 pt-3">
@@ -607,7 +607,7 @@ function AdminShell({
           )}
         </div>
 
-        <main className="relative min-h-0 min-w-0 flex-1 overflow-y-auto">
+        <main className="relative min-h-0 min-w-0 flex-1 overflow-y-auto print:overflow-visible">
           {banner}
           <Content {...content} surface="admin" className="medium:pb-6 pb-24" />
         </main>
@@ -683,7 +683,7 @@ function GuestShell({ brand, destinations, theme, banner, ...content }: AppShell
   return (
     <CurrentDestinationContext.Provider value={current}>
       <div className="bg-background flex min-h-dvh flex-col">
-        <header className="bg-card border-border sticky top-0 z-40 border-b">
+        <header className="bg-card border-border sticky top-0 z-40 border-b print:hidden">
           <div className="medium:px-6 mx-auto flex h-14 w-full max-w-300 items-center justify-between gap-4 px-4">
             <Link
               to={brand.to}
