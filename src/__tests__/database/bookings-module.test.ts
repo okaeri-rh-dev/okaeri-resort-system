@@ -177,6 +177,24 @@ describe("booking onto a blocked night", () => {
     ).rejects.toThrow(BLOCKED_UNIT_MESSAGE);
   });
 
+  it("a refused createBooking leaves no new guest", async () => {
+    if (!shouldRun) return;
+    const unit = await createTestUnit();
+    await blockNight(unit.unit_id, "2027-01-05");
+    const email = `refused-${crypto.randomUUID()}@example.com`;
+
+    await expect(
+      createBooking(supabase, {
+        ...stayFor(unit.unit_id, "2027-01-04", "2027-01-06"),
+        guest: { guest_name: "Refused Guest", email, contact_number: null },
+      })
+    ).rejects.toThrow(BLOCKED_UNIT_MESSAGE);
+
+    const { data, error } = await supabase.from("guests").select("guest_id").eq("email", email);
+    if (error) throw error;
+    expect(data).toEqual([]);
+  });
+
   it("updateBooking refuses a move onto a blocked night with the same message", async () => {
     if (!shouldRun) return;
     const unit = await createTestUnit();
