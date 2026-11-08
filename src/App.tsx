@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 
 import { createRouter, RouterProvider } from "@tanstack/react-router";
 
-import { LogoLoader } from "@/components/patterns";
+import { PageLoader } from "@/components/patterns";
 import { clearRoleCache } from "@/lib/audit-roles";
 import { auth } from "@/lib/auth";
 import { queryClient } from "@/lib/query-client";
@@ -23,6 +23,8 @@ const router = createRouter({
   } as RouterContext,
   defaultPreload: "intent",
   defaultPreloadStaleTime: 30_000, // 30s — keep preloaded data fresh on hover→click
+  // Rendered in the nearest parent outlet: full screen above the shell, content area inside it
+  defaultPendingComponent: PageLoader,
 });
 
 // Register the router instance for type safety
@@ -98,12 +100,7 @@ function App() {
 
   // Show loading while checking authentication
   if (isAuthenticated === null) {
-    return (
-      // Same box as the index.html splash, so only the animation starts
-      <div className="grid min-h-dvh place-items-center">
-        <LogoLoader />
-      </div>
-    );
+    return <PageLoader />;
   }
 
   return (

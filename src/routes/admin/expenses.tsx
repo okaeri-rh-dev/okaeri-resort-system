@@ -11,6 +11,7 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
+  PageLoader,
 } from "@/components/patterns";
 import { requireManager } from "@/lib/route-guards";
 import type { Expense } from "@/types";
@@ -75,13 +76,7 @@ function ExpensesPage() {
         </div>
 
         <ErrorBoundary level="component">
-          <Suspense
-            fallback={
-              <div className="flex items-center justify-center py-12">
-                <div className="border-primary h-8 w-8 animate-spin rounded-full border-b-2" />
-              </div>
-            }
-          >
+          <Suspense fallback={<PageLoader />}>
             <ExpensesTable onViewExpense={handleViewExpense} onEditExpense={handleEditExpense} />
           </Suspense>
         </ErrorBoundary>
