@@ -311,7 +311,7 @@ describe("Airbnb booking", () => {
     expect(await guestsWith(email)).toEqual([]);
   });
 
-  it("staff cannot create a booking directly, and leave no new guest", async () => {
+  it("a staff create is refused and leaves no new guest", async () => {
     if (!shouldRun) return;
     const email = `staff-${crypto.randomUUID()}@example.com`;
 
