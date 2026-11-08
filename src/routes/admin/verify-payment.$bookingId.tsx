@@ -10,7 +10,14 @@ import { createFileRoute } from "@tanstack/react-router";
 import { ArrowLeft } from "lucide-react";
 
 import { PaymentProofViewer } from "@/components/admin/PaymentProofViewer";
-import { Button, Card, CardContent, CardHeader, CardTitle } from "@/components/patterns";
+import {
+  Button,
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  PageLoader,
+} from "@/components/patterns";
 import { useAuthToken } from "@/hooks/useAuthToken";
 import { requireManager } from "@/lib/route-guards";
 import { formatCurrency, formatDate } from "@/lib/utils";
@@ -79,11 +86,7 @@ function PaymentVerificationPage() {
   }
 
   if (isLoading) {
-    return (
-      <div className="container mx-auto py-8">
-        <div className="text-center">Loading booking details...</div>
-      </div>
-    );
+    return <PageLoader />;
   }
 
   if (error || !booking) {
