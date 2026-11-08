@@ -3,6 +3,7 @@ import { lazy, Suspense, useState } from "react";
 import { createFileRoute, Outlet, useNavigate, useParams } from "@tanstack/react-router";
 import { z } from "zod";
 
+import { FormSkeleton } from "@/components/bookings/FormSkeleton";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import {
   Button,
@@ -10,7 +11,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  PageLoader,
+  TableSkeleton,
 } from "@/components/patterns";
 import { requireManager } from "@/lib/route-guards";
 import type { Payment } from "@/types";
@@ -75,7 +76,11 @@ function PaymentsPage() {
         </div>
 
         <ErrorBoundary level="component">
-          <Suspense fallback={<PageLoader />}>
+          <Suspense
+            fallback={
+              <TableSkeleton rows={8} columns={7} toolbar pagination label="Loading payments" />
+            }
+          >
             <PaymentsTable onViewPayment={handleViewPayment} onEditPayment={handleEditPayment} />
           </Suspense>
         </ErrorBoundary>
@@ -87,13 +92,7 @@ function PaymentsPage() {
               <DialogTitle>Record New Payment</DialogTitle>
             </DialogHeader>
             <ErrorBoundary level="component">
-              <Suspense
-                fallback={
-                  <div className="flex items-center justify-center py-12">
-                    <div className="border-primary h-8 w-8 animate-spin rounded-full border-b-2" />
-                  </div>
-                }
-              >
+              <Suspense fallback={<FormSkeleton fields={7} label="Loading payment form" />}>
                 <PaymentForm
                   onSuccess={() => setShowPaymentForm(false)}
                   onCancel={() => setShowPaymentForm(false)}

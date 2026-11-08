@@ -5,6 +5,7 @@ import { Building2, ChevronDown, Plus, Users } from "lucide-react";
 
 import { useSelectedBookings } from "@/components/bookings/BookingsTable/hooks/useSelectedBookings";
 import { exportBookings } from "@/components/bookings/BookingsTable/utils/export";
+import { FormSkeleton } from "@/components/bookings/FormSkeleton";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import {
   ActionMenu,
@@ -15,7 +16,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-  PageLoader,
+  TableSkeleton,
   toast,
 } from "@/components/patterns";
 import { parseBookingsSearch } from "@/lib/bookings";
@@ -122,7 +123,11 @@ function BookingsPage() {
         </div>
 
         <ErrorBoundary level="component">
-          <Suspense fallback={<PageLoader />}>
+          <Suspense
+            fallback={
+              <TableSkeleton rows={8} columns={9} toolbar pagination label="Loading bookings" />
+            }
+          >
             <BookingsTable />
           </Suspense>
         </ErrorBoundary>
@@ -132,13 +137,7 @@ function BookingsPage() {
           <DialogContent className="max-h-[90vh] max-w-4xl overflow-y-auto">
             {/* DialogHeader removed - BookingForm has its own step-based header */}
             <ErrorBoundary level="component">
-              <Suspense
-                fallback={
-                  <div className="flex items-center justify-center py-12">
-                    <div className="border-primary h-8 w-8 animate-spin rounded-full border-b-2" />
-                  </div>
-                }
-              >
+              <Suspense fallback={<FormSkeleton steps={4} label="Loading booking form" />}>
                 <BookingForm
                   onSuccess={() => setShowBookingForm(false)}
                   onCancel={() => setShowBookingForm(false)}

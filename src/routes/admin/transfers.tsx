@@ -4,6 +4,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { ArrowLeftRight, Plus } from "lucide-react";
 import { z } from "zod";
 
+import { FormSkeleton } from "@/components/bookings/FormSkeleton";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import {
   Button,
@@ -12,7 +13,7 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  PageLoader,
+  TableSkeleton,
 } from "@/components/patterns";
 import { requireManager } from "@/lib/route-guards";
 
@@ -77,7 +78,11 @@ function TransfersPage() {
 
         {/* Transfers Table */}
         <ErrorBoundary level="component">
-          <Suspense fallback={<PageLoader />}>
+          <Suspense
+            fallback={
+              <TableSkeleton rows={6} columns={8} toolbar pagination label="Loading transfers" />
+            }
+          >
             <TransfersTable />
           </Suspense>
         </ErrorBoundary>
@@ -92,13 +97,7 @@ function TransfersPage() {
               </DialogDescription>
             </DialogHeader>
             <ErrorBoundary level="component">
-              <Suspense
-                fallback={
-                  <div className="flex items-center justify-center py-12">
-                    <div className="border-primary h-8 w-8 animate-spin rounded-full border-b-2" />
-                  </div>
-                }
-              >
+              <Suspense fallback={<FormSkeleton fields={5} label="Loading transfer form" />}>
                 <TransferForm
                   onSuccess={() => setShowTransferForm(false)}
                   onCancel={() => setShowTransferForm(false)}

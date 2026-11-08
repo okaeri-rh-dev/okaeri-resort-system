@@ -4,7 +4,7 @@ import { createFileRoute, Outlet, useNavigate, useParams } from "@tanstack/react
 import { z } from "zod";
 
 import { ErrorBoundary } from "@/components/ErrorBoundary";
-import { PageLoader } from "@/components/patterns";
+import { TableSkeleton } from "@/components/patterns";
 import { requireManager } from "@/lib/route-guards";
 import type { Guest } from "@/types";
 
@@ -60,7 +60,9 @@ function GuestsPage() {
         </div>
 
         <ErrorBoundary level="component">
-          <Suspense fallback={<PageLoader />}>
+          <Suspense
+            fallback={<TableSkeleton rows={6} columns={6} toolbar label="Loading guests" />}
+          >
             <GuestsTable onViewGuest={handleViewGuest} onEditGuest={handleEditGuest} />
           </Suspense>
         </ErrorBoundary>
