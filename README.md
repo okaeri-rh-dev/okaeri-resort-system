@@ -149,8 +149,8 @@ Before you begin, ensure you have the following installed:
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/yourusername/okaeri-resort.git
-cd okaeri-resort
+git clone https://github.com/okaeri-rh-dev/okaeri-resort-system.git
+cd okaeri-resort-system
 ```
 
 ### 2. Install Dependencies
@@ -382,9 +382,6 @@ Comprehensive documentation is available throughout the repository. Long-form de
 ### API & Functions
 - [Serverless Functions](./functions/README.md) - Cloudflare Workers architecture
 - [API Endpoints](./functions/api/README.md) - API route documentation
-- [Audit Logging API](./functions/api/audit/README.md) - Audit trail endpoints
-- [Guest Booking API](./functions/api/guest-booking/README.md) - Public booking endpoints
-- [Monitoring API](./functions/api/monitoring/README.md) - Health and quota monitoring
 
 ### Database
 - [Database Schema](./database/SCHEMA.md) - Complete schema documentation
@@ -406,13 +403,7 @@ Comprehensive documentation is available throughout the repository. Long-form de
 
 ## 🤝 Contributing
 
-We welcome contributions! Please see our [Contributing Guide](./CONTRIBUTING.md) for details on:
-
-- Code of Conduct
-- Development workflow
-- Commit conventions
-- Pull request process
-- Code review guidelines
+We welcome contributions. Open an issue or a pull request on GitHub. Commit messages follow Conventional Commits.
 
 ## 🐛 Known Issues & Roadmap
 
@@ -434,9 +425,8 @@ We welcome contributions! Please see our [Contributing Guide](./CONTRIBUTING.md)
 
 For support, please:
 
-1. Check the [Troubleshooting Guide](./docs/TROUBLESHOOTING.md)
-2. Review existing [GitHub Issues](https://github.com/yourusername/okaeri-resort/issues)
-3. Contact the development team
+1. Review existing [GitHub Issues](https://github.com/okaeri-rh-dev/okaeri-resort-system/issues)
+2. Contact the development team
 
 ## 📄 License
 

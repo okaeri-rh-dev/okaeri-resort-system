@@ -8,8 +8,8 @@ This directory contains all migration scripts and documentation for deploying da
 
 **Need to deploy changes from commit `f3da057` onwards?**
 
-1. **Start here:** [PRODUCTION-MIGRATION-SUMMARY.md](./PRODUCTION-MIGRATION-SUMMARY.md) (2-page quick reference)
-2. **Full details:** [PRODUCTION-DEPLOYMENT.md](./PRODUCTION-DEPLOYMENT.md) (Comprehensive 379-line guide)
+1. **Start here:** PRODUCTION-MIGRATION-SUMMARY.md (2-page quick reference)
+2. **Full details:** PRODUCTION-DEPLOYMENT.md (Comprehensive 379-line guide)
 3. **Execute:** Migrations 016 and 017 via Supabase SQL Editor
 
 **Estimated time:** 5 minutes | **Downtime:** None
@@ -20,7 +20,7 @@ This directory contains all migration scripts and documentation for deploying da
 
 ### Level 1: Executive Summary (Start Here)
 
-- **[PRODUCTION-MIGRATION-SUMMARY.md](./PRODUCTION-MIGRATION-SUMMARY.md)**
+- **PRODUCTION-MIGRATION-SUMMARY.md**
   - 2-page quick reference
   - Critical migrations 016 & 017
   - Quick deployment steps
@@ -29,7 +29,7 @@ This directory contains all migration scripts and documentation for deploying da
 
 ### Level 2: Comprehensive Guide
 
-- **[PRODUCTION-DEPLOYMENT.md](./PRODUCTION-DEPLOYMENT.md)**
+- **PRODUCTION-DEPLOYMENT.md**
   - Complete migration sequence (001-017)
   - PostgreSQL security architecture
   - Detailed verification queries
@@ -65,11 +65,11 @@ This directory contains all migration scripts and documentation for deploying da
 
 ### "I need to deploy to production NOW"
 
-→ [PRODUCTION-MIGRATION-SUMMARY.md](./PRODUCTION-MIGRATION-SUMMARY.md)
+→ PRODUCTION-MIGRATION-SUMMARY.md
 
 ### "I want to understand the full migration history"
 
-→ [PRODUCTION-DEPLOYMENT.md](./PRODUCTION-DEPLOYMENT.md)
+→ PRODUCTION-DEPLOYMENT.md
 
 ### "Users are getting permission denied errors"
 
@@ -138,7 +138,7 @@ rollback/
 
 Before running migrations in production:
 
-- [ ] Review [PRODUCTION-MIGRATION-SUMMARY.md](./PRODUCTION-MIGRATION-SUMMARY.md)
+- [ ] Review PRODUCTION-MIGRATION-SUMMARY.md
 - [ ] Backup production database via Supabase Dashboard
 - [ ] Verify current migration status in production
 - [ ] Schedule maintenance window (if needed)
@@ -168,7 +168,7 @@ After deployment, verify:
 
 ### Issue: "RLS policy returns no rows"
 
-→ Check helper function volatility in [PRODUCTION-DEPLOYMENT.md](./PRODUCTION-DEPLOYMENT.md)
+→ Check helper function volatility in PRODUCTION-DEPLOYMENT.md
 
 ### Issue: "Edit page shows detail page"
 
@@ -176,7 +176,7 @@ After deployment, verify:
 
 ### General troubleshooting
 
-→ [PRODUCTION-DEPLOYMENT.md](./PRODUCTION-DEPLOYMENT.md) Section: "Support & Troubleshooting"
+→ PRODUCTION-DEPLOYMENT.md Section: "Support & Troubleshooting"
 
 ---
 
@@ -219,7 +219,7 @@ WHERE table_name IN ('audit_logs', 'audit_logs_archive', 'app_roles')
 
 If deployment issues occur:
 
-1. **Rollback immediately** using commands in [PRODUCTION-MIGRATION-SUMMARY.md](./PRODUCTION-MIGRATION-SUMMARY.md)
+1. **Rollback immediately** using commands in PRODUCTION-MIGRATION-SUMMARY.md
 2. **Check Supabase logs** in Dashboard → Logs
 3. **Run verification queries** to diagnose specific issues
 4. **Review error messages** in browser console

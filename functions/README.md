@@ -403,10 +403,6 @@ describe('Guest Booking API', () => {
 ## 📚 Related Documentation
 
 - [API Endpoints](/functions/api/README.md) - Detailed API documentation
-- [Audit API](/functions/api/audit/README.md) - Audit logging endpoints
-- [Guest Booking API](/functions/api/guest-booking/README.md) - Public booking API
-- [Monitoring API](/functions/api/monitoring/README.md) - Quota monitoring endpoints
-- [Cron Jobs](/functions/cron/README.md) - Scheduled tasks
 
 ## 🚨 Security Considerations
 

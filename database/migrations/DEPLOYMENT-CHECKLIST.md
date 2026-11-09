@@ -32,7 +32,7 @@
 
 ### Documentation Review
 
-- [ ] Read [PRODUCTION-MIGRATION-SUMMARY.md](./PRODUCTION-MIGRATION-SUMMARY.md)
+- [ ] Read PRODUCTION-MIGRATION-SUMMARY.md
 - [ ] Verification queries prepared
 - [ ] Rollback commands ready (just in case)
 
@@ -350,8 +350,8 @@ Use this space to document anything unusual during deployment:
 
 ## Reference Documentation
 
-- **Quick Summary:** [PRODUCTION-MIGRATION-SUMMARY.md](./PRODUCTION-MIGRATION-SUMMARY.md)
-- **Full Guide:** [PRODUCTION-DEPLOYMENT.md](./PRODUCTION-DEPLOYMENT.md)
+- **Quick Summary:** PRODUCTION-MIGRATION-SUMMARY.md
+- **Full Guide:** PRODUCTION-DEPLOYMENT.md
 - **Troubleshooting:** [FIX_AUDIT_LOGS_FINAL.md](./FIX_AUDIT_LOGS_FINAL.md)
 - **All Docs:** [MIGRATION-INDEX.md](./MIGRATION-INDEX.md)
 
