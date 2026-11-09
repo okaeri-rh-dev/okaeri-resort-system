@@ -3,7 +3,7 @@
  *
  * Implements two-tier security strategy:
  * 1. Magic number validation (prevents MIME type spoofing)
- * 2. Client-side image compression (reduces upload time and bandwidth)
+ * 2. Client-side image shrinking (reduces upload time and storage)
  *
  * @module file-validation-client
  * @see vault note [[008-payment-proof-upload README]]
@@ -35,17 +35,6 @@ export interface FileValidationError {
   type: "FILE_TYPE_INVALID" | "FILE_SIZE_EXCEEDED" | "FILE_CONTENT_INVALID" | "VALIDATION_FAILED";
   message: string;
   severity: "error" | "warning" | "info";
-}
-
-/**
- * Result of image compression operation
- */
-export interface CompressedFileResult {
-  file: File;
-  originalSize: number;
-  compressedSize: number;
-  compressionRatio: number; // Percentage
-  wasCompressed: boolean;
 }
 
 /**
@@ -99,123 +88,28 @@ export async function validateFileContent(file: File): Promise<boolean> {
 }
 
 /**
- * Compress image file using Canvas API
+ * Shrink a JPEG or PNG to a JPEG with a 1600 px long edge and about 300 KB, so that
+ * receipt text stays readable at a small stored size.
  *
- * Targets ~2MB for optimal upload speed while maintaining quality.
- * Uses progressive quality reduction (0.9 → 0.5) until target size reached.
- *
- * @param file - Image file to compress (JPEG/PNG)
- * @returns Promise<CompressedFileResult> - Compressed file with metadata
- *
- * @example
- * ```typescript
- * const result = await compressImage(file);
- * logger.info(`Compressed ${result.compressionRatio.toFixed(0)}%`);
- * logger.info(`${formatFileSize(result.originalSize)} → ${formatFileSize(result.compressedSize)}`);
- * ```
+ * @returns The shrunk image, or the original file for a PDF, on failure, or when shrinking does not help
  */
-export async function compressImage(file: File): Promise<CompressedFileResult> {
-  const originalSize = file.size;
-
-  // Skip compression for PDFs (can't compress PDFs with Canvas API)
-  if (file.type === "application/pdf") {
-    return {
-      file,
-      originalSize,
-      compressedSize: originalSize,
-      compressionRatio: 0,
-      wasCompressed: false,
-    };
-  }
-
-  const targetSize = 2 * 1024 * 1024; // 2MB target
-
-  // Already small enough, no compression needed
-  if (file.size <= targetSize) {
-    return {
-      file,
-      originalSize,
-      compressedSize: originalSize,
-      compressionRatio: 0,
-      wasCompressed: false,
-    };
-  }
+export async function shrinkImage(file: File): Promise<File> {
+  if (!["image/jpeg", "image/jpg", "image/png"].includes(file.type)) return file;
 
   try {
-    const canvas = document.createElement("canvas");
-    const ctx = canvas.getContext("2d");
-    const img = new Image();
-
-    if (!ctx) {
-      throw new Error("Canvas API not supported");
-    }
-
-    const compressedFile = await new Promise<File>((resolve, reject) => {
-      img.onload = () => {
-        // Maintain original dimensions (no resizing)
-        canvas.width = img.width;
-        canvas.height = img.height;
-        ctx.drawImage(img, 0, 0);
-
-        let quality = 0.9; // Start with high quality (90%)
-
-        const tryCompress = () => {
-          canvas.toBlob(
-            (blob) => {
-              if (!blob) {
-                reject(new Error("Canvas toBlob failed"));
-                return;
-              }
-
-              // Success conditions:
-              // 1. File size under target (~2MB), OR
-              // 2. Quality reduced to minimum threshold (0.5)
-              if (blob.size <= targetSize || quality <= 0.5) {
-                resolve(new File([blob], file.name, { type: "image/jpeg" }));
-              } else {
-                quality -= 0.1; // Reduce quality by 10%
-                tryCompress(); // Retry with lower quality
-              }
-            },
-            "image/jpeg", // Convert all images to JPEG for consistency
-            quality
-          );
-        };
-
-        tryCompress();
-      };
-
-      img.onerror = () => reject(new Error("Image load failed"));
-
-      // Load image from file
-      img.src = URL.createObjectURL(file);
+    const { default: imageCompression } = await import("browser-image-compression");
+    const shrunk = await imageCompression(file, {
+      maxWidthOrHeight: 1600,
+      maxSizeMB: 0.3,
+      fileType: "image/jpeg",
+      // The worker script loads from a CDN, which the CSP blocks.
+      useWebWorker: false,
     });
-
-    const compressionRatio = ((originalSize - compressedFile.size) / originalSize) * 100;
-
-    return {
-      file: compressedFile,
-      originalSize,
-      compressedSize: compressedFile.size,
-      compressionRatio,
-      wasCompressed: true,
-    };
+    if (shrunk.size >= file.size) return file;
+    return new File([shrunk], `${file.name.replace(/\.[^.]*$/, "")}.jpg`, { type: "image/jpeg" });
   } catch (error) {
-    console.error("[FILE_VALIDATION] Compression failed:", error);
-
-    // Fallback: Return uncompressed if under 5MB hard limit
-    if (file.size <= 5 * 1024 * 1024) {
-      console.warn("[FILE_VALIDATION] Using uncompressed file (compression failed)");
-      return {
-        file,
-        originalSize,
-        compressedSize: originalSize,
-        compressionRatio: 0,
-        wasCompressed: false,
-      };
-    }
-
-    throw new Error("File too large and compression failed");
+    console.warn("[FILE_VALIDATION] Image shrink failed, using the original file:", error);
+    return file;
   }
 }
 

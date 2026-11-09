@@ -3,7 +3,7 @@ import { useRef, useState } from "react";
 import { CheckCircle, FileImage, FileText, Loader2, RotateCcw, Upload, X } from "lucide-react";
 
 import { Button, Callout, Progress } from "@/components/patterns";
-import { compressImage, formatFileSize, validateFile } from "@/lib/file-validation-client";
+import { formatFileSize, shrinkImage, validateFile } from "@/lib/file-validation-client";
 import { cn } from "@/lib/utils";
 
 export interface PaymentProofUploadProps {
@@ -86,7 +86,7 @@ function putFile(uploadUrl: string, file: File, onProgress: (percentage: number)
 }
 
 /**
- * The guest's payment screenshot field. Choosing (or dropping) a file validates it, compresses
+ * The guest's payment screenshot field. Choosing (or dropping) a file validates it, shrinks
  * images, and uploads it straight away to a signed storage URL; `onChange` receives the stored path.
  */
 export function PaymentProofUpload({
@@ -150,16 +150,16 @@ export function PaymentProofUpload({
         return;
       }
 
-      const compressed = await compressImage(chosenFile);
-      if (compressed.wasCompressed) {
+      const shrunk = await shrinkImage(chosenFile);
+      if (shrunk !== chosenFile) {
         setCompressionInfo({
-          originalSize: compressed.originalSize,
-          ratio: compressed.compressionRatio,
+          originalSize: chosenFile.size,
+          ratio: ((chosenFile.size - shrunk.size) / chosenFile.size) * 100,
         });
       }
 
-      setFile(compressed.file);
-      await upload(compressed.file);
+      setFile(shrunk);
+      await upload(shrunk);
     } catch (err) {
       console.error("[UPLOAD] File validation error:", err);
       setUploadState({
@@ -318,7 +318,7 @@ export function PaymentProofUpload({
           {import.meta.env.DEV
             ? " Optional in development mode."
             : " We need it to confirm your booking."}{" "}
-          Large images are compressed before upload.
+          Images are made smaller before upload.
         </p>
       )}
     </div>
