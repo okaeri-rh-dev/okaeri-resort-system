@@ -182,14 +182,10 @@ VITE_DEBUG=true
 
 ### 4. Database Setup
 
-Run the database migrations:
+Start the local Supabase stack. It applies `supabase/migrations/` and `supabase/seed.sql`:
 
 ```bash
-# Apply schema
-psql $DATABASE_URL < database/schema.sql
-
-# Run migrations
-psql $DATABASE_URL < database/migrations/*.sql
+supabase start
 ```
 
 ### 5. Start Development Server

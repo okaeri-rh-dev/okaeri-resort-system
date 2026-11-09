@@ -46,4 +46,3 @@ These hold for every file in this folder. A re-added component must be brought b
 ## Known gaps
 
 - `sonner.tsx` keeps the `toaster` class, which its `group-[.toaster]:` selectors need, and `responsive-date-picker.tsx` keeps `mobile-calendar` (defined in `responsive-date-picker.css`, which the lint entry point does not load). Each carries an inline `eslint-disable-next-line better-tailwindcss/no-unknown-classes` with that reason instead of a suppressions entry.
-- `max-md:text-base` on inputs uses a default breakpoint; it moves to the window size classes with slice 6.
