@@ -149,8 +149,8 @@ Before you begin, ensure you have the following installed:
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/yourusername/okaeri-resort.git
-cd okaeri-resort
+git clone https://github.com/okaeri-rh-dev/okaeri-resort-system.git
+cd okaeri-resort-system
 ```
 
 ### 2. Install Dependencies
@@ -182,14 +182,10 @@ VITE_DEBUG=true
 
 ### 4. Database Setup
 
-Run the database migrations:
+Start the local Supabase stack. It applies `supabase/migrations/` and `supabase/seed.sql`:
 
 ```bash
-# Apply schema
-psql $DATABASE_URL < database/schema.sql
-
-# Run migrations
-psql $DATABASE_URL < database/migrations/*.sql
+supabase start
 ```
 
 ### 5. Start Development Server
@@ -373,21 +369,15 @@ Comprehensive documentation is available throughout the repository. Long-form de
 - Development Guide: vault note [[02-development README]]
 - [Component Library](./src/components/ui/README.md) - UI component reference
 - [State Management](./src/stores/README.md) - Zustand + TanStack Query patterns
-- [Security Utilities](./src/lib/security/README.md) - XSS prevention, sanitization, and validation
 
 ### Feature Implementation
 - Audit Trail System: vault note [[audit-trail README]]
 - Guest Booking System: vault note [[guest-booking-multi-unit README]]
-- [Monitoring Infrastructure](./src/lib/monitoring/README.md) - Quota monitoring and alert systems
-- [Booking Components](./src/components/bookings/README.md) - Complex booking form and table architecture
 - [Patterns kit](./src/components/patterns/CLAUDE.md) - Reusable table and page patterns (`@/components/patterns`)
 
 ### API & Functions
 - [Serverless Functions](./functions/README.md) - Cloudflare Workers architecture
 - [API Endpoints](./functions/api/README.md) - API route documentation
-- [Audit Logging API](./functions/api/audit/README.md) - Audit trail endpoints
-- [Guest Booking API](./functions/api/guest-booking/README.md) - Public booking endpoints
-- [Monitoring API](./functions/api/monitoring/README.md) - Health and quota monitoring
 
 ### Database
 - [Database Schema](./database/SCHEMA.md) - Complete schema documentation
@@ -395,7 +385,6 @@ Comprehensive documentation is available throughout the repository. Long-form de
 - [Migrations](./database/migrations/README.md) - Migration management
 
 ### Testing
-- [Testing Strategy](./src/__tests__/README.md) - E2E, performance, and security testing
 - Testing Guide: vault note [[testing-strategy]]
 
 ### Deployment & Operations
@@ -410,13 +399,7 @@ Comprehensive documentation is available throughout the repository. Long-form de
 
 ## 🤝 Contributing
 
-We welcome contributions! Please see our [Contributing Guide](./CONTRIBUTING.md) for details on:
-
-- Code of Conduct
-- Development workflow
-- Commit conventions
-- Pull request process
-- Code review guidelines
+We welcome contributions. Open an issue or a pull request on GitHub. Commit messages follow Conventional Commits.
 
 ## 🐛 Known Issues & Roadmap
 
@@ -438,9 +421,8 @@ We welcome contributions! Please see our [Contributing Guide](./CONTRIBUTING.md)
 
 For support, please:
 
-1. Check the [Troubleshooting Guide](./docs/TROUBLESHOOTING.md)
-2. Review existing [GitHub Issues](https://github.com/yourusername/okaeri-resort/issues)
-3. Contact the development team
+1. Review existing [GitHub Issues](https://github.com/okaeri-rh-dev/okaeri-resort-system/issues)
+2. Contact the development team
 
 ## 📄 License
 

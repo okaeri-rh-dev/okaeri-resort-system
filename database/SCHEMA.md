@@ -652,5 +652,4 @@ ORDER BY idx_scan;
 
 - [PostgreSQL Documentation](https://www.postgresql.org/docs/)
 - [Supabase Database Guide](https://supabase.com/docs/guides/database)
-- [RLS Best Practices](./docs/database/rls-guide.md)
-- [Migration Guide](./database/migrations/README.md)
+- [Migration Guide](./migrations/README.md)

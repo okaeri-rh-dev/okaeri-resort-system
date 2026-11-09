@@ -4,7 +4,7 @@ React hooks shared across components. Entity CRUD (bookings, guests, payments, e
 
 ## Conventions
 
-- Queries are `queryOptions` factories (`@tanstack/query/prefer-query-options` is a lint error). Keys come from `src/lib/query-keys.ts`; `useUserRole`, `usePendingUsers` and `useRoleManagement` still export their own key factories.
+- Queries are `queryOptions` factories (`@tanstack/query/prefer-query-options` is a lint error). Keys come from `src/lib/query-keys.ts`.
 - Components do not import the `supabase` client (lint warning, CI fails on warnings): query through a hook, a store or the `db` helpers in `src/lib/supabase.ts`. Session and sign-in calls use `supabaseAuth`.
 - Table writes need no audit call; the audit trigger records them (see `src/components/audit/CLAUDE.md`).
 
@@ -26,6 +26,8 @@ React hooks shared across components. Entity CRUD (bookings, guests, payments, e
 | `useMultiUnitBookingQueries.ts` | `useMultiUnitAvailability`, `useCreateMultiUnitBooking`                                       |
 | `useMultiUnitRealtime.ts`       | `useMultiUnitAvailabilitySubscription`: `afterWrite("availability_blackouts")` and `onChange` on block events |
 | `useAvailabilityRealtime.ts`    | `useAvailabilityRealtime`: availability changes that affect multi-unit bookings               |
+| `useAvailabilityTimeline.ts`    | `useAvailabilityTimeline`, `blocksInNightsQuery`: stays and blocks for the availability timeline |
+| `useContactChannels.ts`         | `useContactChannels`, `useActiveContactChannels`, create/update/set-active/reorder mutations |
 | `useBlocks.ts`                  | `useBlocks` (current and upcoming, past on request), create/update/delete block mutations    |
 | `useDebouncedValue.ts`          | `useDebouncedValue`, `SEARCH_DEBOUNCE_MS`: delay list search queries until typing pauses     |
 | `useIdempotencyKey.ts`          | `useIdempotencyKey`: persisted key for retry-safe mutations                                   |
