@@ -94,7 +94,7 @@ export async function validateFileContent(file: File): Promise<boolean> {
  * @returns The shrunk image, or the original file for a PDF, on failure, or when shrinking does not help
  */
 export async function shrinkImage(file: File): Promise<File> {
-  if (file.type !== "image/jpeg" && file.type !== "image/png") return file;
+  if (!["image/jpeg", "image/jpg", "image/png"].includes(file.type)) return file;
 
   try {
     const { default: imageCompression } = await import("browser-image-compression");
@@ -102,7 +102,8 @@ export async function shrinkImage(file: File): Promise<File> {
       maxWidthOrHeight: 1600,
       maxSizeMB: 0.3,
       fileType: "image/jpeg",
-      useWebWorker: true,
+      // The worker script loads from a CDN, which the CSP blocks.
+      useWebWorker: false,
     });
     if (shrunk.size >= file.size) return file;
     return new File([shrunk], `${file.name.replace(/\.[^.]*$/, "")}.jpg`, { type: "image/jpeg" });

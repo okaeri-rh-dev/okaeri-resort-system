@@ -86,7 +86,7 @@ function putFile(uploadUrl: string, file: File, onProgress: (percentage: number)
 }
 
 /**
- * The guest's payment screenshot field. Choosing (or dropping) a file validates it, compresses
+ * The guest's payment screenshot field. Choosing (or dropping) a file validates it, shrinks
  * images, and uploads it straight away to a signed storage URL; `onChange` receives the stored path.
  */
 export function PaymentProofUpload({
@@ -318,7 +318,7 @@ export function PaymentProofUpload({
           {import.meta.env.DEV
             ? " Optional in development mode."
             : " We need it to confirm your booking."}{" "}
-          Large images are compressed before upload.
+          Images are made smaller before upload.
         </p>
       )}
     </div>

@@ -168,6 +168,7 @@ export async function uploadReceipt(
   expenseId: string
 ): Promise<{ path: string; url: string }> {
   const file = await shrinkImage(chosenFile);
+
   // Allow both images and PDFs for receipts
   const allowedTypes = [...ALLOWED_IMAGE_TYPES, ...ALLOWED_DOCUMENT_TYPES];
 
