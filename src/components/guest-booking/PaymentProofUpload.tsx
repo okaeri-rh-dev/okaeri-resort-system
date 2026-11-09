@@ -3,7 +3,7 @@ import { useRef, useState } from "react";
 import { CheckCircle, FileImage, FileText, Loader2, RotateCcw, Upload, X } from "lucide-react";
 
 import { Button, Callout, Progress } from "@/components/patterns";
-import { compressImage, formatFileSize, validateFile } from "@/lib/file-validation-client";
+import { formatFileSize, shrinkImage, validateFile } from "@/lib/file-validation-client";
 import { cn } from "@/lib/utils";
 
 export interface PaymentProofUploadProps {
@@ -150,16 +150,16 @@ export function PaymentProofUpload({
         return;
       }
 
-      const compressed = await compressImage(chosenFile);
-      if (compressed.wasCompressed) {
+      const shrunk = await shrinkImage(chosenFile);
+      if (shrunk !== chosenFile) {
         setCompressionInfo({
-          originalSize: compressed.originalSize,
-          ratio: compressed.compressionRatio,
+          originalSize: chosenFile.size,
+          ratio: ((chosenFile.size - shrunk.size) / chosenFile.size) * 100,
         });
       }
 
-      setFile(compressed.file);
-      await upload(compressed.file);
+      setFile(shrunk);
+      await upload(shrunk);
     } catch (err) {
       console.error("[UPLOAD] File validation error:", err);
       setUploadState({

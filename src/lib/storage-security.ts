@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+import { shrinkImage } from "@/lib/file-validation-client";
 import type { Database } from "@/types/database.types";
 
 import { supabase } from "./supabase";
@@ -122,11 +123,12 @@ export function formatFileSize(bytes: number): string {
  * Upload payment proof with validation
  */
 export async function uploadPaymentProof(
-  file: File,
+  chosenFile: File,
   bookingId: string,
   client: SupabaseClient<Database> = supabase
 ): Promise<{ path: string; url: string }> {
-  // Perform all validations
+  const file = await shrinkImage(chosenFile);
+
   validateFileSize(file);
   validateFileType(file, ALLOWED_IMAGE_TYPES);
   validateFileExtension(file);
@@ -162,9 +164,10 @@ export async function uploadPaymentProof(
  * Upload receipt with validation
  */
 export async function uploadReceipt(
-  file: File,
+  chosenFile: File,
   expenseId: string
 ): Promise<{ path: string; url: string }> {
+  const file = await shrinkImage(chosenFile);
   // Allow both images and PDFs for receipts
   const allowedTypes = [...ALLOWED_IMAGE_TYPES, ...ALLOWED_DOCUMENT_TYPES];
 

@@ -200,7 +200,7 @@ const receiptConfig = {
 
 // Upload receipt
 const uploadReceipt = async (file: File, expenseId: string) => {
-  const compressed = await compressImage(file)
+  const compressed = await shrinkImage(file)
   const { url, error } = await uploadToStorage(compressed, {
     bucket: 'receipts',
     path: `expenses/${expenseId}`
