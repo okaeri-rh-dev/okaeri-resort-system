@@ -492,10 +492,6 @@ describe('Guest Booking API', () => {
 ## 📚 Related Documentation
 
 - [Serverless Functions](/functions/README.md) - Cloudflare Workers architecture
-- [Guest Booking API](/functions/api/guest-booking/README.md) - Detailed guest booking docs
-- [Audit API](/functions/api/audit/README.md) - Audit logging endpoint
-- [Monitoring API](/functions/api/monitoring/README.md) - Quota monitoring
-- [Cron Jobs](/functions/cron/README.md) - Scheduled tasks
 - Security Guidelines: vault note [[security README]]
 
 ## 🔧 Environment Variables
