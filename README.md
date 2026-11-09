@@ -373,13 +373,10 @@ Comprehensive documentation is available throughout the repository. Long-form de
 - Development Guide: vault note [[02-development README]]
 - [Component Library](./src/components/ui/README.md) - UI component reference
 - [State Management](./src/stores/README.md) - Zustand + TanStack Query patterns
-- [Security Utilities](./src/lib/security/README.md) - XSS prevention, sanitization, and validation
 
 ### Feature Implementation
 - Audit Trail System: vault note [[audit-trail README]]
 - Guest Booking System: vault note [[guest-booking-multi-unit README]]
-- [Monitoring Infrastructure](./src/lib/monitoring/README.md) - Quota monitoring and alert systems
-- [Booking Components](./src/components/bookings/README.md) - Complex booking form and table architecture
 - [Patterns kit](./src/components/patterns/CLAUDE.md) - Reusable table and page patterns (`@/components/patterns`)
 
 ### API & Functions
@@ -395,7 +392,6 @@ Comprehensive documentation is available throughout the repository. Long-form de
 - [Migrations](./database/migrations/README.md) - Migration management
 
 ### Testing
-- [Testing Strategy](./src/__tests__/README.md) - E2E, performance, and security testing
 - Testing Guide: vault note [[testing-strategy]]
 
 ### Deployment & Operations

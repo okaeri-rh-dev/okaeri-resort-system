@@ -407,8 +407,6 @@ describe('Guest Booking API', () => {
 - [Guest Booking API](/functions/api/guest-booking/README.md) - Public booking API
 - [Monitoring API](/functions/api/monitoring/README.md) - Quota monitoring endpoints
 - [Cron Jobs](/functions/cron/README.md) - Scheduled tasks
-- [Security Guidelines](/src/lib/security/README.md) - Security best practices
-- [Monitoring System](/src/lib/monitoring/README.md) - Quota and performance monitoring
 
 ## 🚨 Security Considerations
 
