@@ -96,7 +96,7 @@ function BookingsTableComponent({ className }: BookingsTableProps) {
         renderCard={(row) => (
           <BookingCard
             booking={row.original}
-            onUploadPayment={() => handleUploadPayment(row.original)}
+            onRecordPayment={() => handleUploadPayment(row.original)}
             onCancel={() => cancelBooking.mutate(row.original.booking_id)}
             updateBookingStatus={updateBookingStatus}
           />

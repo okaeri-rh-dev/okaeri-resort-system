@@ -9,6 +9,7 @@ import { statusBadgeProps } from "@/lib/status-tone";
 import type { Booking, BookingStatus } from "@/types";
 
 import { formatStayRange, getNights } from "../utils/stay";
+import { BalanceLabel } from "./BalanceLabel";
 import { BookingActionsCell } from "./BookingActionsCell";
 import { CabinChip } from "./CabinChip";
 import { SourceBadge } from "./SourceBadge";
@@ -90,7 +91,12 @@ export const useBookingColumns = ({
 
       columnHelper.accessor("total_amount", {
         header: "Amount",
-        cell: ({ getValue }) => <span className="font-semibold">{formatCurrency(getValue())}</span>,
+        cell: ({ getValue, row }) => (
+          <div className="space-y-0.5">
+            <div className="font-semibold">{formatCurrency(getValue())}</div>
+            <BalanceLabel booking={row.original} />
+          </div>
+        ),
         meta: { align: "right", priority: "low" },
         size: 120,
       }),

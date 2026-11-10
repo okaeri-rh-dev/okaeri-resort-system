@@ -1,10 +1,22 @@
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 
 import { useNavigate } from "@tanstack/react-router";
 
-import { Button } from "@/components/patterns";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  Button,
+} from "@/components/patterns";
 import { useUserRole } from "@/hooks";
 import { mainActionFor, manilaDayOf, type MainAction } from "@/lib/bookings";
+import { outstandingBalance } from "@/lib/dashboard";
+import { formatCurrency } from "@/lib/formatters";
 import type { Booking, BookingStatus } from "@/types";
 
 import type { BookingCardProps } from "../types";
@@ -18,6 +30,7 @@ const NEXT_STATUS: Record<Exclude<MainAction, "Verify payment">, BookingStatus> 
 interface MainActionButtonProps {
   booking: Booking;
   updateBookingStatus: BookingCardProps["updateBookingStatus"];
+  onRecordPayment: () => void;
   className?: string;
   /** Shown when the booking has no main action for this user. */
   fallback?: ReactNode;
@@ -26,15 +39,22 @@ interface MainActionButtonProps {
 export const MainActionButton = ({
   booking,
   updateBookingStatus,
+  onRecordPayment,
   className,
   fallback = null,
 }: MainActionButtonProps) => {
   const navigate = useNavigate();
   const { role } = useUserRole();
+  const [askFirst, setAskFirst] = useState(false);
   const action = mainActionFor(booking, role, manilaDayOf(new Date()));
   if (!action) return fallback;
 
-  const run = () => {
+  const balance = outstandingBalance(booking);
+  const hasPayment = (booking.payments ?? []).some((payment) => payment.status === "Active");
+  const needsWarning =
+    (action === "Confirm" && !hasPayment) || (action === "Check out" && balance > 0);
+
+  const move = () => {
     if (action === "Verify payment") {
       navigate({
         to: "/admin/verify-payment/$bookingId",
@@ -46,8 +66,47 @@ export const MainActionButton = ({
   };
 
   return (
-    <Button onClick={run} size="sm" className={className}>
-      {action}
-    </Button>
+    <>
+      <Button
+        onClick={needsWarning ? () => setAskFirst(true) : move}
+        size="sm"
+        className={className}
+      >
+        {action}
+      </Button>
+
+      <AlertDialog open={askFirst} onOpenChange={setAskFirst}>
+        <AlertDialogContent>
+          {action === "Check out" ? (
+            <>
+              <AlertDialogHeader>
+                <AlertDialogTitle>{formatCurrency(balance)} due</AlertDialogTitle>
+                <AlertDialogDescription>
+                  {booking.guest_name} still owes {formatCurrency(balance)}. Record the payment
+                  before check out?
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel onClick={move}>Check out anyway</AlertDialogCancel>
+                <AlertDialogAction onClick={onRecordPayment}>Record payment</AlertDialogAction>
+              </AlertDialogFooter>
+            </>
+          ) : (
+            <>
+              <AlertDialogHeader>
+                <AlertDialogTitle>No payment recorded</AlertDialogTitle>
+                <AlertDialogDescription>
+                  {booking.booking_reference} has no payment yet. Confirm it anyway?
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Keep pending</AlertDialogCancel>
+                <AlertDialogAction onClick={move}>Confirm anyway</AlertDialogAction>
+              </AlertDialogFooter>
+            </>
+          )}
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 };

@@ -1,22 +1,6 @@
-import { useCallback, useState } from "react";
-
-import { useNavigate } from "@tanstack/react-router";
-
-import {
-  ActionMenu,
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/patterns";
-import { useUserRole } from "@/hooks";
-import { canTransitionStatus } from "@/lib/bookings";
 import type { Booking, BookingStatus } from "@/types";
 
+import { BookingOverflowMenu } from "./BookingOverflowMenu";
 import { MainActionButton } from "./MainActionButton";
 
 // Type for TanStack Query mutation objects (simplified from UseMutationResult)
@@ -37,95 +21,18 @@ export const BookingActionsCell: React.FC<BookingActionsCellProps> = ({
   updateBookingStatus,
   cancelBooking,
   handleUploadPayment,
-}) => {
-  const navigate = useNavigate();
-  const { canEdit, canEditBookings, canConfirmBookings } = useUserRole();
-  const [showCancelDialog, setShowCancelDialog] = useState(false);
-
-  const confirmCancel = useCallback(() => {
-    cancelBooking.mutate(booking.booking_id);
-    setShowCancelDialog(false);
-  }, [cancelBooking, booking.booking_id]);
-
-  // Build all possible actions
-  const allActions = [
-    ...(canEditBookings
-      ? [
-          {
-            label: "Edit Booking",
-            onClick: () => {
-              navigate({
-                to: "/admin/bookings/$bookingId/edit",
-                params: { bookingId: booking.booking_id },
-              });
-            },
-          },
-        ]
-      : []),
-    // Upload Payment - always visible (staff can upload on behalf of guests)
-    ...(booking.payment_status !== "Completed"
-      ? [
-          {
-            label: "Upload Payment",
-            onClick: () => handleUploadPayment(booking),
-          },
-        ]
-      : []),
-    // Confirm - requires canConfirmBookings permission
-    ...(canConfirmBookings && booking.booking_status === "Pending"
-      ? [
-          {
-            label: "Confirm",
-            onClick: () => {
-              updateBookingStatus.mutate({
-                bookingId: booking.booking_id,
-                status: "Confirmed" as BookingStatus,
-              });
-            },
-          },
-        ]
-      : []),
-    // Cancel - requires canEdit permission
-    ...(canEdit && canTransitionStatus(booking.booking_status as BookingStatus, "Cancelled")
-      ? [
-          {
-            label: "Cancel",
-            onClick: () => setShowCancelDialog(true),
-            variant: "destructive" as const,
-          },
-        ]
-      : []),
-  ];
-
-  return (
-    <>
-      <div className="flex items-center justify-end gap-2">
-        <MainActionButton booking={booking} updateBookingStatus={updateBookingStatus} />
-        {allActions.length > 0 && (
-          <ActionMenu actions={allActions} label={`Actions for ${booking.booking_reference}`} />
-        )}
-      </div>
-
-      <AlertDialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Cancel booking</AlertDialogTitle>
-            <AlertDialogDescription>
-              {booking.booking_reference} will be cancelled and its unit freed for these days. This
-              cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Keep booking</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={confirmCancel}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              Cancel booking
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </>
-  );
-};
+}) => (
+  <div className="flex items-center justify-end gap-2">
+    <MainActionButton
+      booking={booking}
+      updateBookingStatus={updateBookingStatus}
+      onRecordPayment={() => handleUploadPayment(booking)}
+    />
+    <BookingOverflowMenu
+      booking={booking}
+      updateBookingStatus={updateBookingStatus}
+      onRecordPayment={() => handleUploadPayment(booking)}
+      onCancel={() => cancelBooking.mutate(booking.booking_id)}
+    />
+  </div>
+);

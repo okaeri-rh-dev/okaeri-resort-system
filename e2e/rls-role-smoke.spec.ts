@@ -69,11 +69,11 @@ test.describe("RLS role smoke (browser)", () => {
     await expect(row).toBeVisible({ timeout: 15_000 });
     await row.locator('button[aria-haspopup="menu"]').click();
 
-    // "Upload Payment" triggers a native file chooser (handleUploadPayment
+    // "Record payment" triggers a native file chooser (handleUploadPayment
     // creates + clicks a file input).
     const [fileChooser] = await Promise.all([
       page.waitForEvent("filechooser"),
-      page.getByRole("menuitem", { name: /upload payment/i }).click(),
+      page.getByRole("menuitem", { name: /record payment/i }).click(),
     ]);
     await fileChooser.setFiles({ name: "proof.png", mimeType: "image/png", buffer: PNG_1X1 });
 

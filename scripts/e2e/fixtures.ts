@@ -30,7 +30,7 @@ export const E2E_UNIT = {
 export interface E2EBookingFixture {
   booking_id?: string;
   booking_reference: string;
-  booking_status: "Pending" | "Confirmed" | "Cancelled";
+  booking_status: "Pending" | "Confirmed" | "CheckedIn" | "Cancelled";
   payment_status: "Pending" | "Completed";
   check_in: string;
   check_out: string;
@@ -52,6 +52,7 @@ export const E2E_REF = {
   CONF_PAID: "E2E-CONF-PAID",
   CANCELLED: "E2E-CANCELLED",
   CHECK_IN: "E2E-CHECK-IN",
+  CHECK_OUT: "E2E-CHECK-OUT",
   QUEUE: "E2E-QUEUE",
   QUEUE_PAID: "E2E-PAID-QUEUE",
   ASSIGN_PAID: "E2E-ASSIGN-PAID",
@@ -68,6 +69,17 @@ export const E2E_BOOKINGS: E2EBookingFixture[] = [
     payment_status: "Completed",
     check_in: `${manilaDay(0)}T06:00:00Z`,
     check_out: `${manilaDay(24 * 60 * 60 * 1000)}T04:00:00Z`,
+    total_amount: 2500,
+    num_guests: 2,
+  },
+  // In-house with nothing paid, so Check out asks about the balance first. A past stay keeps
+  // its nights clear of E2E-CHECK-IN on the same cabin.
+  {
+    booking_reference: E2E_REF.CHECK_OUT,
+    booking_status: "CheckedIn",
+    payment_status: "Pending",
+    check_in: `${manilaDay(-2 * 24 * 60 * 60 * 1000)}T06:00:00Z`,
+    check_out: `${manilaDay(-1 * 24 * 60 * 60 * 1000)}T04:00:00Z`,
     total_amount: 2500,
     num_guests: 2,
   },
