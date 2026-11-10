@@ -127,6 +127,8 @@ export function adaptBookingFromDB(dbBooking: DbBooking): Booking {
     check_out: dbBooking.check_out,
     total_amount: dbBooking.total_amount,
     booking_status: dbBooking.booking_status,
+    status_changed_by: dbBooking.status_changed_by,
+    status_changed_at: dbBooking.status_changed_at,
     payment_status: dbBooking.payment_status,
     payment_method: dbBooking.payment_method,
     payment_proof_url: dbBooking.payment_proof_url,

@@ -7,6 +7,7 @@ import {
   parseBookingsSearch,
   selectBookings,
   toStayInstants,
+  undoActionFor,
 } from "@/lib/bookings";
 import type { Booking, BookingStatus } from "@/types";
 
@@ -316,5 +317,31 @@ describe("mainActionFor", () => {
       check_in: "2026-10-15T16:30:00.000Z",
     });
     expect(mainActionFor(early, "staff", TODAY)).toBeUndefined();
+  });
+});
+
+describe("undoActionFor", () => {
+  const ME = "user-me";
+  const changedAt = "2026-10-15T02:00:00.000Z";
+  const secondsLater = (seconds: number) => new Date(Date.parse(changedAt) + seconds * 1000);
+  const changedBy = (status: BookingStatus, userId: string | null) =>
+    booking(status, "2026-10-15", "2026-10-17", {
+      status_changed_by: userId,
+      status_changed_at: changedAt,
+    });
+
+  it.each([
+    ["CheckedIn", ME, "staff", 60, "Undo check-in"],
+    ["CheckedOut", ME, "staff", 119, "Undo check-out"],
+    ["CheckedIn", ME, "staff", 121, undefined],
+    ["CheckedIn", "user-other", "staff", 10, undefined],
+    ["CheckedIn", null, "staff", 10, undefined],
+    ["CheckedIn", "user-other", "manager", 86_400, "Undo check-in"],
+    ["CheckedOut", null, "admin", 86_400, "Undo check-out"],
+    ["Confirmed", ME, "manager", 10, undefined],
+    ["Cancelled", ME, "admin", 10, undefined],
+    ["CheckedIn", ME, undefined, 10, undefined],
+  ] as const)("gives %s changed by %s, for %s %is later: %s", (status, by, role, seconds, item) => {
+    expect(undoActionFor(changedBy(status, by), role, ME, secondsLater(seconds))).toBe(item);
   });
 });

@@ -17,12 +17,17 @@ async function openBooking(page: Page, ref: string) {
   return row;
 }
 
-test("staff check in a Confirmed booking on its check-in day", async ({ page }) => {
+test("staff check in a Confirmed booking on its check-in day, then undo it", async ({ page }) => {
   const row = await openBooking(page, E2E_REF.CHECK_IN);
   await row.getByRole("button", { name: "Check in" }).click();
 
   await expect(row.getByRole("button", { name: "Check out" })).toBeVisible();
   await expect(row.getByRole("button", { name: "Check in" })).toHaveCount(0);
+
+  await page.getByRole("button", { name: "Undo" }).click();
+
+  await expect(row.getByRole("button", { name: "Check in" })).toBeVisible();
+  await expect(row.getByRole("button", { name: "Check out" })).toHaveCount(0);
 });
 
 test("staff do not see Confirm on a Pending booking", async ({ page }) => {

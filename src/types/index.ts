@@ -93,6 +93,8 @@ export interface Booking {
   check_out: string; // Date as ISO string
   total_amount: number;
   booking_status: BookingStatus | null;
+  status_changed_by?: string | null;
+  status_changed_at?: string | null;
   payment_status: string | null; // Database uses nullable strings, not enums
   payment_method?: string | null;
   payment_proof_url?: string | null;
