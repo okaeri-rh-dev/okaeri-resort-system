@@ -242,16 +242,21 @@ describe("BookingCard ⋯ menu role gating", () => {
 });
 
 describe("BookingCard info-zone navigation", () => {
-  it("clicking the info zone navigates to the booking detail route", async () => {
+  it("clicking the info zone opens the booking sheet and keeps the list's search", async () => {
     const user = userEvent.setup();
     renderCard();
     const infoZone = screen.getByRole("button", {
       name: /view booking BK-TEST-001/i,
     });
     await user.click(infoZone);
-    expect(navigateMock).toHaveBeenCalledWith({
-      to: "/admin/bookings/$bookingId",
-      params: { bookingId: baseBooking.booking_id },
+    const [{ to, search }] = navigateMock.mock.calls[0] as [
+      { to: string; search: (prev: object) => object },
+    ];
+    expect(to).toBe("/admin/bookings");
+    expect(search({ view: "past", q: "Jonah" })).toEqual({
+      view: "past",
+      q: "Jonah",
+      booking: baseBooking.booking_id,
     });
   });
 

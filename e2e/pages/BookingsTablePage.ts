@@ -180,11 +180,11 @@ export class BookingsTablePage {
 
   /**
    * Get all booking references from the table
-   * References link to the booking detail page
+   * References open the booking sheet
    */
   async getBookingReferences(): Promise<string[]> {
     const refs: string[] = [];
-    const refLinks = this.page.locator('table tbody td a[href^="/admin/bookings/"]');
+    const refLinks = this.page.locator('table tbody td a[href*="booking="]');
     const count = await refLinks.count();
 
     for (let i = 0; i < count; i++) {
@@ -196,13 +196,21 @@ export class BookingsTablePage {
     return refs;
   }
 
-  /**
-   * Click on a booking row to view details
-   * Booking references are links that navigate to details
-   */
+  /** The booking open in its sheet (`?booking=<id>`) */
+  get bookingSheet(): Locator {
+    return this.page.getByRole("dialog");
+  }
+
+  async openBookingSheet(reference: string) {
+    await this.page.locator("table tbody td a", { hasText: reference }).click();
+    await this.page.waitForURL(/[?&]booking=/);
+  }
+
+  /** Open the booking's sheet, then its full page */
   async clickBookingRow(reference: string) {
-    await this.page.locator(`a:has-text("${reference}")`).click();
-    await this.page.waitForURL(/\/admin\/bookings\//);
+    await this.openBookingSheet(reference);
+    await this.bookingSheet.getByRole("link", { name: "Open full page" }).click();
+    await this.page.waitForURL(/\/admin\/bookings\/[0-9a-f-]{36}/);
   }
 
   /**
