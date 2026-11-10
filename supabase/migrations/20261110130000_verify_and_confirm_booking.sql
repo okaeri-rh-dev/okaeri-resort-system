@@ -26,7 +26,8 @@ BEGIN
     FOR UPDATE;
 
     IF NOT FOUND THEN
-        RAISE EXCEPTION 'Booking % not found or already confirmed', p_booking_id;
+        RAISE EXCEPTION 'Booking % not found or already confirmed', p_booking_id
+            USING ERRCODE = 'P0002';
     END IF;
 
     IF NOT EXISTS (

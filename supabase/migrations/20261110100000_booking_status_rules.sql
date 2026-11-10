@@ -1,6 +1,7 @@
 -- Booking status moves and their roles live in the database (docs/adr/0007).
--- Signed-in users get only the forward moves below; the service role and
--- SECURITY DEFINER server code are trusted and skip the role rules.
+-- The rules apply when auth.role(), read from the request JWT, is 'authenticated':
+-- signed-in users get only the forward moves below, also inside SECURITY DEFINER
+-- functions they call. Service-role requests and sessions with no JWT skip them.
 BEGIN;
 
 ALTER TABLE public.bookings
