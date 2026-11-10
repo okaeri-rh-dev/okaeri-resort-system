@@ -42,12 +42,12 @@ Breakpoints use the window size class names (`medium:`, `expanded:`, `large:`, `
 
 Navigation per class:
 
-| Surface | Compact                                                                                                                        | Medium, expanded                     | Large, xlarge                     |
-| ------- | ------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------ | --------------------------------- |
-| Admin   | Bottom bar: Dashboard, Bookings, Booking Queue, Payments, More (opens the menu sheet). Roles with ≤5 destinations get no More. | Collapsed rail; groups open a flyout | Expanded rail with group headings |
-| Guest   | Top bar with a menu sheet                                                                                                      | Top bar with inline links            | (centred at max width)            |
+| Surface | Compact                                                                                                         | Medium, expanded                     | Large, xlarge                     |
+| ------- | --------------------------------------------------------------------------------------------------------------- | ------------------------------------ | --------------------------------- |
+| Admin   | Bottom bar: Dashboard, Bookings, Payments, More (opens the menu sheet). Roles with ≤5 destinations get no More. | Collapsed rail; groups open a flyout | Expanded rail with group headings |
+| Guest   | Top bar with a menu sheet                                                                                       | Top bar with inline links            | (centred at max width)            |
 
-Admin destinations sit in four groups under Dashboard, which has no heading: **Bookings** (Bookings, Booking Queue, Payments, Guests), **Cabins** (Cabins, Availability, Blocked dates), **Money** (Expenses, Accounts, Transfers, Documents) and **Admin** (Settings, Audit Trail, User Roles). Headings in the expanded rail and the menu sheets are always open. A role sees only the groups that hold an item it can open, and a one-item group keeps its heading. The bottom bar shows no headings. Rationale: [Side-menu grouping](https://github.com/okaeri-rh-dev/okaeri-resort-system/issues/155).
+Admin destinations sit in four groups under Dashboard, which has no heading: **Bookings** (Bookings, Payments, Guests), **Cabins** (Cabins, Availability, Blocked dates), **Money** (Expenses, Accounts, Transfers, Documents) and **Admin** (Settings, Audit Trail, User Roles). Headings in the expanded rail and the menu sheets are always open. A role sees only the groups that hold an item it can open, and a one-item group keeps its heading. The bottom bar shows no headings. Rationale: [Side-menu grouping](https://github.com/okaeri-rh-dev/okaeri-resort-system/issues/155).
 
 The rail and the menu sheets scroll as one column when the window is short.
 
@@ -66,14 +66,14 @@ Auto is the system setting. The dark mode switch sets an explicit theme, so Auto
 
 Pane layouts:
 
-| Screen                         | Layout                                                                                     |
-| ------------------------------ | ------------------------------------------------------------------------------------------ |
-| Admin lists                    | Single pane, detail on its own route                                                       |
-| Booking Queue → verify payment | List-detail; two panes from `expanded`                                                     |
-| Detail views                   | Supporting pane: below up to `medium`, beside at 360px from `expanded`, 412px from `large` |
-| Dashboard                      | Single pane; the day opens in a bottom sheet up to `medium`, a side sheet from `expanded`  |
-| Guest booking                  | Price summary below on compact and `medium`, sticky side pane from `expanded`              |
-| Public calendar                | Single pane                                                                                |
+| Screen               | Layout                                                                                     |
+| -------------------- | ------------------------------------------------------------------------------------------ |
+| Admin lists          | Single pane, detail on its own route                                                       |
+| Bookings → a booking | Sheet over the full list: from the right from `expanded`, full screen below it             |
+| Detail views         | Supporting pane: below up to `medium`, beside at 360px from `expanded`, 412px from `large` |
+| Dashboard            | Single pane; the day opens in a bottom sheet up to `medium`, a side sheet from `expanded`  |
+| Guest booking        | Price summary below on compact and `medium`, sticky side pane from `expanded`              |
+| Public calendar      | Single pane                                                                                |
 
 Window margins are 16px on compact and 24px from `medium`, with a 24px spacer between panes. Content caps: admin 1600px, guest 1200px, form and reading columns ~40rem.
 

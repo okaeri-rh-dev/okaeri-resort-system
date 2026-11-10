@@ -56,7 +56,7 @@ const everyTable: Record<TableName, true> = {
   units: true,
 };
 
-const availability = [availabilityKeys.availableUnits.all, availabilityKeys.multiUnit.all];
+const availability = [availabilityKeys.multiUnit.all];
 
 describe("afterWrite", () => {
   afterEach(() => {

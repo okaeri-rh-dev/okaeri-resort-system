@@ -64,8 +64,6 @@ export class BookingDetailPage {
   // Action buttons
   readonly editButton: Locator;
   readonly cancelButton: Locator;
-  readonly verifyPaymentButton: Locator;
-  readonly assignUnitsButton: Locator;
   readonly checkInButton: Locator;
   readonly checkOutButton: Locator;
   readonly actionsMenu: Locator;
@@ -147,12 +145,6 @@ export class BookingDetailPage {
     // Action buttons
     this.editButton = page.getByRole("link", { name: "Edit", exact: true });
     this.cancelButton = page.getByRole("button", { name: /cancel.*booking/i });
-    this.verifyPaymentButton = page.getByRole("button", {
-      name: /verify.*payment/i,
-    });
-    this.assignUnitsButton = page.getByRole("button", {
-      name: /assign.*unit/i,
-    });
     this.checkInButton = page.getByRole("button", { name: /check.?in/i });
     this.checkOutButton = page.getByRole("button", { name: /check.?out/i });
     this.actionsMenu = page.getByRole("button", { name: /actions|more/i });
@@ -315,22 +307,6 @@ export class BookingDetailPage {
       state: "visible",
       timeout: TIMEOUTS.medium,
     });
-  }
-
-  /**
-   * Navigate to verify payment
-   */
-  async goToVerifyPayment(): Promise<void> {
-    await this.verifyPaymentButton.click();
-    await this.page.waitForURL(/\/verify-payment/);
-  }
-
-  /**
-   * Navigate to assign units
-   */
-  async goToAssignUnits(): Promise<void> {
-    await this.assignUnitsButton.click();
-    await this.page.waitForURL(/\/assign-units/);
   }
 
   /**

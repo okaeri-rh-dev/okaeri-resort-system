@@ -77,7 +77,7 @@ export function useUserRole() {
   // Can confirm/cancel bookings (manager+)
   const canConfirmBookings = isManager;
 
-  // Can verify/reject payments (manager+)
+  // Can verify payments (manager+)
   const canVerifyPayments = isManager;
 
   // Can soft-delete records (manager+) — sets status to 'Deleted' instead of removing

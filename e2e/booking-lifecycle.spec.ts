@@ -9,21 +9,18 @@ import {
   GUEST_PROFILES,
 } from "./fixtures/booking-data";
 import { ROUTES, TEST_GUEST, TIMEOUTS, VIEWPORTS } from "./fixtures/test-data";
-import { AdminQueuePage } from "./pages/AdminQueuePage";
 import { BookingDetailPage } from "./pages/BookingDetailPage";
 import { BookingFormPage } from "./pages/BookingFormPage";
-import { PaymentVerificationPage } from "./pages/PaymentVerificationPage";
 import { PublicCalendarPage } from "./pages/PublicCalendarPage";
-import { UnitAssignmentPage } from "./pages/UnitAssignmentPage";
 
 /**
  * Booking Lifecycle E2E Tests
  *
  * Tests the complete booking journey:
  * 1. Guest submits booking via public form
- * 2. Booking appears in admin queue with urgency scoring
- * 3. Admin verifies payment
- * 4. Admin assigns units (all-or-nothing)
+ * 2. Booking appears in the Needs action view
+ * 3. Admin opens Verify payment
+ * 4. Admin picks exactly the requested cabins (all-or-nothing)
  * 5. Booking confirmed, calendar updated
  * 6. Guest can check booking status
  */
@@ -168,66 +165,18 @@ test.describe("Booking Lifecycle", () => {
     });
   });
 
-  test.describe("2. Booking Appears in Admin Queue", () => {
+  test.describe("2. Booking Appears in Needs action", () => {
     test.beforeEach(async ({ page }) => {
       await loginAsAdmin(page);
     });
 
-    test("admin can access booking queue", async ({ page }) => {
-      const queuePage = new AdminQueuePage(page);
-      await queuePage.goto();
+    test("an online booking waiting for cabins shows in the Needs action view", async ({
+      page,
+    }) => {
+      await page.goto(`/admin/bookings?view=needs-action&q=${E2E_REF.QUEUE}`);
 
-      await queuePage.expectQueueVisible();
-    });
-
-    test("queue displays urgency scores for bookings", async ({ page }) => {
-      const queuePage = new AdminQueuePage(page);
-      await queuePage.goto();
-
-      // Check that urgency indicators are present
-      const hasUrgencyBadges =
-        (await queuePage.criticalBadges.count()) > 0 ||
-        (await queuePage.highBadges.count()) > 0 ||
-        (await queuePage.mediumBadges.count()) > 0 ||
-        (await queuePage.lowBadges.count()) > 0 ||
-        (await queuePage.emptyState.isVisible());
-
-      expect(hasUrgencyBadges).toBeTruthy();
-    });
-
-    test("queue can be filtered by urgency level", async ({ page }) => {
-      const queuePage = new AdminQueuePage(page);
-      await queuePage.goto();
-
-      // Skip if queue is empty
-      if (await queuePage.emptyState.isVisible()) {
-        test.skip();
-        return;
-      }
-
-      await queuePage.filterByUrgency("critical");
-      await queuePage.waitForQueueRefresh();
-
-      // After filtering, all visible items should be critical (or empty)
-      const criticalCount = await queuePage.criticalBadges.count();
-      const totalCount = await queuePage.getQueueCount();
-
-      // All items should be critical, or queue is empty after filter
-      expect(criticalCount === totalCount || totalCount === 0).toBeTruthy();
-    });
-
-    test("queue can be searched by booking reference", async ({ page }) => {
-      const queuePage = new AdminQueuePage(page);
-      await queuePage.goto();
-
-      // Search for a pattern
-      await queuePage.searchByReference("OKR-");
-
-      // Results should contain the search pattern or be empty
-      const refs = await queuePage.getAllBookingReferences();
-      refs.forEach((ref) => {
-        expect(ref).toContain("OKR-");
-      });
+      await expect(page.getByText(E2E_REF.QUEUE).first()).toBeVisible();
+      await expect(page.getByRole("button", { name: "Verify payment" })).toBeVisible();
     });
   });
 
@@ -236,85 +185,14 @@ test.describe("Booking Lifecycle", () => {
       await loginAsAdmin(page);
     });
 
-    test("admin can navigate to payment verification from queue", async ({ page }) => {
-      const queuePage = new AdminQueuePage(page);
-      await queuePage.goto();
+    test("Verify payment shows the proof and asks for the requested cabins", async ({ page }) => {
+      await page.goto(`/admin/bookings?view=needs-action&q=${E2E_REF.QUEUE}`);
+      await page.getByRole("button", { name: "Verify payment" }).click();
 
-      // Skip if queue is empty
-      if (await queuePage.emptyState.isVisible()) {
-        test.skip();
-        return;
-      }
-
-      // Find first booking with review payment action
-      const reviewLinks = await queuePage.reviewPaymentLinks.all();
-      if (reviewLinks.length === 0) {
-        test.skip();
-        return;
-      }
-
-      await reviewLinks[0].click();
-
-      // Should navigate to payment verification
-      await expect(page).toHaveURL(/verify-payment|payment/);
-    });
-
-    test("payment verification page shows booking details", async ({ page }) => {
-      // Navigate directly to a verification page (requires valid booking ID)
-      // This test assumes there's at least one pending payment booking
-      const queuePage = new AdminQueuePage(page);
-      await queuePage.goto();
-
-      if (await queuePage.emptyState.isVisible()) {
-        test.skip();
-        return;
-      }
-
-      const reviewLinks = await queuePage.reviewPaymentLinks.all();
-      if (reviewLinks.length === 0) {
-        test.skip();
-        return;
-      }
-
-      await reviewLinks[0].click();
-
-      const verifyPage = new PaymentVerificationPage(page);
-      await verifyPage.expectPageLoaded();
-
-      // Should display booking reference
-      const reference = await verifyPage.getBookingReference();
-      expect(reference).toMatch(/^[A-Z0-9]+-[A-Z0-9-]+$/);
-    });
-
-    test("admin can verify payment", async ({ page }) => {
-      const queuePage = new AdminQueuePage(page);
-      await queuePage.goto();
-
-      if (await queuePage.emptyState.isVisible()) {
-        test.skip();
-        return;
-      }
-
-      const reviewLinks = await queuePage.reviewPaymentLinks.all();
-      if (reviewLinks.length === 0) {
-        test.skip();
-        return;
-      }
-
-      await reviewLinks[0].click();
-
-      const verifyPage = new PaymentVerificationPage(page);
-      await verifyPage.expectPageLoaded();
-
-      // Check if verify button is visible (payment not already verified)
-      const canVerify = await verifyPage.verifyButton.isVisible();
-      if (!canVerify) {
-        test.skip();
-        return;
-      }
-
-      // Verify should be visible for admin
-      await verifyPage.expectVerifyButtonVisible();
+      const dialog = page.getByRole("dialog", { name: "Verify payment" });
+      await expect(dialog.getByText(E2E_REF.QUEUE)).toBeVisible();
+      await expect(dialog.getByRole("img", { name: "Payment proof" })).toBeVisible();
+      await expect(dialog.getByRole("heading", { name: "Choose 2 cabins" })).toBeVisible();
     });
   });
 
@@ -323,49 +201,20 @@ test.describe("Booking Lifecycle", () => {
       await loginAsAdmin(page);
     });
 
-    test("admin can navigate to unit assignment from queue", async ({ page }) => {
-      const queuePage = new AdminQueuePage(page);
-      await queuePage.goto();
+    test("confirm stays disabled until the requested number of cabins is picked", async ({
+      page,
+    }) => {
+      await page.goto(`/admin/bookings?view=needs-action&q=${E2E_REF.QUEUE_PAID}`);
+      await page.getByRole("button", { name: "Verify payment" }).click();
 
-      await queuePage.openAssignCabins(E2E_REF.QUEUE_PAID);
-      await expect(page).toHaveURL(/assign-units/);
-    });
+      const dialog = page.getByRole("dialog", { name: "Confirm booking" });
+      const confirm = dialog.getByRole("button", { name: "Confirm" });
+      const cabins = dialog.getByRole("checkbox");
+      await expect(cabins.first()).toBeVisible();
+      await expect(confirm).toBeDisabled();
 
-    test("unit assignment page shows required unit count", async ({ page }) => {
-      const queuePage = new AdminQueuePage(page);
-      await queuePage.goto();
-
-      await queuePage.openAssignCabins(E2E_REF.QUEUE_PAID);
-
-      const assignPage = new UnitAssignmentPage(page);
-      await assignPage.expectPageLoaded();
-
-      // Required count should be visible
-      const requiredCount = await assignPage.getRequiredCount();
-      expect(requiredCount).toBeGreaterThanOrEqual(1);
-    });
-
-    test("confirm button disabled until correct number of units selected", async ({ page }) => {
-      const queuePage = new AdminQueuePage(page);
-      await queuePage.goto();
-
-      await queuePage.openAssignCabins(E2E_REF.QUEUE_PAID);
-
-      const assignPage = new UnitAssignmentPage(page);
-      await assignPage.expectPageLoaded();
-
-      // Initially, confirm should be disabled (0 units selected)
-      const initiallyEnabled = await assignPage.isConfirmEnabled();
-
-      // If no units required, test doesn't apply
-      const requiredCount = await assignPage.getRequiredCount();
-      if (requiredCount === 0) {
-        test.skip();
-        return;
-      }
-
-      // Without selecting the right number, should be disabled
-      expect(initiallyEnabled).toBeFalsy();
+      await cabins.first().check();
+      await expect(confirm).toBeDisabled();
     });
   });
 

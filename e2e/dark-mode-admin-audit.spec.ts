@@ -1,13 +1,14 @@
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 
+import { E2E_REF } from "../scripts/e2e/fixtures";
 import { loginAsAdmin } from "./fixtures/auth";
 import { COMPACT, EXPANDED, expectReadable, useDarkTheme } from "./fixtures/contrast";
 
 /**
- * Dark mode is readable on the role management, booking queue, payment verification and audit
- * trail screens (#106): no text under WCAG AA against what is painted behind it. Needs the
- * seeded admin; queue, booking, proof and role-history data are stubbed so every urgency,
- * payment state and change type renders regardless of what the shared database holds.
+ * Dark mode is readable on the role management, verify payment and audit trail screens (#106):
+ * no text under WCAG AA against what is painted behind it. Needs the seeded admin and E2E
+ * bookings; role-history data is stubbed so every change type renders regardless of what the
+ * shared database holds.
  */
 
 const roleHistoryEntry = (
@@ -49,67 +50,6 @@ const ROLE_HISTORY = [
   roleHistoryEntry("INSERT", null, { role: "staff", is_active: true }, "2026-10-01T09:00:00Z"),
 ];
 
-const queuedBooking = (
-  reference: string,
-  urgency: "critical" | "high" | "medium" | "low",
-  paymentStatus: "Pending" | "Partial" | "Completed" | "Refunded"
-) => ({
-  booking_id: `00000000-0000-4000-8000-0000000e2e${reference.slice(-2)}`,
-  booking_reference: reference,
-  guest_name: "Maria Santos",
-  guest_contact: "maria@example.com",
-  check_in_date: "2026-11-14",
-  check_out_date: "2026-11-16",
-  requested_unit_count: 2,
-  total_amount: 12500,
-  payment_status: paymentStatus,
-  urgency_score: { critical: 92, high: 71, medium: 48, low: 12 }[urgency],
-  urgency_level: urgency,
-  created_at: "2026-10-20T08:00:00Z",
-});
-
-const QUEUE = [
-  queuedBooking("E2E-STUB-01", "critical", "Pending"),
-  queuedBooking("E2E-STUB-02", "high", "Partial"),
-  queuedBooking("E2E-STUB-03", "medium", "Completed"),
-  queuedBooking("E2E-STUB-04", "low", "Refunded"),
-];
-
-const PROOF_PNG = Buffer.from(
-  "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=",
-  "base64"
-);
-
-async function stubQueue(page: Page) {
-  await page.route("**/api/admin/pending-bookings", (route) =>
-    route.fulfill({ json: { bookings: QUEUE } })
-  );
-}
-
-/** Stubs one booking awaiting review, with an uploaded proof the viewer can sign and load. */
-async function stubBookingWithProof(page: Page, paymentStatus: "Pending" | "Completed") {
-  const booking = QUEUE[0];
-  await page.route(`**/api/admin/bookings/${booking.booking_id}`, (route) =>
-    route.fulfill({
-      json: {
-        ...booking,
-        check_in: booking.check_in_date,
-        check_out: booking.check_out_date,
-        payment_status: paymentStatus,
-        payment_proof_url: "E2E-STUB-01_proof.png",
-      },
-    })
-  );
-  await page.route("**/storage/v1/object/sign/payment-proofs/**", (route) =>
-    route.request().method() === "POST"
-      ? route.fulfill({
-          json: { signedURL: "/object/sign/payment-proofs/E2E-STUB-01_proof.png?token=e2e" },
-        })
-      : route.fulfill({ contentType: "image/png", body: PROOF_PNG })
-  );
-  return booking.booking_id;
-}
-
 test.describe("Dark mode admin and audit screens", () => {
   test.beforeEach(async ({ page }) => {
     if (!process.env.TEST_ADMIN_EMAIL || !process.env.TEST_ADMIN_PASSWORD) test.skip();
@@ -117,15 +57,6 @@ test.describe("Dark mode admin and audit screens", () => {
   });
 
   for (const viewport of [EXPANDED, COMPACT]) {
-    test(`booking queue reads in dark at ${viewport.width}`, async ({ page }) => {
-      await stubQueue(page);
-      await page.setViewportSize(viewport);
-      await loginAsAdmin(page);
-      await page.goto("/admin/bookings/queue");
-      await expect(page.getByText("E2E-STUB-04").first()).toBeVisible();
-      await expectReadable(page);
-    });
-
     test(`user roles read in dark at ${viewport.width}`, async ({ page }) => {
       await page.setViewportSize(viewport);
       await loginAsAdmin(page);
@@ -138,27 +69,14 @@ test.describe("Dark mode admin and audit screens", () => {
     });
   }
 
-  test("payment verification reads in dark", async ({ page }) => {
-    await stubQueue(page);
-    await stubBookingWithProof(page, "Pending");
+  test("the verify payment dialog and its proof read in dark", async ({ page }) => {
     await page.setViewportSize(EXPANDED);
     await loginAsAdmin(page);
-    await page.goto("/admin/bookings/queue");
-    const queueRow = page.getByRole("row").filter({ hasText: "E2E-STUB-01" });
-    await queueRow.getByRole("link", { name: "Review Payment" }).click();
-    await expect(page).toHaveURL(/\/admin\/verify-payment\//);
-    await expect(page.getByText("Payment pending verification")).toBeVisible();
-    await expect(page.getByRole("img", { name: "Payment proof" })).toBeVisible();
-    await expectReadable(page);
-  });
-
-  test("verified payment reads in dark", async ({ page }) => {
-    const bookingId = await stubBookingWithProof(page, "Completed");
-    await page.setViewportSize(EXPANDED);
-    await loginAsAdmin(page);
-    await page.goto(`/admin/verify-payment/${bookingId}`);
-    await expect(page.getByText("Payment verified")).toBeVisible();
-    await expectReadable(page);
+    await page.goto(`/admin/bookings?view=needs-action&q=${E2E_REF.QUEUE}`);
+    await page.getByRole("button", { name: "Verify payment" }).click();
+    const dialog = page.getByRole("dialog", { name: "Verify payment" });
+    await expect(dialog.getByRole("img", { name: "Payment proof" })).toBeVisible();
+    await expectReadable(page, '[role="dialog"]');
   });
 
   test("role change history reads in dark", async ({ page }) => {

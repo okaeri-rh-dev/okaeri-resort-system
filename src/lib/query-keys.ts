@@ -55,8 +55,6 @@ export const bookingKeys = {
   lists: () => [...bookingKeys.all, "list"] as const,
   details: () => [...bookingKeys.all, "detail"] as const,
   detail: (bookingId: string) => [...bookingKeys.details(), bookingId] as const,
-  // The /api/admin/bookings/:id response, a different shape from detail(); under it so invalidating detail covers both
-  adminDetail: (bookingId: string) => [...bookingKeys.detail(bookingId), "admin"] as const,
 };
 
 export const accountKeys = {
@@ -119,13 +117,6 @@ export const pricingKeys = {
 
 // Availability reads sit under several top-level roots; afterWrite() in src/lib/after-write.ts reaches each one
 export const availabilityKeys = {
-  availableUnits: {
-    all: ["available-units"] as const,
-    range: (checkIn: string, checkOut: string) =>
-      [...availabilityKeys.availableUnits.all, checkIn, checkOut] as const,
-    search: (checkIn: string, checkOut: string, filters: object, limit: number) =>
-      [...availabilityKeys.availableUnits.range(checkIn, checkOut), filters, limit] as const,
-  },
   calendar: {
     all: ["availability-calendar"] as const,
     stays: (firstNight: string, lastNight: string) =>

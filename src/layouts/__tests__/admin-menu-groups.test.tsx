@@ -73,7 +73,7 @@ describe("admin menu groups per role", () => {
     const nav = await renderMenuFor(AuditRole.STAFF);
 
     expect(groupNames(nav)).toEqual(["Bookings", "Cabins"]);
-    expect(groupLinks(nav, "Bookings")).toEqual(["Bookings", "Booking Queue"]);
+    expect(groupLinks(nav, "Bookings")).toEqual(["Bookings"]);
     expect(groupLinks(nav, "Cabins")).toEqual(["Availability", "Blocked dates"]);
     expect(screen.queryByRole("button", { name: "More" })).not.toBeInTheDocument();
   });
@@ -82,12 +82,7 @@ describe("admin menu groups per role", () => {
     const nav = await renderMenuFor(AuditRole.MANAGER);
 
     expect(groupNames(nav)).toEqual(["Bookings", "Cabins", "Money", "Admin"]);
-    expect(groupLinks(nav, "Bookings")).toEqual([
-      "Bookings",
-      "Booking Queue",
-      "Payments",
-      "Guests",
-    ]);
+    expect(groupLinks(nav, "Bookings")).toEqual(["Bookings", "Payments", "Guests"]);
     expect(groupLinks(nav, "Cabins")).toEqual(["Cabins", "Availability", "Blocked dates"]);
     expect(groupLinks(nav, "Money")).toEqual(["Expenses", "Accounts", "Transfers", "Documents"]);
     expect(groupLinks(nav, "Admin")).toEqual(["Settings"]);
@@ -115,16 +110,13 @@ describe("admin menu groups per role", () => {
     }
   });
 
-  it("marks Bookings, not Booking Queue, on a booking's detail page", async () => {
+  it("marks Bookings on a booking's detail page", async () => {
     const nav = await renderMenuFor(AuditRole.MANAGER, "/admin/bookings/booking-1");
 
     const bookings = within(nav).getByRole("list", { name: "Bookings" });
     expect(within(bookings).getByRole("link", { name: "Bookings" })).toHaveAttribute(
       "aria-current",
       "page"
-    );
-    expect(within(bookings).getByRole("link", { name: "Booking Queue" })).not.toHaveAttribute(
-      "aria-current"
     );
   });
 });
