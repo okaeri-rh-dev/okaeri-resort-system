@@ -192,7 +192,9 @@ test.describe("Admin Bookings Management", () => {
       await bookingsTable.selectView("Past");
 
       await bookingsTable.pickFilter("Airbnb");
-      await expect(page).toHaveURL(/[?&]source=airbnb/);
+      // The router writes arrays as JSON: source=["airbnb"]
+      await expect(page).toHaveURL(/[?&]source=%5B%22airbnb%22%5D/);
+      await page.reload();
       await expect(bookingsTable.filtersButton).toHaveAccessibleName("Filters, 1 active");
 
       await bookingsTable.filterChip("Airbnb").click();
