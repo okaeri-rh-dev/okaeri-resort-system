@@ -19,6 +19,8 @@ export interface DatePickerProps {
   placeholder?: string;
   /** Name the trigger when no visible label is tied to it. */
   "aria-label"?: string;
+  /** Disables the trigger. */
+  disabled?: boolean;
   /** Placement only (width, margin), applied to the trigger. */
   className?: string;
 }
@@ -44,6 +46,7 @@ export function DatePicker({
   isDateDisabled,
   placeholder,
   "aria-label": ariaLabel,
+  disabled,
   className,
 }: DatePickerProps) {
   const isCompact = useContext(CompactWindowContext);
@@ -55,6 +58,7 @@ export function DatePicker({
       disabled={isDateDisabled}
       placeholder={placeholder}
       aria-label={ariaLabel}
+      buttonDisabled={disabled}
       buttonClassName={className}
     />
   );

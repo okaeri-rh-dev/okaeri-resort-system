@@ -161,6 +161,9 @@ const unitListQuery = (filters: UnitStore["filters"]) =>
     refetchInterval: 60000, // Refetch every minute
   });
 
+// Every cabin, ignoring the Units page filters
+export const useAllUnits = () => useQuery(allUnitsQuery());
+
 export const useUnits = () => {
   const filters = useUnitStore((state) => state.filters);
 

@@ -11,6 +11,7 @@ async function openEditForm(page: Page) {
     .or(page.getByRole("button", { name: `View booking ${E2E_REF.CONF_PAID}` }))
     .first()
     .click();
+  await page.getByRole("dialog").getByRole("link", { name: "Open full page" }).click();
   await page.getByRole("link", { name: "Edit" }).click();
   return page.getByLabel("Total");
 }

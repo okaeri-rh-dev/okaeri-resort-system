@@ -1,6 +1,8 @@
 import { z } from "zod";
 
-import { PAYMENT_STATUSES, type Booking } from "@/types";
+import { outstandingBalance } from "@/lib/dashboard";
+import { PAYMENT_STATUSES, type Booking, type BookingStatus } from "@/types";
+import type { AppRoleName } from "@/types/app-role";
 
 import { BOOKING_SOURCES } from "./source";
 import { isManilaDay, manilaDayOf, type ManilaDay } from "./stay";
@@ -91,6 +93,90 @@ export const needsActionReason = (
 /** The glossary's Needs-action booking. A balance alone never counts. */
 export const isNeedsAction = (booking: Booking, today: ManilaDay) =>
   booking.booking_status === "Pending" || needsActionReason(booking, today) !== undefined;
+
+// Managers, owners and admins; staff are the only role below them
+const isManagerRole = (role: AppRoleName) => role !== "staff";
+
+export type MainAction = "Verify payment" | "Confirm" | "Check in" | "Check out";
+
+/** The one action a booking leads with; the database enforces the same rules (docs/adr/0007). */
+export const mainActionFor = (
+  booking: Booking,
+  role: AppRoleName | null | undefined,
+  today: ManilaDay
+): MainAction | undefined => {
+  if (!role) return undefined;
+  switch (booking.booking_status) {
+    case "Pending":
+      if (!isManagerRole(role)) return undefined;
+      return booking.booking_source === "Website" ? "Verify payment" : "Confirm";
+    case "Confirmed":
+      return manilaDayOf(booking.check_in) <= today ? "Check in" : undefined;
+    case "CheckedIn":
+      return "Check out";
+    default:
+      return undefined;
+  }
+};
+
+export type UndoAction = "Undo check-in" | "Undo check-out";
+
+/** The status each undo returns the booking to. */
+export const UNDO_STATUS = {
+  "Undo check-in": "Confirmed",
+  "Undo check-out": "CheckedIn",
+} as const satisfies Record<UndoAction, BookingStatus>;
+
+/** A status update; `undo` is the Undo its success toast offers. */
+export interface StatusChange {
+  bookingId: string;
+  status: BookingStatus;
+  undo?: UndoAction;
+}
+
+const SELF_UNDO_MS = 2 * 60 * 1000;
+
+/** The user who made the change within 2 minutes, or a manager at any time (docs/adr/0007). */
+export const undoActionFor = (
+  booking: Booking,
+  role: AppRoleName | null | undefined,
+  actorId: string | null | undefined,
+  now: Date
+): UndoAction | undefined => {
+  const action =
+    booking.booking_status === "CheckedIn"
+      ? "Undo check-in"
+      : booking.booking_status === "CheckedOut"
+        ? "Undo check-out"
+        : undefined;
+  if (!action || !role) return undefined;
+  if (isManagerRole(role)) return action;
+  const changedAt = Date.parse(booking.status_changed_at ?? "");
+  const isOwnRecentChange =
+    !!actorId && booking.status_changed_by === actorId && now.getTime() - changedAt < SELF_UNDO_MS;
+  return isOwnRecentChange ? action : undefined;
+};
+
+export type OverflowAction = "Record payment" | "Edit" | UndoAction | "Cancel";
+
+/** The menu items beside the main action, in a fixed order; the database judges undo again (docs/adr/0007). */
+export const overflowActionsFor = (
+  booking: Booking,
+  role: AppRoleName | null | undefined,
+  actorId: string | null | undefined,
+  now: Date
+): OverflowAction[] => {
+  if (!role) return [];
+  const status = booking.booking_status;
+  const undo = undoActionFor(booking, role, actorId, now);
+
+  const items: OverflowAction[] = [];
+  if (status !== "Cancelled" && outstandingBalance(booking) > 0) items.push("Record payment");
+  if (status === "Pending" || status === "Confirmed" || status === "CheckedIn") items.push("Edit");
+  if (undo) items.push(undo);
+  if (isManagerRole(role) && (status === "Pending" || status === "Confirmed")) items.push("Cancel");
+  return items;
+};
 
 const inView = (booking: Booking, view: BookingView | undefined, today: ManilaDay) => {
   switch (view) {

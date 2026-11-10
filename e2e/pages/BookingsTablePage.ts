@@ -10,7 +10,7 @@ import { ROUTES, TIMEOUTS } from "../fixtures/test-data";
  * - Desktop: Table view with rows
  * - Mobile: Card-based layout with ListCard components
  * - Booking references: links to /admin/bookings/$bookingId
- * - Actions menu: Edit Booking, Upload Payment, Confirm, Cancel, Delete
+ * - Actions menu: Record payment, Edit, Undo check-in / check-out, Cancel
  * - BookingFilters component for search/filters
  */
 export class BookingsTablePage {
@@ -19,7 +19,8 @@ export class BookingsTablePage {
   // Search and filters
   readonly searchInput: Locator;
   readonly viewTabs: Locator;
-  readonly dateRangeFilter: Locator;
+  readonly filtersButton: Locator;
+  readonly filtersSheet: Locator;
   readonly clearFiltersButton: Locator;
 
   // Table elements
@@ -31,6 +32,7 @@ export class BookingsTablePage {
   readonly tableHeaders: Locator;
   readonly noBookingsState: Locator;
   readonly noMatchesState: Locator;
+  readonly emptyViewState: Locator;
   readonly emptyState: Locator;
   readonly loadingState: Locator;
 
@@ -40,27 +42,17 @@ export class BookingsTablePage {
   readonly exportButton: Locator;
   readonly refreshButton: Locator;
 
-  // Pagination
-  readonly pagination: Locator;
-  readonly nextPageButton: Locator;
-  readonly previousPageButton: Locator;
-  readonly pageInfo: Locator;
-
   // Row actions - using ActionMenu dropdown
   readonly rowActionsMenu: Locator;
 
   constructor(page: Page) {
     this.page = page;
 
-    // Search and filters - BookingFilters component uses FilterPopover
     this.searchInput = page.getByPlaceholder(/^search/i);
     this.viewTabs = page.getByRole("tablist", { name: "Booking views" });
-    // Date filter is a FilterPopover trigger
-    this.dateRangeFilter = page.getByRole("button", { name: "Dates" });
-    this.clearFiltersButton = page.getByRole("button", {
-      name: "Clear Filters",
-      exact: true,
-    });
+    this.filtersButton = page.getByRole("button", { name: /^Filters/ });
+    this.filtersSheet = page.getByRole("dialog", { name: "Filters" });
+    this.clearFiltersButton = page.getByRole("button", { name: "Clear filters", exact: true });
 
     // Table elements
     this.table = page.getByRole("table");
@@ -70,21 +62,16 @@ export class BookingsTablePage {
     this.tableBodyRows = page.locator("table tbody tr");
     this.tableHeaders = page.getByRole("columnheader");
     this.noBookingsState = page.getByText("No bookings yet");
-    this.noMatchesState = page.getByText("No bookings found");
-    this.emptyState = this.noBookingsState.or(this.noMatchesState);
+    this.noMatchesState = page.getByText("No bookings match");
+    this.emptyViewState = page.getByText("No bookings found");
+    this.emptyState = this.noBookingsState.or(this.noMatchesState).or(this.emptyViewState);
     this.loadingState = page.locator(".animate-pulse, .animate-spin");
 
     // Action buttons
-    this.newBookingButton = page.getByRole("button", { name: /new booking/i });
+    this.newBookingButton = page.getByRole("link", { name: "New booking" });
     this.pageMenuButton = page.getByRole("button", { name: "More booking actions" });
     this.exportButton = page.getByRole("menuitem", { name: "Export CSV" });
     this.refreshButton = page.getByRole("button", { name: /refresh/i });
-
-    // Pagination - TablePagination component
-    this.pagination = page.getByRole("navigation", { name: "Pagination" });
-    this.nextPageButton = page.getByRole("button", { name: /next/i });
-    this.previousPageButton = page.getByRole("button", { name: /previous/i });
-    this.pageInfo = page.getByText(/page \d+/i);
 
     // Row actions - ActionMenu with dropdown
     this.rowActionsMenu = page.getByRole("button", { name: /actions|more/i });
@@ -147,6 +134,21 @@ export class BookingsTablePage {
     await this.waitForTableLoad();
   }
 
+  /** Ticks one option in the Filters sheet, then closes the sheet. */
+  async pickFilter(option: string) {
+    await this.filtersButton.click();
+    const checkbox = this.filtersSheet.getByRole("checkbox", { name: option, exact: true });
+    // The tick follows the URL, which the router updates a moment after the click
+    await checkbox.click();
+    await expect(checkbox).toBeChecked();
+    await this.page.keyboard.press("Escape");
+    await expect(this.filtersSheet).toBeHidden();
+  }
+
+  filterChip(label: string): Locator {
+    return this.page.getByRole("button", { name: `Remove filter ${label}`, exact: true });
+  }
+
   /**
    * Clear all filters
    */
@@ -169,11 +171,11 @@ export class BookingsTablePage {
 
   /**
    * Get all booking references from the table
-   * References link to the booking detail page
+   * References open the booking sheet
    */
   async getBookingReferences(): Promise<string[]> {
     const refs: string[] = [];
-    const refLinks = this.page.locator('table tbody td a[href^="/admin/bookings/"]');
+    const refLinks = this.page.locator('table tbody td a[href*="booking="]');
     const count = await refLinks.count();
 
     for (let i = 0; i < count; i++) {
@@ -185,13 +187,21 @@ export class BookingsTablePage {
     return refs;
   }
 
-  /**
-   * Click on a booking row to view details
-   * Booking references are links that navigate to details
-   */
+  /** The booking open in its sheet (`?booking=<id>`) */
+  get bookingSheet(): Locator {
+    return this.page.getByRole("dialog");
+  }
+
+  async openBookingSheet(reference: string) {
+    await this.page.locator("table tbody td a", { hasText: reference }).click();
+    await this.page.waitForURL(/[?&]booking=/);
+  }
+
+  /** Open the booking's sheet, then its full page */
   async clickBookingRow(reference: string) {
-    await this.page.locator(`a:has-text("${reference}")`).click();
-    await this.page.waitForURL(/\/admin\/bookings\//);
+    await this.openBookingSheet(reference);
+    await this.bookingSheet.getByRole("link", { name: "Open full page" }).click();
+    await this.page.waitForURL(/\/admin\/bookings\/[0-9a-f-]{36}/);
   }
 
   /**
@@ -254,7 +264,7 @@ export class BookingsTablePage {
 
   /**
    * Click action in menu
-   * Menu items: Edit Booking, Upload Payment, Confirm, Cancel, Delete
+   * Menu items: Record payment, Edit, Undo check-in / check-out, Cancel
    */
   async clickAction(actionName: string) {
     await this.page.getByRole("menuitem", { name: new RegExp(actionName, "i") }).click();
@@ -272,24 +282,16 @@ export class BookingsTablePage {
    */
   async editBooking(reference: string) {
     await this.openActionsMenu(reference);
-    await this.clickAction("Edit Booking");
+    await this.clickAction("^Edit$");
     await this.page.waitForURL(/\/edit/);
   }
 
   /**
-   * Upload payment via actions menu
+   * Record payment via actions menu
    */
-  async uploadPayment(reference: string) {
+  async recordPayment(reference: string) {
     await this.openActionsMenu(reference);
-    await this.clickAction("Upload Payment");
-  }
-
-  /**
-   * Confirm booking via actions menu
-   */
-  async confirmBooking(reference: string) {
-    await this.openActionsMenu(reference);
-    await this.clickAction("Confirm");
+    await this.clickAction("Record payment");
   }
 
   /**
@@ -306,31 +308,6 @@ export class BookingsTablePage {
   async exportBookings() {
     await this.pageMenuButton.click();
     await this.exportButton.click();
-  }
-
-  // ================== Pagination ==================
-
-  /**
-   * Go to next page
-   */
-  async goToNextPage() {
-    await this.nextPageButton.click();
-    await this.waitForTableLoad();
-  }
-
-  /**
-   * Go to previous page
-   */
-  async goToPreviousPage() {
-    await this.previousPageButton.click();
-    await this.waitForTableLoad();
-  }
-
-  /**
-   * Check if there are more pages
-   */
-  async hasNextPage(): Promise<boolean> {
-    return this.nextPageButton.isEnabled();
   }
 
   // ================== Assertions ==================

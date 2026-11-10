@@ -6,7 +6,7 @@ import { COMPACT, EXPANDED, expectReadable, useTheme } from "./fixtures/contrast
 /**
  * The dashboard and settings screens read in light and dark (#110): no text under WCAG AA
  * against what is painted behind it. Needs the seeded admin. Bookings are stubbed so the day
- * panel, the queue line and the calendar chips render whatever the shared database holds;
+ * panel, the needs-action banner and the calendar chips render whatever the shared database holds;
  * settings use the seeded payment methods and expense categories.
  */
 
@@ -135,7 +135,7 @@ test.describe("Dashboard and settings read in light and dark", () => {
         await page.setViewportSize(COMPACT);
         await loginAsAdmin(page);
         await page.goto(`/admin/dashboard?day=${isoDay(0)}`);
-        await expect(page.getByText("1 booking waiting for verification")).toBeVisible();
+        await expect(page.getByText("1 booking needs action")).toBeVisible();
         await expect(page.getByRole("link", { name: /Ana Reyes/ })).toBeVisible();
         await expect(page.getByText("Waiting for verification", { exact: true })).toBeVisible();
         await expectReadable(page);
@@ -193,4 +193,25 @@ test.describe("Dashboard and settings read in light and dark", () => {
       });
     });
   }
+});
+
+test.describe("Dashboard needs-action banner", () => {
+  test.beforeEach(() => {
+    if (!process.env.TEST_ADMIN_EMAIL || !process.env.TEST_ADMIN_PASSWORD) test.skip();
+  });
+
+  test("shows the count and opens the Needs action view", async ({ page }) => {
+    await stubBookings(page);
+    await loginAsAdmin(page);
+    await page.goto("/admin/dashboard");
+
+    await page.getByRole("link", { name: "1 booking needs action" }).click();
+
+    await expect(page).toHaveURL(/\/admin\/bookings\?view=needs-action$/);
+    await expect(page.getByRole("tab", { name: "Needs action · 1" })).toHaveAttribute(
+      "aria-selected",
+      "true"
+    );
+    await expect(visible(page.getByText("Ana Reyes"))).toBeVisible();
+  });
 });

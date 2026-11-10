@@ -3,7 +3,6 @@ import { useCallback, useState } from "react";
 import {
   getCoreRowModel,
   getFilteredRowModel,
-  getPaginationRowModel,
   useReactTable,
   type ColumnFiltersState,
   type VisibilityState,
@@ -11,7 +10,6 @@ import {
 
 import { hasBookingFilters, parseBookingsSearch } from "@/lib/bookings";
 import {
-  useBookingStore,
   useCancelBooking,
   useUpdateBookingStatus,
   useUploadPaymentProof,
@@ -22,7 +20,6 @@ import { useBookingColumns } from "../components/BookingColumns";
 import { useSelectedBookings } from "./useSelectedBookings";
 
 export const useBookingsTable = () => {
-  const { tableState, setTableState } = useBookingStore();
   const {
     bookings,
     needsActionCount,
@@ -82,20 +79,11 @@ export const useBookingsTable = () => {
     state: {
       columnFilters,
       columnVisibility,
-      pagination: tableState.pagination || { pageIndex: 0, pageSize: 10 },
     },
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
     onColumnFiltersChange: setColumnFilters,
     onColumnVisibilityChange: setColumnVisibility,
-    onPaginationChange: (updater) => {
-      const newPagination =
-        typeof updater === "function"
-          ? updater(tableState.pagination || { pageIndex: 0, pageSize: 10 })
-          : updater;
-      setTableState({ pagination: newPagination });
-    },
   });
 
   return {

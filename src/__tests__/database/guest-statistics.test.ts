@@ -46,7 +46,7 @@ describe("guest statistics trigger", () => {
     await cleanupTestData({ includeTestFixtures: true });
   });
 
-  it("updates the guest's totals when staff cancel a booking", async () => {
+  it("updates the guest's totals when a manager cancels a booking", async () => {
     if (!shouldRun) return;
     const guest = await createTestGuest();
     const booking = await createTestBooking({ guest, total_amount: 5000 });
@@ -55,7 +55,7 @@ describe("guest statistics trigger", () => {
       total_spent: 5000,
     });
 
-    await cancelBooking(roleClients.byRole.staff, booking.booking_id);
+    await cancelBooking(roleClients.byRole.manager, booking.booking_id);
 
     expect(await guestTotals(guest.guest_id)).toMatchObject({
       total_bookings: 0,

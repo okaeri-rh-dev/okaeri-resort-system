@@ -210,16 +210,26 @@ const notedColumns: ColumnDef<NotedStayRow>[] = [
   { accessorKey: "note", header: "Note", meta: { priority: "low" } },
 ];
 
-function NotedStaysTable() {
+function NotedStaysTable({ virtualize = false }: { virtualize?: boolean }) {
   const rows = useMemo(() => stays.map((stay) => ({ ...stay, note: "Late arrival" })), []);
   const table = useReactTable({
     data: rows,
-    columns: notedColumns,
+    columns: virtualize ? virtualizedColumns : notedColumns,
     getCoreRowModel: getCoreRowModel(),
   });
 
-  return <DataTable table={table} label="Stays" renderCard={() => null} />;
+  return (
+    <main>
+      <DataTable table={table} label="Stays" virtualize={virtualize} renderCard={() => null} />
+    </main>
+  );
 }
+
+// One more column, so the slim table (900px) is wider than the 600px card threshold.
+const virtualizedColumns: ColumnDef<NotedStayRow>[] = [
+  { id: "nights", header: "Nights", cell: () => "2" },
+  ...notedColumns,
+];
 
 // jsdom has no layout, so each column takes this many pixels and the scroller overflows the pane.
 const FAKE_COLUMN_WIDTH = 300;
@@ -283,6 +293,22 @@ describe("DataTable low-priority columns", () => {
     expect(screen.queryByRole("columnheader", { name: "Note" })).not.toBeInTheDocument();
   });
 
+  it("virtualized: renders cards when even the slim table is wider than its pane", () => {
+    const { unmount } = render(<NotedStaysTable virtualize />);
+    resizePane(1000);
+    expect(screen.queryByRole("columnheader", { name: "Note" })).not.toBeInTheDocument();
+    expect(screen.getByRole("columnheader", { name: "Balance" })).toBeVisible();
+
+    resizePane(899);
+    expect(screen.queryByRole("table")).not.toBeInTheDocument();
+    expect(screen.getByRole("list", { name: "Stays" })).toBeInTheDocument();
+
+    resizePane(900);
+    expect(screen.getByRole("columnheader", { name: "Balance" })).toBeVisible();
+    // Before afterEach restores the mocks: the virtualizer's cleanup builds a ResizeObserver.
+    unmount();
+  });
+
   it("still renders cards below 600px", () => {
     render(<NotedStaysTable />);
     resizePane(390);
@@ -311,3 +337,135 @@ function ExpandableStaysTable() {
     />
   );
 }
+
+describe("DataTable virtualized", () => {
+  const manyStays: StayRow[] = Array.from({ length: 200 }, (_, index) => ({
+    guest: `Guest ${index + 1}`,
+    balance: 1000,
+  }));
+
+  function LongStaysTable() {
+    const table = useReactTable({ data: manyStays, columns, getCoreRowModel: getCoreRowModel() });
+    return (
+      <main>
+        <DataTable
+          table={table}
+          label="Stays"
+          virtualize
+          renderCard={(row) => <StayCard row={row} />}
+        />
+      </main>
+    );
+  }
+
+  beforeEach(() => {
+    ResizeObserverStub.instances = [];
+    vi.stubGlobal("ResizeObserver", ResizeObserverStub);
+    // jsdom has no layout: a 400px tall <main> and 40px tall rows.
+    vi.spyOn(HTMLElement.prototype, "clientHeight", "get").mockReturnValue(400);
+    vi.spyOn(HTMLElement.prototype, "offsetHeight", "get").mockReturnValue(40);
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+  });
+
+  it("renders only the rows in view, and tells screen readers the position and total", () => {
+    render(<LongStaysTable />);
+    ResizeObserverStub.resizeAllTo(840);
+
+    const table = screen.getByRole("table", { name: "Stays" });
+    expect(table).toHaveAttribute("aria-rowcount", "201");
+    const rows = within(table).getAllByRole("row");
+    expect(rows.length).toBeLessThan(100);
+    expect(rows[0]).toHaveAttribute("aria-rowindex", "1");
+    expect(rows[1]).toHaveAttribute("aria-rowindex", "2");
+    expect(within(rows[1]).getByRole("cell", { name: "Guest 1" })).toBeVisible();
+    expect(screen.queryByText("Guest 200")).not.toBeInTheDocument();
+  });
+
+  it("gives each card its position in the whole list", () => {
+    render(<LongStaysTable />);
+    ResizeObserverStub.resizeAllTo(390);
+
+    const cards = within(screen.getByRole("list", { name: "Stays" })).getAllByRole("listitem");
+    expect(cards.length).toBeLessThan(100);
+    expect(cards[0]).toHaveAttribute("aria-setsize", "200");
+    expect(cards[0]).toHaveAttribute("aria-posinset", "1");
+    expect(cards[1]).toHaveAttribute("aria-posinset", "2");
+  });
+
+  it("has no axe violations as a table", async () => {
+    const { container } = render(<LongStaysTable />);
+    ResizeObserverStub.resizeAllTo(840);
+    expect(await axe(container)).toHaveNoViolations();
+  });
+});
+
+describe("DataTable row click", () => {
+  const openedGuests: string[] = [];
+  const menuClicks: string[] = [];
+  const clickableColumns: ColumnDef<StayRow>[] = [
+    ...columns,
+    {
+      id: "menu",
+      header: "Menu",
+      cell: ({ row }) => (
+        <button type="button" onClick={() => menuClicks.push(row.original.guest)}>
+          Menu for {row.original.guest}
+        </button>
+      ),
+    },
+  ];
+
+  function ClickableStaysTable() {
+    const table = useReactTable({
+      data: stays,
+      columns: clickableColumns,
+      getCoreRowModel: getCoreRowModel(),
+    });
+    return (
+      <DataTable
+        table={table}
+        label="Stays"
+        onRowClick={(row) => openedGuests.push(row.original.guest)}
+        renderCard={(row) => <StayCard row={row} />}
+      />
+    );
+  }
+
+  beforeEach(() => {
+    openedGuests.length = 0;
+    menuClicks.length = 0;
+    ResizeObserverStub.instances = [];
+    vi.stubGlobal("ResizeObserver", ResizeObserverStub);
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("opens the row when any cell is clicked", () => {
+    render(<ClickableStaysTable />);
+    ResizeObserverStub.resizeAllTo(840);
+
+    act(() => screen.getByRole("cell", { name: "₱1,200.50" }).click());
+    expect(openedGuests).toEqual(["Jose Rizal"]);
+  });
+
+  it("leaves a button inside the row to its own handler", () => {
+    render(<ClickableStaysTable />);
+    ResizeObserverStub.resizeAllTo(840);
+
+    act(() => screen.getByRole("button", { name: "Menu for Maria Santos" }).click());
+    expect(menuClicks).toEqual(["Maria Santos"]);
+    expect(openedGuests).toEqual([]);
+  });
+
+  it("has no axe violations", async () => {
+    const { container } = render(<ClickableStaysTable />);
+    ResizeObserverStub.resizeAllTo(840);
+    expect(await axe(container)).toHaveNoViolations();
+  });
+});

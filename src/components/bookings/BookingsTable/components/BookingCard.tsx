@@ -1,59 +1,20 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback } from "react";
 
 import { useNavigate } from "@tanstack/react-router";
-import { format } from "date-fns";
-import { Check, Upload } from "lucide-react";
 
-import {
-  ActionMenu,
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  Button,
-  ListCard,
-  StatusBadge,
-} from "@/components/patterns";
-import { useUserRole } from "@/hooks";
-import { canTransitionStatus } from "@/lib/bookings";
+import { ListCard, StatusBadge } from "@/components/patterns";
 import { formatCurrency } from "@/lib/formatters";
 import { statusBadgeProps } from "@/lib/status-tone";
 import { cn } from "@/lib/utils";
-import type { BookingStatus } from "@/types";
-import { utcToResortTime } from "@/utils/date-helpers";
 
 import type { BookingCardProps } from "../types";
+import { formatStayRange, getNights } from "../utils/stay";
+import { BalanceLabel } from "./BalanceLabel";
+import { BookingOverflowMenu } from "./BookingOverflowMenu";
 import { CabinChip } from "./CabinChip";
+import { MainActionButton } from "./MainActionButton";
+import { NeedsActionLabel } from "./NeedsActionLabel";
 import { SourceBadge } from "./SourceBadge";
-
-const formatStayRange = (checkIn: string, checkOut: string): string => {
-  try {
-    const inDate = utcToResortTime(checkIn);
-    const outDate = utcToResortTime(checkOut);
-    const sameMonth =
-      inDate.getFullYear() === outDate.getFullYear() && inDate.getMonth() === outDate.getMonth();
-    return sameMonth
-      ? `${format(inDate, "MMM d")} → ${format(outDate, "d")}`
-      : `${format(inDate, "MMM d")} → ${format(outDate, "MMM d")}`;
-  } catch {
-    return "Invalid Date";
-  }
-};
-
-const getNights = (checkIn: string, checkOut: string): number => {
-  try {
-    const inDate = utcToResortTime(checkIn);
-    const outDate = utcToResortTime(checkOut);
-    const ms = outDate.getTime() - inDate.getTime();
-    return Math.max(1, Math.round(ms / 86_400_000));
-  } catch {
-    return 0;
-  }
-};
 
 const PAYMENT_DOT: Record<string, { color: string; label: string }> = {
   Completed: { color: "bg-success-foreground", label: "Paid" },
@@ -75,67 +36,28 @@ const PaymentDot: React.FC<{ status: string | null | undefined }> = ({ status })
 
 export const BookingCard: React.FC<BookingCardProps> = ({
   booking,
-  onUploadPayment,
+  onRecordPayment,
   onCancel,
   updateBookingStatus,
 }) => {
-  const navigate = useNavigate();
-  const { canEdit, canEditBookings, canConfirmBookings } = useUserRole();
-  const [showCancelDialog, setShowCancelDialog] = useState(false);
-
+  const navigate = useNavigate({ from: "/admin/bookings" });
   const units = booking.booking_units || [];
   const nights = getNights(booking.check_in, booking.check_out);
 
   const handleViewBooking = useCallback(() => {
-    navigate({
-      to: "/admin/bookings/$bookingId",
-      params: { bookingId: booking.booking_id },
+    void navigate({
+      to: "/admin/bookings",
+      search: (prev) => ({ ...prev, booking: booking.booking_id }),
     });
   }, [navigate, booking.booking_id]);
 
-  const handleEdit = useCallback(() => {
-    navigate({
-      to: "/admin/bookings/$bookingId/edit",
-      params: { bookingId: booking.booking_id },
-    });
-  }, [navigate, booking.booking_id]);
-
-  const handleConfirm = useCallback(() => {
-    updateBookingStatus.mutate({
-      bookingId: booking.booking_id,
-      status: "Confirmed" as BookingStatus,
-    });
-  }, [updateBookingStatus, booking.booking_id]);
-
-  const confirmCancel = useCallback(() => {
-    onCancel();
-    setShowCancelDialog(false);
-  }, [onCancel]);
-
-  const isPending = booking.booking_status === "Pending";
-  const isCancelled = booking.booking_status === "Cancelled";
-  const paymentIncomplete = booking.payment_status !== "Completed";
-
-  const showConfirmPrimary = canConfirmBookings && isPending;
-  const showPaymentPrimary = !showConfirmPrimary && !isCancelled && paymentIncomplete;
-  const showActionZone = showConfirmPrimary || showPaymentPrimary;
-
-  const menuActions = [
-    ...(canEditBookings ? [{ label: "Edit Booking", onClick: handleEdit }] : []),
-    ...(paymentIncomplete && !isCancelled
-      ? [{ label: "Upload Payment", onClick: onUploadPayment }]
-      : []),
-    ...(canConfirmBookings && isPending ? [{ label: "Confirm", onClick: handleConfirm }] : []),
-    ...(canEdit && canTransitionStatus(booking.booking_status as BookingStatus, "Cancelled")
-      ? [
-          {
-            label: "Cancel",
-            onClick: () => setShowCancelDialog(true),
-            variant: "destructive" as const,
-          },
-        ]
-      : []),
-  ];
+  const handleCardClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    const target = e.target as Element;
+    // Clicks inside a dialog or menu portal bubble through React too, so check the DOM.
+    if (!e.currentTarget.contains(target)) return;
+    if (target.closest("a, button, [role=menuitem]")) return;
+    handleViewBooking();
+  };
 
   const handleInfoKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
     if (e.key === "Enter" || e.key === " ") {
@@ -145,8 +67,10 @@ export const BookingCard: React.FC<BookingCardProps> = ({
   };
 
   return (
-    <>
-      <ListCard className="space-y-2">
+    <ListCard>
+      {/* A tap anywhere outside the buttons opens the booking; the info zone is the keyboard target */}
+      {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
+      <div onClick={handleCardClick} className="cursor-pointer space-y-2">
         {/* Header: identity (left) + status/menu (right) */}
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0">
@@ -157,10 +81,16 @@ export const BookingCard: React.FC<BookingCardProps> = ({
             <div className="text-muted-foreground text-xs tabular-nums">
               {booking.booking_reference}
             </div>
+            <NeedsActionLabel booking={booking} />
           </div>
           <div className="flex items-center gap-1">
             <StatusBadge {...statusBadgeProps(booking.booking_status, "Pending")} />
-            {menuActions.length > 0 && <ActionMenu actions={menuActions} />}
+            <BookingOverflowMenu
+              booking={booking}
+              updateBookingStatus={updateBookingStatus}
+              onRecordPayment={onRecordPayment}
+              onCancel={onCancel}
+            />
           </div>
         </div>
 
@@ -168,7 +98,6 @@ export const BookingCard: React.FC<BookingCardProps> = ({
         <div
           role="button"
           tabIndex={0}
-          onClick={handleViewBooking}
           onKeyDown={handleInfoKeyDown}
           aria-label={`View booking ${booking.booking_reference}`}
           className="focus-visible:bg-muted active:bg-muted -mx-1 cursor-pointer space-y-1.5 rounded px-1 py-1 transition-colors focus-visible:outline-none"
@@ -200,49 +129,19 @@ export const BookingCard: React.FC<BookingCardProps> = ({
               <span className="text-foreground text-sm font-semibold tabular-nums">
                 {formatCurrency(booking.total_amount)}
               </span>
+              <BalanceLabel booking={booking} />
               <PaymentDot status={booking.payment_status} />
             </div>
           </div>
         </div>
 
-        {/* Action zone: status-dependent primary button */}
-        {showActionZone && (
-          <div className="pt-1">
-            {showConfirmPrimary ? (
-              <Button onClick={handleConfirm} size="sm" className="w-full">
-                <Check className="mr-1.5 h-4 w-4" />
-                Confirm
-              </Button>
-            ) : (
-              <Button onClick={onUploadPayment} variant="outline" size="sm" className="w-full">
-                <Upload className="mr-1.5 h-4 w-4" />
-                Upload Payment
-              </Button>
-            )}
-          </div>
-        )}
-      </ListCard>
-
-      <AlertDialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Cancel booking</AlertDialogTitle>
-            <AlertDialogDescription>
-              {booking.booking_reference} will be cancelled and its unit freed for these days. This
-              cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Keep booking</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={confirmCancel}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              Cancel booking
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </>
+        <MainActionButton
+          booking={booking}
+          updateBookingStatus={updateBookingStatus}
+          onRecordPayment={onRecordPayment}
+          className="w-full"
+        />
+      </div>
+    </ListCard>
   );
 };

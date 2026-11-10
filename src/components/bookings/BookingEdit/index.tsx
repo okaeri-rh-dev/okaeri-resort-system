@@ -43,6 +43,8 @@ export function BookingEditPage() {
   const { booking, units } = useLoaderData({ from: "/admin/bookings/$bookingId/edit" });
   const navigate = useNavigate();
   const { isManager } = useUserRole();
+  // The database refuses staff a date change on a Confirmed booking (docs/adr/0007)
+  const canChangeDates = isManager || booking.booking_status !== "Confirmed";
 
   // Initialize form with default values from booking
   // NOTE: Single-unit editing only - extracts first unit from booking_units array
@@ -169,13 +171,21 @@ export function BookingEditPage() {
             </CardHeader>
             <CardContent className="@container">
               <div className="grid grid-cols-1 gap-4 @lg:grid-cols-2">
-                <FormField control={form.control} name="check_in" label="Check-in Date">
+                <FormField
+                  control={form.control}
+                  name="check_in"
+                  label="Check-in Date"
+                  description={
+                    canChangeDates ? undefined : "Only a manager can change confirmed dates"
+                  }
+                >
                   {(field) => (
                     <DatePicker
                       value={field.value ? new Date(field.value) : undefined}
                       onChange={field.onChange}
                       placeholder="Pick a date"
                       aria-label="Check-in Date"
+                      disabled={!canChangeDates}
                     />
                   )}
                 </FormField>
@@ -185,6 +195,7 @@ export function BookingEditPage() {
                     <DatePicker
                       value={field.value ? new Date(field.value) : undefined}
                       onChange={field.onChange}
+                      disabled={!canChangeDates}
                       isDateDisabled={(date) => {
                         const checkIn = form.getValues("check_in");
                         return date <= (checkIn ? new Date(checkIn) : new Date());

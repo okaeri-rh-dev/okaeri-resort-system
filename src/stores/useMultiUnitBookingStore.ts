@@ -15,9 +15,8 @@ import { create } from "zustand";
 import { devtools, persist, subscribeWithSelector } from "zustand/middleware";
 import { immer } from "zustand/middleware/immer";
 
-import { manilaDayOf, nightsBetween } from "@/lib/bookings";
 import { logger } from "@/lib/logger";
-import { isWeekendNight } from "@/lib/pricing/weekend-night";
+import { priceCabin } from "@/lib/pricing/cabin-pricing";
 import { hasBooleanProperty, hasProperty, hasStringProperty } from "@/lib/type-guards";
 import type { MultiUnitBookingStore, OptimisticEntry } from "@/types";
 
@@ -252,35 +251,8 @@ export const useMultiUnitBookingStore = create<MultiUnitBookingStore>()(
 
           // ========== PRICING CALCULATIONS ==========
 
-          calculateUnitPricing: (unit, checkIn, checkOut, numGuests) => {
-            const checkInDate = new Date(checkIn);
-            const nights = nightsBetween(manilaDayOf(checkIn), manilaDayOf(checkOut));
-
-            let baseTotal = 0;
-            let weekendSurcharge = 0;
-
-            // Calculate per-night pricing
-            for (let i = 0; i < nights; i++) {
-              const currentDate = new Date(checkInDate);
-              currentDate.setDate(currentDate.getDate() + i);
-              baseTotal += unit.base_rate;
-              if (isWeekendNight(currentDate) && unit.weekend_rate > unit.base_rate) {
-                weekendSurcharge += unit.weekend_rate - unit.base_rate;
-              }
-            }
-
-            // Calculate extra person fee
-            const extraPersons = Math.max(0, numGuests - unit.base_occupancy);
-            const extraPersonFee = extraPersons * unit.extra_person_rate * nights;
-
-            return {
-              nights,
-              base_total: baseTotal,
-              weekend_surcharge: weekendSurcharge,
-              extra_person_fee: extraPersonFee,
-              unit_total: baseTotal + weekendSurcharge + extraPersonFee,
-            };
-          },
+          calculateUnitPricing: (unit, checkIn, checkOut, numGuests) =>
+            priceCabin(unit, checkIn, checkOut, numGuests),
 
           recalculateTotalPricing: (checkIn?, checkOut?) =>
             set((state: Draft<MultiUnitBookingStore>) => {

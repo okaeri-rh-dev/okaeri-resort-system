@@ -30,6 +30,8 @@ vi.mock("@/stores/useBookingStore", async (importOriginal) => ({
   useAllBookings: () => ({ data: loaded.bookings, isLoading: false, error: null }),
 }));
 
+vi.mock("@/stores/useUnitStore", () => ({ useAllUnits: () => ({ data: [] }) }));
+
 const checkedOut = {
   booking_id: "booking-1",
   booking_reference: "OKR-1",
@@ -51,25 +53,25 @@ describe("BookingsTable empty state", () => {
     render(<BookingsTable />);
 
     expect(screen.getByText("No bookings yet")).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Clear Filters" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Clear filters" })).not.toBeInTheDocument();
   });
 
-  it("clears the search and keeps the view when a search matches nothing", async () => {
-    router.search = { view: "past", q: "nonexistent-xyz" };
+  it("clears the search and filters and keeps the view when nothing matches", async () => {
+    router.search = { view: "past", q: "nonexistent-xyz", source: ["airbnb"] };
     render(<BookingsTable />);
 
-    expect(screen.getByText("No bookings found")).toBeInTheDocument();
+    expect(screen.getByText("No bookings match")).toBeInTheDocument();
 
-    await userEvent.click(screen.getByRole("button", { name: "Clear Filters" }));
+    await userEvent.click(screen.getByRole("button", { name: "Clear filters" }));
     const [{ search }] = router.navigate.mock.lastCall!;
     expect(search(router.search)).toEqual({ view: "past" });
   });
 
-  it("offers no Clear Filters when only the view is empty", () => {
+  it("offers no Clear filters when only the view is empty", () => {
     router.search = { view: "cancelled" };
     render(<BookingsTable />);
 
     expect(screen.getByText("No bookings in this view.")).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Clear Filters" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Clear filters" })).not.toBeInTheDocument();
   });
 });

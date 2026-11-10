@@ -37,7 +37,7 @@ test.describe("Admin navigation form", () => {
     expect(box.y + box.height).toBeGreaterThan(844 - 2);
     expect(box.height).toBeLessThan(120);
 
-    for (const name of ["Dashboard", "Bookings", "Booking Queue", "Payments"]) {
+    for (const name of ["Dashboard", "Bookings", "Payments"]) {
       await expect(nav.getByRole("link", { name, exact: true })).toBeVisible();
     }
     await expect(nav.getByRole("link", { name: "Guests" })).toBeHidden();
@@ -110,7 +110,7 @@ test.describe("Admin navigation form", () => {
     await expect(page.getByRole("link", { name: "Okaeri Rest House" })).toBeVisible();
     await expect(page.getByRole("button", { name: "Open menu" })).toBeHidden();
 
-    const link = await nav.getByRole("link", { name: "Booking Queue" }).boundingBox();
+    const link = await nav.getByRole("link", { name: "Payments" }).boundingBox();
     expect(link?.height).toBeLessThan(56);
     for (const group of ["Bookings", "Cabins", "Money", "Admin"]) {
       await expect(nav.getByRole("list", { name: group })).toBeVisible();
@@ -170,14 +170,8 @@ test.describe("Admin navigation form", () => {
     await loginAsStaff(page);
 
     const { nav } = await mainNavBox(page);
-    await expect(nav.getByRole("link")).toHaveCount(5);
-    for (const name of [
-      "Dashboard",
-      "Bookings",
-      "Booking Queue",
-      "Availability",
-      "Blocked dates",
-    ]) {
+    await expect(nav.getByRole("link")).toHaveCount(4);
+    for (const name of ["Dashboard", "Bookings", "Availability", "Blocked dates"]) {
       await expect(nav.getByRole("link", { name, exact: true })).toBeVisible();
     }
     await expect(page.getByRole("button", { name: "More" })).toHaveCount(0);

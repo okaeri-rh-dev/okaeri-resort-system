@@ -174,35 +174,32 @@ describe("maintenance SQL functions", () => {
     expect(runPsql(triggerCount)).toEqual(["0"]);
   });
 
-  it("clears expired payment proofs and returns their bucket paths", async () => {
+  it("clears cancelled payment proofs after 30 days and returns their bucket paths", async () => {
     if (!canRun) return;
+    // Checked-out proofs wait for guest anonymization instead
     const checkedOutOld = await pastBooking("CheckedOut", 100, "bookings/old/proof.jpg");
-    const checkedOutRecent = await pastBooking("CheckedOut", 10, "bookings/recent/proof.jpg");
     const cancelledOld = await pastBooking("Cancelled", 5, "GUEST-REF_1.png");
     const cancelledRecent = await pastBooking("Cancelled", 5, "GUEST-REF_2.png");
     const confirmedOld = await pastBooking("Confirmed", 200, "bookings/confirmed/proof.jpg");
     bookingIds.push(
-      ...[checkedOutOld, checkedOutRecent, cancelledOld, cancelledRecent, confirmedOld].map(
+      ...[checkedOutOld, cancelledOld, cancelledRecent, confirmedOld].map(
         (booking) => booking.booking_id
       )
     );
-    backdateBooking(cancelledOld.booking_id, "updated_at", 40);
-    backdateBooking(cancelledRecent.booking_id, "updated_at", 10);
-
+    // Before the backdate, since a payment insert touches the booking's updated_at
     const { error: paymentError } = await admin.from("payments").insert({
-      booking_id: checkedOutOld.booking_id,
+      booking_id: cancelledOld.booking_id,
       amount: 100,
-      proof_url: `${PUBLIC_URL_PREFIX}bookings/old/proof.jpg?t=1`,
+      proof_url: `${PUBLIC_URL_PREFIX}GUEST-REF_1.png?t=1`,
       status: "Active",
     });
     expect(paymentError).toBeNull();
+    backdateBooking(cancelledOld.booking_id, "updated_at", 40);
+    backdateBooking(cancelledRecent.booking_id, "updated_at", 10);
 
     const { data, error } = await admin.rpc("cleanup_expired_payment_proofs");
     expect(error).toBeNull();
-    expect((data ?? []).map((row) => row.file_path).sort()).toEqual([
-      "GUEST-REF_1.png",
-      "bookings/old/proof.jpg",
-    ]);
+    expect((data ?? []).map((row) => row.file_path)).toEqual(["GUEST-REF_1.png"]);
 
     const { data: remaining } = await admin
       .from("bookings")
@@ -210,13 +207,13 @@ describe("maintenance SQL functions", () => {
       .in("booking_id", bookingIds)
       .not("payment_proof_url", "is", null);
     expect((remaining ?? []).map((row) => row.booking_id).sort()).toEqual(
-      [checkedOutRecent, cancelledRecent, confirmedOld].map((booking) => booking.booking_id).sort()
+      [checkedOutOld, cancelledRecent, confirmedOld].map((booking) => booking.booking_id).sort()
     );
 
     const { data: payment } = await admin
       .from("payments")
       .select("proof_url")
-      .eq("booking_id", checkedOutOld.booking_id)
+      .eq("booking_id", cancelledOld.booking_id)
       .single();
     expect(payment?.proof_url).toBeNull();
   });

@@ -12,6 +12,7 @@ import {
   guestKeys,
   multiUnitBookingKeys,
   paymentKeys,
+  paymentProofKeys,
   pendingUsersKeys,
   pricingKeys,
   publicAvailabilityKeys,
@@ -56,7 +57,7 @@ const everyTable: Record<TableName, true> = {
   units: true,
 };
 
-const availability = [availabilityKeys.availableUnits.all, availabilityKeys.multiUnit.all];
+const availability = [availabilityKeys.multiUnit.all];
 
 describe("afterWrite", () => {
   afterEach(() => {
@@ -118,7 +119,8 @@ describe("afterWrite", () => {
   });
 
   it("reaches every key root from some table, except data that is not table data", () => {
-    const notTableData = [publicAvailabilityKeys.all];
+    // The signed-in user id comes from the session and a signed URL from storage, not a table
+    const notTableData = [publicAvailabilityKeys.all, userRoleKeys.currentId, paymentProofKeys.all];
     const keys: unknown[][] = [];
     const collect = (value: unknown) => {
       if (Array.isArray(value)) keys.push(value);

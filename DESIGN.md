@@ -38,16 +38,16 @@ Rationale: [Component layer boundaries](https://github.com/okaeri-rh-dev/okaeri-
 Breakpoints use the window size class names (`medium:`, `expanded:`, `large:`, `xlarge:`), with compact as the unprefixed base ([ADR 0004](docs/adr/0004-m3-named-breakpoints.md)). Admin supports compact to xlarge. Guest and public pages support compact to expanded, then stay centred at their max width.
 
 - **Window queries live in shells.** Breakpoint prefixes set nav form, pane count and margins. Inside a pane, adapt with `@container`.
-- **`DataTable` owns table ↔ card.** It switches to cards when its pane is narrower than ~600px. Product code passes a card renderer and never branches on width. In table form, columns with `meta: { priority: "low" }` all hide together while the full table is wider than its pane, so a pinned column never covers data; product code only sets the flag.
+- **`DataTable` owns table ↔ card.** It switches to cards when its pane is narrower than ~600px. Product code passes a card renderer and never branches on width. In table form, columns with `meta: { priority: "low" }` all hide together while the full table is wider than its pane, so a pinned column never covers data; product code only sets the flag. A long list sets `virtualize`: it renders only the rows near the view, with no pages, and its header sticks to the top of `<main>`. A virtualized table cannot scroll sideways, so it is denser (cells 8px a side, `StatusBadge size="compact"`), needs `priority: "low"` columns to fit slim panes, and shows cards when even the slim table does not fit.
 
 Navigation per class:
 
-| Surface | Compact                                                                                                                        | Medium, expanded                     | Large, xlarge                     |
-| ------- | ------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------ | --------------------------------- |
-| Admin   | Bottom bar: Dashboard, Bookings, Booking Queue, Payments, More (opens the menu sheet). Roles with ≤5 destinations get no More. | Collapsed rail; groups open a flyout | Expanded rail with group headings |
-| Guest   | Top bar with a menu sheet                                                                                                      | Top bar with inline links            | (centred at max width)            |
+| Surface | Compact                                                                                                         | Medium, expanded                     | Large, xlarge                     |
+| ------- | --------------------------------------------------------------------------------------------------------------- | ------------------------------------ | --------------------------------- |
+| Admin   | Bottom bar: Dashboard, Bookings, Payments, More (opens the menu sheet). Roles with ≤5 destinations get no More. | Collapsed rail; groups open a flyout | Expanded rail with group headings |
+| Guest   | Top bar with a menu sheet                                                                                       | Top bar with inline links            | (centred at max width)            |
 
-Admin destinations sit in four groups under Dashboard, which has no heading: **Bookings** (Bookings, Booking Queue, Payments, Guests), **Cabins** (Cabins, Availability, Blocked dates), **Money** (Expenses, Accounts, Transfers, Documents) and **Admin** (Settings, Audit Trail, User Roles). Headings in the expanded rail and the menu sheets are always open. A role sees only the groups that hold an item it can open, and a one-item group keeps its heading. The bottom bar shows no headings. Rationale: [Side-menu grouping](https://github.com/okaeri-rh-dev/okaeri-resort-system/issues/155).
+Admin destinations sit in four groups under Dashboard, which has no heading: **Bookings** (Bookings, Payments, Guests), **Cabins** (Cabins, Availability, Blocked dates), **Money** (Expenses, Accounts, Transfers, Documents) and **Admin** (Settings, Audit Trail, User Roles). Headings in the expanded rail and the menu sheets are always open. A role sees only the groups that hold an item it can open, and a one-item group keeps its heading. The bottom bar shows no headings. Rationale: [Side-menu grouping](https://github.com/okaeri-rh-dev/okaeri-resort-system/issues/155).
 
 The rail and the menu sheets scroll as one column when the window is short.
 
@@ -66,14 +66,14 @@ Auto is the system setting. The dark mode switch sets an explicit theme, so Auto
 
 Pane layouts:
 
-| Screen                         | Layout                                                                                     |
-| ------------------------------ | ------------------------------------------------------------------------------------------ |
-| Admin lists                    | Single pane, detail on its own route                                                       |
-| Booking Queue → verify payment | List-detail; two panes from `expanded`                                                     |
-| Detail views                   | Supporting pane: below up to `medium`, beside at 360px from `expanded`, 412px from `large` |
-| Dashboard                      | Single pane; the day opens in a bottom sheet up to `medium`, a side sheet from `expanded`  |
-| Guest booking                  | Price summary below on compact and `medium`, sticky side pane from `expanded`              |
-| Public calendar                | Single pane                                                                                |
+| Screen               | Layout                                                                                     |
+| -------------------- | ------------------------------------------------------------------------------------------ |
+| Admin lists          | Single pane, detail on its own route                                                       |
+| Bookings → a booking | Sheet over the full list: from the right from `expanded`, full screen below it             |
+| Detail views         | Supporting pane: below up to `medium`, beside at 360px from `expanded`, 412px from `large` |
+| Dashboard            | Single pane; the day opens in a bottom sheet up to `medium`, a side sheet from `expanded`  |
+| Guest booking        | Price summary below on compact and `medium`, sticky side pane from `expanded`              |
+| Public calendar      | Single pane                                                                                |
 
 Window margins are 16px on compact and 24px from `medium`, with a 24px spacer between panes. Content caps: admin 1600px, guest 1200px, form and reading columns ~40rem.
 
@@ -122,14 +122,14 @@ Rationale: [Type scale and font loading](https://github.com/okaeri-rh-dev/okaeri
 
 **Density is chosen per pattern** on the default 4px spacing scale. One set of tokens, no density mode.
 
-| Spacing                                   | Admin                    | Guest                   |
-| ----------------------------------------- | ------------------------ | ----------------------- |
-| Inline gap (icon and label, button group) | 2                        | 2                       |
-| Form field stack                          | 4                        | 4                       |
-| Card padding                              | 4                        | 6                       |
-| Gap between cards                         | 4                        | 6                       |
-| Page section gap                          | 6                        | 12 (16 from `expanded`) |
-| `DataTable` row                           | 40px (`py-2`, `text-sm`) | —                       |
+| Spacing                                   | Admin                                                           | Guest                   |
+| ----------------------------------------- | --------------------------------------------------------------- | ----------------------- |
+| Inline gap (icon and label, button group) | 2                                                               | 2                       |
+| Form field stack                          | 4                                                               | 4                       |
+| Card padding                              | 4                                                               | 6                       |
+| Gap between cards                         | 4                                                               | 6                       |
+| Page section gap                          | 6                                                               | 12 (16 from `expanded`) |
+| `DataTable` row                           | 40px (`py-2`, `text-sm`); cells `px-4`, `px-2` when virtualized | —                       |
 
 **Targets.** Every interactive primitive is at least 24px, and 44px under `coarse:` on every surface (icon buttons via `min-w-11`, clickable table rows included). Control heights are shared across surfaces: `sm` 32px, `default` 36px, `lg` 44px, with inputs matching buttons at each size. Primary actions in the guest booking flow use `lg`.
 

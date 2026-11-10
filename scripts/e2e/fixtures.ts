@@ -30,16 +30,15 @@ export const E2E_UNIT = {
 export interface E2EBookingFixture {
   booking_id?: string;
   booking_reference: string;
-  booking_status: "Pending" | "Confirmed" | "Cancelled";
+  booking_status: "Pending" | "Confirmed" | "CheckedIn" | "Cancelled";
   payment_status: "Pending" | "Completed";
   check_in: string;
   check_out: string;
   total_amount: number;
   num_guests: number;
-  // Multi-cabin guest booking with no cabins assigned yet; shows in the booking queue
+  // Multi-cabin guest booking with no cabins assigned yet; offers Verify payment
   awaiting_unit_assignment?: boolean;
-  // Keeps an awaiting booking out of the booking queue (not a guest booking), so specs that act
-  // on the first queued booking never pick it
+  // Makes an awaiting booking staff-made (not a guest booking), so it offers no Verify payment
   hidden_from_queue?: boolean;
   // Object key in the payment-proofs bucket; seed uploads a placeholder image
   payment_proof_url?: string;
@@ -51,12 +50,38 @@ export const E2E_REF = {
   CONFIRMED: "E2E-CONFIRMED",
   CONF_PAID: "E2E-CONF-PAID",
   CANCELLED: "E2E-CANCELLED",
+  CHECK_IN: "E2E-CHECK-IN",
+  CHECK_OUT: "E2E-CHECK-OUT",
   QUEUE: "E2E-QUEUE",
   QUEUE_PAID: "E2E-PAID-QUEUE",
   ASSIGN_PAID: "E2E-ASSIGN-PAID",
 } as const;
 
+const manilaDay = (msFromNow: number) =>
+  new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Manila" }).format(Date.now() + msFromNow);
+
 export const E2E_BOOKINGS: E2EBookingFixture[] = [
+  // Checks in today, so staff can check it in
+  {
+    booking_reference: E2E_REF.CHECK_IN,
+    booking_status: "Confirmed",
+    payment_status: "Completed",
+    check_in: `${manilaDay(0)}T06:00:00Z`,
+    check_out: `${manilaDay(24 * 60 * 60 * 1000)}T04:00:00Z`,
+    total_amount: 2500,
+    num_guests: 2,
+  },
+  // In-house with nothing paid, so Check out asks about the balance first. A past stay keeps
+  // its nights clear of E2E-CHECK-IN on the same cabin.
+  {
+    booking_reference: E2E_REF.CHECK_OUT,
+    booking_status: "CheckedIn",
+    payment_status: "Pending",
+    check_in: `${manilaDay(-2 * 24 * 60 * 60 * 1000)}T06:00:00Z`,
+    check_out: `${manilaDay(-1 * 24 * 60 * 60 * 1000)}T04:00:00Z`,
+    total_amount: 2500,
+    num_guests: 2,
+  },
   {
     booking_reference: E2E_REF.PENDING,
     booking_status: "Pending",

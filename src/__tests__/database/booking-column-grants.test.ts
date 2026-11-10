@@ -45,6 +45,8 @@ describe("booking column grants", () => {
       unit: await createTestUnit({}),
       guest,
       booking_reference: `GRT${Date.now() % 1000000}`,
+      // Pending, since only a manager moves the dates of a Confirmed booking
+      booking_status: "Pending",
       payment_status: "Pending",
       unit_price: 5000,
       subtotal: 5000,
@@ -107,7 +109,7 @@ describe("booking column grants", () => {
     expect(error?.code).toBe("42501");
   });
 
-  it("staff can still edit a booking and change its status", async () => {
+  it("staff can still edit a booking, and a manager can cancel it", async () => {
     if (!shouldRun) return;
     const staff = roleClients.byRole.staff;
     await updateBooking(staff, bookingId, {
@@ -120,7 +122,7 @@ describe("booking column grants", () => {
       booking_source: "Walk-in",
       stay: { check_in: "2027-01-10", check_out: "2027-01-11" },
     });
-    const cancelled = await cancelBooking(staff, bookingId);
+    const cancelled = await cancelBooking(roleClients.byRole.manager, bookingId);
     expect(cancelled.booking_status).toBe("Cancelled");
   });
 });

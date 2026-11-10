@@ -134,22 +134,6 @@ const bookingStep1BaseSchema = z.object({
   num_guests: z.number().min(1, messages.minGuests).max(20),
 });
 
-export const bookingStep1Schema = bookingStep1BaseSchema.refine(
-  (data) => data.check_out > data.check_in,
-  {
-    message: messages.endAfterStart,
-    path: ["check_out"],
-  }
-);
-
-export const bookingStep2Schema = z.object({
-  guest_name: nameSchema,
-  email: z.string().refine((val) => val === "" || emailRegex.test(val), messages.email),
-  phone_number: z
-    .string()
-    .refine((val) => val === "" || philippinePhoneRegex.test(val), messages.phone),
-});
-
 export const bookingStep3Schema = z.object({
   special_requests: z.string().max(500, messages.maxLength(500)).optional(),
   payment_method: z.enum(["GCash", "BankTransfer", "Cash", "Card"] as const),
@@ -204,22 +188,9 @@ export const completeBookingSchema = bookingStep1BaseSchema
 // ============================================
 
 export type UnitFormData = z.infer<typeof unitFormSchema>;
-export type CompleteBookingData = z.infer<typeof completeBookingSchema>;
 
 // ============================================
 // VALIDATION UTILITIES
 // ============================================
 
 // Parse currency string to number
-
-// Format phone number for display
-export const formatPhoneNumber = (phone: string): string => {
-  if (!phone) return "";
-  if (phone.startsWith("+63")) {
-    return phone;
-  }
-  if (phone.startsWith("0")) {
-    return `+63${phone.slice(1)}`;
-  }
-  return `+63${phone}`;
-};

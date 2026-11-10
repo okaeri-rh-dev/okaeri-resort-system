@@ -93,6 +93,8 @@ export interface Booking {
   check_out: string; // Date as ISO string
   total_amount: number;
   booking_status: BookingStatus | null;
+  status_changed_by?: string | null;
+  status_changed_at?: string | null;
   payment_status: string | null; // Database uses nullable strings, not enums
   payment_method?: string | null;
   payment_proof_url?: string | null;
@@ -106,6 +108,7 @@ export interface Booking {
   is_guest_booking?: boolean | null;
   unit_assignment_status?: string | null;
   unit_count?: number | null;
+  requested_unit_count?: number | null;
   pricing_metadata?: {
     hasSeasonalRates?: boolean;
     seasonNames?: string[];

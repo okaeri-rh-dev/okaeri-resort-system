@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 
+import { E2E_REF } from "../scripts/e2e/fixtures";
 import { loginAsAdmin, loginAsStaff } from "./fixtures/auth";
 import { ROUTES } from "./fixtures/test-data";
 import { BookingsTablePage } from "./pages/BookingsTablePage";
@@ -185,6 +186,31 @@ test.describe("Admin Bookings Management", () => {
       await expect(bookingsTable.viewTab("All")).toHaveAttribute("aria-selected", "true");
     });
 
+    test("a filter shows as a chip, and Clear filters keeps the view", async ({ page }) => {
+      const bookingsTable = new BookingsTablePage(page);
+      await bookingsTable.goto();
+      await bookingsTable.selectView("Past");
+
+      await bookingsTable.pickFilter("Airbnb");
+      // The router writes arrays as JSON: source=["airbnb"]
+      await expect(page).toHaveURL(/[?&]source=%5B%22airbnb%22%5D/);
+      await page.reload();
+      await expect(bookingsTable.filtersButton).toHaveAccessibleName("Filters, 1 active");
+
+      await bookingsTable.filterChip("Airbnb").click();
+      await expect(page).not.toHaveURL(/[?&]source=/);
+      await expect(bookingsTable.filterChip("Airbnb")).toHaveCount(0);
+
+      await bookingsTable.pickFilter("Refunded");
+      await bookingsTable.search("nonexistent-booking-xyz-999");
+      await expect(bookingsTable.noMatchesState).toBeVisible();
+
+      await bookingsTable.clearFiltersButton.click();
+      await expect(page).not.toHaveURL(/[?&](q|payment)=/);
+      await expect(page).toHaveURL(/[?&]view=past/);
+      await expect(bookingsTable.searchInput).toHaveValue("");
+    });
+
     test("old and broken params open the All view", async ({ page }) => {
       await page.goto(`${ROUTES.admin.bookings}?status=NoShow&search=OKR&page=2&view=bogus`);
       const bookingsTable = new BookingsTablePage(page);
@@ -192,6 +218,57 @@ test.describe("Admin Bookings Management", () => {
 
       await expect(bookingsTable.viewTab("All")).toHaveAttribute("aria-selected", "true");
       await expect(bookingsTable.searchInput).toHaveValue("");
+    });
+  });
+
+  test.describe("Booking sheet", () => {
+    test("a booking opens in a sheet, links to its full page, and Back closes it", async ({
+      page,
+    }) => {
+      const bookingsTable = new BookingsTablePage(page);
+      await bookingsTable.goto();
+      await bookingsTable.search(E2E_REF.CONFIRMED);
+
+      await bookingsTable.openBookingSheet(E2E_REF.CONFIRMED);
+      const sheet = bookingsTable.bookingSheet;
+      await expect(sheet.getByText(E2E_REF.CONFIRMED)).toBeVisible();
+      // The table stays in view behind the right-side sheet (the modal hides it from roles)
+      await expect(page.locator("table")).toBeVisible();
+
+      await sheet.getByRole("link", { name: "Open full page" }).click();
+      await expect(page).toHaveURL(/\/admin\/bookings\/[0-9a-f-]{36}/);
+      await expect(
+        page.getByRole("navigation", { name: "Breadcrumb" }).getByText(E2E_REF.CONFIRMED)
+      ).toBeVisible();
+
+      await page.goBack();
+      await expect(page).toHaveURL(/[?&]booking=/);
+      await expect(sheet).toBeVisible();
+
+      await page.goBack();
+      await expect(page).not.toHaveURL(/[?&]booking=/);
+      await expect(sheet).toBeHidden();
+    });
+
+    test("the payment proof thumbnail opens the proof viewer", async ({ page }) => {
+      const bookingsTable = new BookingsTablePage(page);
+      await bookingsTable.goto();
+      await bookingsTable.search(E2E_REF.QUEUE);
+      await bookingsTable.openBookingSheet(E2E_REF.QUEUE);
+
+      await bookingsTable.bookingSheet.getByRole("button", { name: "View payment proof" }).click();
+      const viewer = page.getByRole("dialog", { name: "Payment proof" });
+      await expect(viewer.getByRole("img", { name: "Payment proof" })).toBeVisible();
+      await expect(viewer.getByRole("button", { name: "Zoom In" })).toBeVisible();
+    });
+
+    test("an unknown booking id is dropped with no error", async ({ page }) => {
+      await page.goto(`${ROUTES.admin.bookings}?booking=00000000-0000-0000-0000-000000000000`);
+      const bookingsTable = new BookingsTablePage(page);
+      await bookingsTable.waitForPageLoad();
+
+      await expect(page).not.toHaveURL(/[?&]booking=/);
+      await expect(bookingsTable.bookingSheet).toBeHidden();
     });
   });
 
@@ -252,14 +329,13 @@ test.describe("Admin Bookings Management", () => {
       await expect(bookingsTable.newBookingButton).toBeVisible();
     });
 
-    test("new booking menu opens single cabin booking form", async ({ page }) => {
+    test("new booking opens the new booking page", async ({ page }) => {
       const bookingsTable = new BookingsTablePage(page);
       await bookingsTable.goto();
 
       await bookingsTable.clickNewBooking();
-      await page.getByRole("menuitem", { name: /single cabin booking/i }).click();
 
-      await expect(page.getByRole("dialog")).toBeVisible();
+      await expect(page).toHaveURL(/\/admin\/bookings\/new\?step=stay/);
     });
   });
 
@@ -273,102 +349,45 @@ test.describe("Admin Bookings Management", () => {
       await expect(bookingsTable.exportButton).toBeVisible();
     });
   });
+});
 
-  test.describe("Pagination", () => {
-    test("pagination controls appear when needed", async ({ page }) => {
-      const bookingsTable = new BookingsTablePage(page);
-      await bookingsTable.goto();
+test.describe("Needs action (replaces the Booking Queue)", () => {
+  test.beforeEach(async ({ page }) => {
+    if (!process.env.TEST_ADMIN_EMAIL || !process.env.TEST_ADMIN_PASSWORD) {
+      test.skip();
+    }
+    await loginAsAdmin(page);
+  });
 
-      // If there are many bookings, pagination should be visible
-      const rowCount = await bookingsTable.getRowCount();
+  for (const oldUrl of ["/admin/bookings/queue", "/pending-bookings"]) {
+    test(`${oldUrl} lands on the Needs action view`, async ({ page }) => {
+      await page.goto(oldUrl);
 
-      if (rowCount >= 10) {
-        // Pagination should be present
-        await expect(bookingsTable.pagination).toBeVisible();
-      }
-      // If few bookings, pagination may not show - that's fine
+      await expect(page).toHaveURL(/\/admin\/bookings\?view=needs-action$/);
+      await expect(page.getByRole("tab", { name: /Needs action/ })).toHaveAttribute(
+        "aria-selected",
+        "true"
+      );
     });
-  });
-});
+  }
 
-test.describe("Bookings Queue (Payment Verification)", () => {
-  test.beforeEach(async ({ page }) => {
-    if (!process.env.TEST_ADMIN_EMAIL || !process.env.TEST_ADMIN_PASSWORD) {
-      test.skip();
-    }
-    await loginAsAdmin(page);
-  });
+  test("an online booking waiting for cabins offers Verify payment", async ({ page }) => {
+    await page.goto(`/admin/bookings?view=needs-action&q=${E2E_REF.QUEUE}`);
 
-  test("bookings queue page loads", async ({ page }) => {
-    await page.goto(ROUTES.admin.bookingsQueue);
-
-    // Page should load (may show empty state)
-    await expect(
-      page
-        .getByRole("main")
-        .getByText(/queue|pending|payment/i)
-        .first()
-    ).toBeVisible();
+    await page.getByRole("button", { name: "Verify payment" }).click();
+    const dialog = page.getByRole("dialog", { name: "Verify payment" });
+    await expect(dialog.getByRole("heading", { name: "Payment proof" })).toBeVisible();
+    await expect(dialog.getByRole("button", { name: "Verify and confirm" })).toBeDisabled();
   });
 
-  test("queue shows pending bookings awaiting verification", async ({ page }) => {
-    await page.goto(ROUTES.admin.bookingsQueue);
-    await page.waitForLoadState("networkidle");
+  test("a paid online booking skips the proof and only confirms cabins", async ({ page }) => {
+    await page.goto(`/admin/bookings?view=needs-action&q=${E2E_REF.QUEUE_PAID}`);
 
-    // Should show list of pending bookings, queue content, or empty message
-    // Check multiple patterns for flexibility
-    const hasPendingText = await page
-      .getByText(/pending/i)
-      .first()
-      .isVisible()
-      .catch(() => false);
-    const hasQueueContent = await page
-      .getByText(/queue|verification|review/i)
-      .first()
-      .isVisible()
-      .catch(() => false);
-    const hasEmptyState = await page
-      .getByText(/no.*pending|empty|no bookings|no results/i)
-      .first()
-      .isVisible()
-      .catch(() => false);
-    const hasTableOrCards = await page
-      .locator('table, [class*="card"]')
-      .first()
-      .isVisible()
-      .catch(() => false);
-    const hasHeading = await page
-      .getByRole("heading", { level: 1 })
-      .isVisible()
-      .catch(() => false);
-
-    // At least one of these should be visible (page loaded successfully)
-    expect(
-      hasPendingText || hasQueueContent || hasEmptyState || hasTableOrCards || hasHeading
-    ).toBeTruthy();
-  });
-});
-
-test.describe("Unit Assignment", () => {
-  test.beforeEach(async ({ page }) => {
-    if (!process.env.TEST_ADMIN_EMAIL || !process.env.TEST_ADMIN_PASSWORD) {
-      test.skip();
-    }
-    await loginAsAdmin(page);
-  });
-
-  test("unit assignment page requires verified payment", async ({ page }) => {
-    // Try to access unit assignment for a hypothetical booking
-    await page.goto("/admin/bookings/test-id/assign-units");
-
-    // Should either show unit assignment form or redirect/error
-    // depending on booking status
-    await expect(
-      page
-        .getByRole("main")
-        .getByText(/assign|units|cabin|error|not found/i)
-        .first()
-    ).toBeVisible();
+    await page.getByRole("button", { name: "Verify payment" }).click();
+    const dialog = page.getByRole("dialog", { name: "Confirm booking" });
+    await expect(dialog.getByRole("heading", { name: "Choose 2 cabins" })).toBeVisible();
+    await expect(dialog.getByRole("heading", { name: "Payment proof" })).toHaveCount(0);
+    await expect(dialog.getByRole("button", { name: "Confirm" })).toBeDisabled();
   });
 });
 

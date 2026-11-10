@@ -9,23 +9,23 @@ import { toast } from "sonner";
 import { create } from "zustand";
 import { devtools, persist } from "zustand/middleware";
 
-import { getAccessToken } from "@/hooks/useAuthToken";
 import { afterWrite } from "@/lib/after-write";
 import {
   cancelBooking,
   setBookingStatus,
+  UNDO_STATUS,
   UPDATE_BOOKING_WRITES,
   updateBooking,
   type BookingChanges,
+  type StatusChange,
 } from "@/lib/bookings";
-import { BOOKING_CREATE_WRITES, requestBooking } from "@/lib/bookings/request";
 import { adaptBookingFromDB } from "@/lib/database-adapters";
 import { throwDetailLoadError } from "@/lib/detail-load-error";
 import { formatCurrency } from "@/lib/formatters";
 import { recordProofPayment } from "@/lib/payments";
 import { bookingKeys } from "@/lib/query-keys";
 import { db, handleSupabaseError, supabase } from "@/lib/supabase";
-import type { Booking, BookingStatus, TableState } from "@/types";
+import type { Booking, TableState } from "@/types";
 
 // import { useWorkflowStore } from "./useWorkflowStore"; // Phase 3-4
 
@@ -219,32 +219,6 @@ export const bookingDetailQuery = (bookingId: string) =>
     staleTime: 30000,
   });
 
-// The admin API's booking view (assign-units, verify-payment); each page declares the fields it reads
-export const adminBookingDetailQuery = <TBooking>(bookingId: string) =>
-  queryOptions({
-    queryKey: bookingKeys.adminDetail(bookingId),
-    queryFn: async (): Promise<TBooking> => {
-      const accessToken = await getAccessToken();
-      const response = await fetch(`/api/admin/bookings/${bookingId}`, {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          "Content-Type": "application/json",
-        },
-      });
-
-      if (!response.ok) {
-        const errorData = (await response
-          .json()
-          .catch(() => ({ error: "Failed to fetch booking" }))) as { error?: string };
-        throw new Error(errorData.error || "Failed to fetch booking details");
-      }
-
-      return response.json();
-    },
-    staleTime: 30000,
-    retry: 1,
-  });
-
 // The cached detail row in the app shape the list and the optimistic map use, for rollback
 const cachedBooking = (queryClient: QueryClient, bookingId: string): Booking | undefined => {
   const row = queryClient.getQueryData(bookingDetailQuery(bookingId).queryKey);
@@ -287,28 +261,23 @@ const bookingListQuery = () =>
 
       return mergedData;
     },
-    staleTime: 300000, // 5 minutes - increased from 30s
-    // Removed refetchInterval - manual refresh preferred for dashboard
+    staleTime: 5 * 60_000,
+    // New online bookings show without a reload
+    refetchInterval: 30 * 60_000,
+    refetchOnWindowFocus: true,
   });
 
 export const useAllBookings = () => useQuery(bookingListQuery());
 
 // Fetch single booking
 
-// Creates through the Worker route (src/lib/bookings/request.ts)
-export const useCreateBooking = () =>
-  useMutation({
-    mutationFn: requestBooking,
-    onSettled: () => afterWrite(...BOOKING_CREATE_WRITES),
-  });
-
 // Update booking status with optimistic update
 export const useUpdateBookingStatus = () => {
   const queryClient = useQueryClient();
   const updateOptimistic = useBookingStore((state) => state.updateOptimisticBooking);
 
-  return useMutation({
-    mutationFn: ({ bookingId, status }: { bookingId: string; status: BookingStatus }) =>
+  const mutation = useMutation({
+    mutationFn: ({ bookingId, status }: StatusChange) =>
       setBookingStatus(supabase, bookingId, status),
     onMutate: async ({ bookingId, status }) => {
       await queryClient.cancelQueries({ queryKey: bookingKeys.all });
@@ -328,9 +297,24 @@ export const useUpdateBookingStatus = () => {
       }
       toast.error("Failed to change the booking status", { description: error.message });
     },
+    onSuccess: (booking, { bookingId, undo }) => {
+      if (!undo) return;
+      toast.success(`${booking.booking_reference} is ${UNDONE_LABEL[undo]}`, {
+        duration: 10_000,
+        action: {
+          label: "Undo",
+          onClick: () => {
+            mutation.mutate({ bookingId, status: UNDO_STATUS[undo] });
+          },
+        },
+      });
+    },
     onSettled: () => afterWrite("bookings"),
   });
+  return mutation;
 };
+
+const UNDONE_LABEL = { "Undo check-in": "checked in", "Undo check-out": "checked out" } as const;
 
 // Update payment status with optimistic update
 

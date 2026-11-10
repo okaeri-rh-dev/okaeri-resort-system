@@ -1,8 +1,9 @@
+import { useNavigate } from "@tanstack/react-router";
+
 import { withErrorBoundary } from "@/components/ErrorBoundary";
 import {
   DataTable,
   TableEmptyState,
-  TablePagination,
   TableSkeleton,
   Tabs,
   TabsList,
@@ -13,6 +14,7 @@ import { cn } from "@/lib/utils";
 
 import { BookingCard } from "./components/BookingCard";
 import { BookingFilters } from "./components/BookingFilters";
+import { BookingSheet } from "./components/BookingSheet";
 import { useBookingsTable } from "./hooks/useBookingsTable";
 import type { BookingsTableProps } from "./types";
 
@@ -28,7 +30,6 @@ const VIEW_LABELS: Record<BookingView | "all", string> = {
 function BookingsTableComponent({ className }: BookingsTableProps) {
   const {
     table,
-    bookings,
     needsActionCount,
     totalCount,
     filteredCount,
@@ -43,9 +44,10 @@ function BookingsTableComponent({ className }: BookingsTableProps) {
     cancelBooking,
     updateBookingStatus,
   } = useBookingsTable();
+  const navigate = useNavigate({ from: "/admin/bookings" });
 
   if (isLoading) {
-    return <TableSkeleton rows={8} columns={9} toolbar pagination label="Loading bookings" />;
+    return <TableSkeleton rows={8} columns={8} toolbar label="Loading bookings" />;
   }
 
   if (error) {
@@ -78,7 +80,6 @@ function BookingsTableComponent({ className }: BookingsTableProps) {
       <BookingFilters
         search={search}
         setSearch={setSearch}
-        resetFilters={resetFilters}
         hasActiveFilters={hasActiveFilters}
         resultCount={filteredCount}
         totalCount={totalCount}
@@ -87,11 +88,15 @@ function BookingsTableComponent({ className }: BookingsTableProps) {
       <DataTable
         table={table}
         label="Bookings"
+        virtualize
+        onRowClick={(row) =>
+          void navigate({ search: (prev) => ({ ...prev, booking: row.original.booking_id }) })
+        }
         isStale={isPlaceholderData}
         renderCard={(row) => (
           <BookingCard
             booking={row.original}
-            onUploadPayment={() => handleUploadPayment(row.original)}
+            onRecordPayment={() => handleUploadPayment(row.original)}
             onCancel={() => cancelBooking.mutate(row.original.booking_id)}
             updateBookingStatus={updateBookingStatus}
           />
@@ -106,21 +111,25 @@ function BookingsTableComponent({ className }: BookingsTableProps) {
           ) : (
             <TableEmptyState
               variant="no-results"
-              title="No bookings found"
+              title={hasActiveFilters ? "No bookings match" : "No bookings found"}
               description={
                 hasActiveFilters
-                  ? "No bookings match your current filters. Try adjusting your search."
+                  ? "Try another search or fewer filters."
                   : "No bookings in this view."
               }
               action={
-                hasActiveFilters ? { label: "Clear Filters", onClick: resetFilters } : undefined
+                hasActiveFilters ? { label: "Clear filters", onClick: resetFilters } : undefined
               }
             />
           )
         }
       />
 
-      <TablePagination table={table} totalItems={bookings.length} />
+      <BookingSheet
+        updateBookingStatus={updateBookingStatus}
+        onRecordPayment={handleUploadPayment}
+        onCancel={(booking) => cancelBooking.mutate(booking.booking_id)}
+      />
     </div>
   );
 }

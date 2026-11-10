@@ -5,8 +5,8 @@
 #
 # Schedules (UTC):
 # - Daily 2:00 AM: Cleanup expired idempotency keys (48+ hours old)
-# - Weekly Sunday 3:00 AM: payment-proof cleanup (90 days after check-out,
-#   30 days after cancellation) and audit anonymization (rows older than
+# - Weekly Sunday 3:00 AM: payment-proof cleanup (30 days after cancellation;
+#   other proofs go with guest anonymization) and audit anonymization (rows older than
 #   24 months; docs/plans/2026-10-18-audit-retention-design.md)
 #   and guest anonymization (24 months after the last check-out;
 #   docs/plans/2026-10-21-guest-retention-design.md)

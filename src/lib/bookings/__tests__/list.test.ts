@@ -2,10 +2,13 @@ import { describe, expect, it } from "vitest";
 
 import {
   isNeedsAction,
+  mainActionFor,
   needsActionReason,
+  overflowActionsFor,
   parseBookingsSearch,
   selectBookings,
   toStayInstants,
+  undoActionFor,
 } from "@/lib/bookings";
 import type { Booking, BookingStatus } from "@/types";
 
@@ -284,5 +287,102 @@ describe("selectBookings sort", () => {
 
   it("puts the latest check-in first in All, Past and Cancelled", () => {
     expect(order()).toEqual(ids([late, middle, early]));
+  });
+});
+
+describe("mainActionFor", () => {
+  const website = { booking_source: "Website" } as const;
+  const direct = { booking_source: "Direct" } as const;
+
+  it.each([
+    ["Pending", "2026-10-20", website, "manager", "Verify payment"],
+    ["Pending", "2026-10-20", website, "admin", "Verify payment"],
+    ["Pending", "2026-10-20", website, "staff", undefined],
+    ["Pending", "2026-10-20", direct, "owner", "Confirm"],
+    ["Pending", "2026-10-20", direct, "staff", undefined],
+    ["Confirmed", "2026-10-15", direct, "staff", "Check in"],
+    ["Confirmed", "2026-10-12", direct, "manager", "Check in"],
+    ["Confirmed", "2026-10-16", direct, "manager", undefined],
+    ["CheckedIn", "2026-10-13", direct, "staff", "Check out"],
+    ["CheckedOut", "2026-10-10", direct, "admin", undefined],
+    ["Cancelled", "2026-10-20", direct, "admin", undefined],
+    ["Confirmed", "2026-10-15", direct, undefined, undefined],
+  ] as const)("gives %s from %s (%o) for %s: %s", (status, checkIn, fields, role, action) => {
+    const stay = booking(status, checkIn, "2026-10-25", fields);
+    expect(mainActionFor(stay, role, TODAY)).toBe(action);
+  });
+
+  it("reads the check-in day in Manila, not UTC", () => {
+    // 00:30 on 16 October in Manila is still 15 October in UTC
+    const early = booking("Confirmed", "2026-10-16", "2026-10-18", {
+      check_in: "2026-10-15T16:30:00.000Z",
+    });
+    expect(mainActionFor(early, "staff", TODAY)).toBeUndefined();
+  });
+});
+
+describe("overflowActionsFor", () => {
+  const NOW = new Date("2026-10-15T04:00:00Z");
+  const due = { total_amount: 5000, payments: [{ amount: 2000, status: "Active" }] };
+  const paid = { total_amount: 5000, payments: [{ amount: 5000, status: "Active" }] };
+  const items = (
+    status: BookingStatus,
+    role: "staff" | "manager" | "owner" | "admin" | undefined,
+    fields: Partial<Booking> = due,
+    actorId?: string
+  ) => overflowActionsFor(booking(status, "2026-10-15", "2026-10-17", fields), role, actorId, NOW);
+
+  it.each([
+    ["Pending", "manager", due, ["Record payment", "Edit", "Cancel"]],
+    ["Pending", "staff", due, ["Record payment", "Edit"]],
+    ["Confirmed", "owner", paid, ["Edit", "Cancel"]],
+    ["Confirmed", "staff", paid, ["Edit"]],
+    ["CheckedIn", "staff", due, ["Record payment", "Edit"]],
+    ["CheckedIn", "admin", paid, ["Edit", "Undo check-in"]],
+    ["CheckedOut", "staff", due, ["Record payment"]],
+    ["CheckedOut", "staff", paid, []],
+    ["CheckedOut", "manager", due, ["Record payment", "Undo check-out"]],
+    ["Cancelled", "admin", due, []],
+    ["Pending", undefined, due, []],
+  ] as const)("lists %s for %s (%o): %o", (status, role, fields, expected) => {
+    expect(items(status, role, fields)).toEqual(expected);
+  });
+
+  it("lets the user who checked in undo it within 2 minutes, not after", () => {
+    const changed = (secondsAgo: number) => ({
+      ...paid,
+      status_changed_by: "staff-1",
+      status_changed_at: new Date(NOW.getTime() - secondsAgo * 1000).toISOString(),
+    });
+    expect(items("CheckedIn", "staff", changed(119), "staff-1")).toContain("Undo check-in");
+    expect(items("CheckedOut", "staff", changed(60), "staff-1")).toEqual(["Undo check-out"]);
+    expect(items("CheckedIn", "staff", changed(121), "staff-1")).not.toContain("Undo check-in");
+    expect(items("CheckedIn", "staff", changed(30), "staff-2")).not.toContain("Undo check-in");
+  });
+});
+
+describe("undoActionFor", () => {
+  const ME = "user-me";
+  const changedAt = "2026-10-15T02:00:00.000Z";
+  const secondsLater = (seconds: number) => new Date(Date.parse(changedAt) + seconds * 1000);
+  const changedBy = (status: BookingStatus, userId: string | null) =>
+    booking(status, "2026-10-15", "2026-10-17", {
+      status_changed_by: userId,
+      status_changed_at: changedAt,
+    });
+
+  it.each([
+    ["CheckedIn", ME, "staff", 60, "Undo check-in"],
+    ["CheckedOut", ME, "staff", 119, "Undo check-out"],
+    ["CheckedIn", ME, "staff", 121, undefined],
+    ["CheckedIn", "user-other", "staff", 10, undefined],
+    ["CheckedIn", null, "staff", 10, undefined],
+    ["CheckedIn", "user-other", "manager", 86_400, "Undo check-in"],
+    ["CheckedOut", null, "admin", 86_400, "Undo check-out"],
+    ["Confirmed", ME, "manager", 10, undefined],
+    ["Cancelled", ME, "admin", 10, undefined],
+    ["CheckedIn", ME, undefined, 10, undefined],
+  ] as const)("gives %s changed by %s, for %s %is later: %s", (status, by, role, seconds, item) => {
+    expect(undoActionFor(changedBy(status, by), role, ME, secondsLater(seconds))).toBe(item);
   });
 });

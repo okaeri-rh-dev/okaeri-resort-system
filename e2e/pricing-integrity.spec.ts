@@ -508,39 +508,6 @@ test.describe("Pricing Integrity", () => {
     });
   });
 
-  test.describe("6. Multi-Unit Pricing", () => {
-    test("booking multiple units sums individual prices", async ({ page }) => {
-      // This test requires multi-unit booking capability
-      await loginAsAdmin(page);
-
-      // Navigate to create new multi-unit booking
-      await page.goto(ROUTES.admin.newMultiBooking);
-      await page.waitForLoadState("networkidle");
-
-      // Check if multi-unit booking page exists
-      if (page.url().includes("/login") || page.url().includes("/404")) {
-        test.skip();
-        return;
-      }
-
-      // Look for unit count selector or multiple unit selection
-      const unitCountInput = page.getByLabel(/number of units|unit count/i);
-      const unitCheckboxes = page.locator('input[type="checkbox"][name*="unit"]');
-
-      const hasUnitCount = await unitCountInput.isVisible().catch(() => false);
-      const hasCheckboxes = (await unitCheckboxes.count()) > 0;
-
-      if (!hasUnitCount && !hasCheckboxes) {
-        // Multi-unit booking not available in current UI
-        test.skip();
-        return;
-      }
-
-      // Implementation continues based on available UI...
-      expect(hasUnitCount || hasCheckboxes).toBeTruthy();
-    });
-  });
-
   test.describe("7. Server-Side Pricing Authority", () => {
     test("final booking price comes from server calculation", async ({ page }) => {
       const bookingForm = new BookingFormPage(page);

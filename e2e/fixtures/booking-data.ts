@@ -84,7 +84,7 @@ export function countWeekendNights(checkIn: Date, checkOut: Date): number {
  */
 export const BOOKING_DATES = {
   /**
-   * Urgent stay - checking in tomorrow (high urgency)
+   * Urgent stay - checking in tomorrow
    */
   getUrgentStay: () => {
     const checkIn = addDays(new Date(), 1);
@@ -295,44 +295,3 @@ export const PAYMENT_METHODS = {
   cash: "Cash",
   maya: "Maya",
 } as const;
-
-/**
- * Urgency levels for admin queue testing
- */
-export const URGENCY_LEVELS = {
-  critical: { min: 75, label: "Critical" },
-  high: { min: 50, max: 74, label: "High" },
-  medium: { min: 25, max: 49, label: "Medium" },
-  low: { min: 0, max: 24, label: "Low" },
-} as const;
-
-/**
- * Calculate expected urgency score based on check-in date
- * Score is higher for bookings with check-in dates closer to today
- */
-export function calculateUrgencyScore(checkInDate: string): number {
-  const checkIn = new Date(checkInDate);
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  checkIn.setHours(0, 0, 0, 0);
-
-  const daysUntilCheckIn = Math.ceil((checkIn.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-
-  // Urgency scoring based on days until check-in
-  if (daysUntilCheckIn <= 1) return 100; // Today or tomorrow
-  if (daysUntilCheckIn <= 3) return 85;
-  if (daysUntilCheckIn <= 7) return 65;
-  if (daysUntilCheckIn <= 14) return 40;
-  if (daysUntilCheckIn <= 30) return 20;
-  return 10;
-}
-
-/**
- * Get urgency level label from score
- */
-export function getUrgencyLevel(score: number): keyof typeof URGENCY_LEVELS {
-  if (score >= URGENCY_LEVELS.critical.min) return "critical";
-  if (score >= URGENCY_LEVELS.high.min) return "high";
-  if (score >= URGENCY_LEVELS.medium.min) return "medium";
-  return "low";
-}

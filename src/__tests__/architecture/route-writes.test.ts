@@ -14,14 +14,6 @@ import { describe, expect, it } from "vitest";
 const repoRoot = join(__dirname, "..", "..", "..");
 
 const ROUTE_WRITES: Record<string, { constant: string; constantFile: string }> = {
-  "functions/api/admin/assign-units.ts": {
-    constant: "ASSIGN_UNITS_WRITES",
-    constantFile: "src/components/admin/UnitAssignmentInterface.tsx",
-  },
-  "functions/api/admin/verify-payment.ts": {
-    constant: "VERIFY_PAYMENT_WRITES",
-    constantFile: "src/components/admin/PaymentProofViewer.tsx",
-  },
   "functions/api/admin/guests/[guestId].ts": {
     constant: "GUEST_RETENTION_WRITES",
     constantFile: "src/stores/useGuestStore.ts",
@@ -84,11 +76,11 @@ describe("Worker route writes", () => {
   });
 
   it("names the route, table and constant when a write is missing", () => {
-    const route = "functions/api/admin/assign-units.ts";
-    const source = `${read(route)}\nawait supabase.from("payments").insert({});`;
+    const route = "functions/api/bookings/multi-unit.ts";
+    const source = `${read(route)}\nawait supabase.from("expenses").insert({});`;
 
     expect(missingWrites(route, source)).toEqual([
-      `${route} writes payments, but ASSIGN_UNITS_WRITES does not list it`,
+      `${route} writes expenses, but BOOKING_CREATE_WRITES does not list it`,
     ]);
   });
 

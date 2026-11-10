@@ -12,7 +12,7 @@ export function CabinChip({ bookingUnit }: { bookingUnit: BookingUnit }) {
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold",
+        "inline-flex items-center rounded-full border px-1.5 py-0.5 text-xs font-semibold",
         slot
           ? cn(slot.bg, slot.text, slot.border)
           : "bg-secondary text-secondary-foreground border-transparent"
