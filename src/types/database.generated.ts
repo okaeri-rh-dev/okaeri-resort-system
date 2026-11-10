@@ -1510,6 +1510,10 @@ export type Database = {
         Args: { p_booking_id: string; p_changes: Json; p_total?: number };
         Returns: undefined;
       };
+      verify_and_confirm_booking: {
+        Args: { p_booking_id: string; p_unit_ids: string[] };
+        Returns: undefined;
+      };
     };
     Enums: {
       [_ in never]: never;
