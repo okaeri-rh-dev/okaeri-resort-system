@@ -185,6 +185,29 @@ test.describe("Admin Bookings Management", () => {
       await expect(bookingsTable.viewTab("All")).toHaveAttribute("aria-selected", "true");
     });
 
+    test("a filter shows as a chip, and Clear filters keeps the view", async ({ page }) => {
+      const bookingsTable = new BookingsTablePage(page);
+      await bookingsTable.goto();
+      await bookingsTable.selectView("Past");
+
+      await bookingsTable.pickFilter("Airbnb");
+      await expect(page).toHaveURL(/[?&]source=airbnb/);
+      await expect(bookingsTable.filtersButton).toHaveAccessibleName("Filters, 1 active");
+
+      await bookingsTable.filterChip("Airbnb").click();
+      await expect(page).not.toHaveURL(/[?&]source=/);
+      await expect(bookingsTable.filterChip("Airbnb")).toHaveCount(0);
+
+      await bookingsTable.pickFilter("Refunded");
+      await bookingsTable.search("nonexistent-booking-xyz-999");
+      await expect(bookingsTable.noMatchesState).toBeVisible();
+
+      await bookingsTable.clearFiltersButton.click();
+      await expect(page).not.toHaveURL(/[?&](q|payment)=/);
+      await expect(page).toHaveURL(/[?&]view=past/);
+      await expect(bookingsTable.searchInput).toHaveValue("");
+    });
+
     test("old and broken params open the All view", async ({ page }) => {
       await page.goto(`${ROUTES.admin.bookings}?status=NoShow&search=OKR&page=2&view=bogus`);
       const bookingsTable = new BookingsTablePage(page);

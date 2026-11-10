@@ -30,10 +30,7 @@ test("staff create an Airbnb booking and find it with Source = Airbnb", async ({
   await dialog.getByRole("button", { name: "Confirm Booking" }).click();
   await expect(page.getByText(/Booking .+ created/)).toBeVisible();
 
-  await page.getByRole("button", { name: "Source" }).click();
-  await page.getByRole("combobox").last().click();
-  await page.getByRole("option", { name: "Airbnb" }).click();
-  await page.keyboard.press("Escape");
+  await bookings.pickFilter("Airbnb");
   await bookings.search(guestName);
 
   await expect(page.getByText(guestName).first()).toBeVisible();
