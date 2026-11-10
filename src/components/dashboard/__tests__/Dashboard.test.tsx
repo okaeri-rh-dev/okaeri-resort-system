@@ -26,7 +26,7 @@ const data = vi.hoisted(() => ({
   unitFetches: 0,
 }));
 
-vi.mock("@/stores/useBookingStore", () => ({
+vi.mock("@/hooks/useBookings", () => ({
   useAllBookings: () => ({
     data: data.bookings,
     isLoading: false,

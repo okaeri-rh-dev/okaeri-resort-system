@@ -4,7 +4,7 @@ import { focusManager, QueryClient, QueryClientProvider } from "@tanstack/react-
 import { act, renderHook } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { useAllBookings } from "../useBookingStore";
+import { useAllBookings } from "../useBookings";
 
 const listFetches = vi.hoisted(() => ({ count: 0 }));
 

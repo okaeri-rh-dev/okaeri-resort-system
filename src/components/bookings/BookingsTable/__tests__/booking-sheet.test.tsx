@@ -23,7 +23,7 @@ vi.mock("@tanstack/react-router", async () => ({
   useSearch: () => router.search,
 }));
 
-vi.mock("@/stores/useBookingStore", () => ({ useAllBookings: () => list }));
+vi.mock("@/hooks/useBookings", () => ({ useAllBookings: () => list }));
 
 vi.mock("@/hooks", () => ({ useUserRole: () => ({ role: "manager", userId: "user-1" }) }));
 

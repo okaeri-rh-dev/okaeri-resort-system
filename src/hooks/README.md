@@ -1,6 +1,6 @@
 # Hooks
 
-React hooks shared across components. Entity CRUD (bookings, guests, documents) lives in `src/stores/`; the hooks here cover money (accounts, expenses, payments, transfers), settings, roles, multi-unit booking, pricing, realtime and UI helpers.
+React hooks shared across components. Entity CRUD (guests, documents) lives in `src/stores/`; the hooks here cover bookings, money (accounts, expenses, payments, transfers), settings, roles, multi-unit booking, pricing, realtime and UI helpers.
 
 ## Conventions
 
@@ -28,6 +28,7 @@ React hooks shared across components. Entity CRUD (bookings, guests, documents) 
 | `useAvailabilityRealtime.ts`    | `useAvailabilityRealtime`: availability changes that affect multi-unit bookings               |
 | `useAvailabilityTimeline.ts`    | `useAvailabilityTimeline`, `blocksInNightsQuery`: stays and blocks for the availability timeline |
 | `useContactChannels.ts`         | `useContactChannels`, `useActiveContactChannels`, create/update/set-active/reorder mutations |
+| `useBookings.ts`                | `bookingDetailQuery`, `useAllBookings`, status/payment-proof/cancel/update booking mutations |
 | `useUnits.ts`                   | `useUnits`, `useAllUnits`, `useCabinStatesTonight`, `unitDetailQuery`, `allUnitsQuery`, create/update/delete unit mutations |
 | `useBlocks.ts`                  | `useBlocks` (current and upcoming, past on request), create/update/delete block mutations    |
 | `useDebouncedValue.ts`          | `useDebouncedValue`, `SEARCH_DEBOUNCE_MS`: delay list search queries until typing pauses     |

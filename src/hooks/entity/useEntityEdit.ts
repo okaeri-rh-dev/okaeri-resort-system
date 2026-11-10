@@ -40,7 +40,7 @@ type UseEntityEditOptions<TData> = {
 /**
  * Generic hook for updating entities with optimistic updates
  *
- * Follows the pattern from useBookingStore with:
+ * Follows the pattern from useBookings with:
  * - Optimistic updates for instant UI feedback
  * - Automatic rollback on error
  * - Toast notifications

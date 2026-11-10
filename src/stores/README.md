@@ -2,8 +2,8 @@
 
 Most files cover one entity and hold two layers:
 
-- A Zustand store (`useBookingStore`, `useGuestStore`, `useExpenseStore`, …) for client state: filters, search text, sort, selection, table state. Lists and details do not live here.
-- TanStack Query hooks beside it (`useAllBookings`, `useGuests`, …) for server data. Queries are `queryOptions` factories (`bookingDetailQuery`, …) with keys from `src/lib/query-keys.ts`.
+- A Zustand store (`useGuestStore`, `useExpenseStore`, …) for client state: filters, search text, sort, selection, table state. Lists and details do not live here.
+- TanStack Query hooks beside it (`useGuests`, …) for server data. Queries are `queryOptions` factories (`guestDetailQuery`, …) with keys from `src/lib/query-keys.ts`.
 
 ## Rules
 
