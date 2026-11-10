@@ -175,6 +175,28 @@ export const useGuests = () => {
   return useQuery(guestListQuery({ searchQuery: debouncedSearchQuery, sortBy, sortOrder }));
 };
 
+/** Up to 5 guests whose name or phone matches, for picking a guest on a new booking. */
+export const useGuestPick = (query: string) => {
+  const debouncedQuery = useDebouncedValue(query.trim(), SEARCH_DEBOUNCE_MS);
+  return useQuery(
+    queryOptions({
+      queryKey: guestKeys.pick(debouncedQuery),
+      queryFn: async () => {
+        const { data, error } = await supabase
+          .from("guests")
+          .select("guest_id, guest_name, phone_number, email, total_bookings")
+          .is("anonymized_at", null)
+          .or(ilikeAnyFilter(["guest_name", "phone_number"], debouncedQuery))
+          .order("guest_name")
+          .limit(5);
+        if (error) throw new Error(handleSupabaseError(error));
+        return data;
+      },
+      enabled: debouncedQuery.length >= 2,
+    })
+  );
+};
+
 // Fetch single guest with booking history
 
 // Get guest by email

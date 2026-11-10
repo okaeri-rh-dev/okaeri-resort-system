@@ -1,7 +1,7 @@
 import { lazy, Suspense, useState } from "react";
 
-import { createFileRoute, Link, Outlet, useMatches } from "@tanstack/react-router";
-import { Building2, ChevronDown, Plus, Users } from "lucide-react";
+import { createFileRoute, Link, Outlet, useMatches, useNavigate } from "@tanstack/react-router";
+import { Plus } from "lucide-react";
 
 import { useSelectedBookings } from "@/components/bookings/BookingsTable/hooks/useSelectedBookings";
 import { exportBookings } from "@/components/bookings/BookingsTable/utils/export";
@@ -11,10 +11,6 @@ import {
   Button,
   Dialog,
   DialogContent,
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
   FormSkeleton,
   TableSkeleton,
   toast,
@@ -38,8 +34,10 @@ export const Route = createFileRoute("/admin/bookings")({
   component: BookingsPage,
 });
 
-function BookingsPageMenu() {
+// The old forms stay reachable here (Airbnb needs them) until #340 moves Airbnb into the new flow.
+function BookingsPageMenu({ onOldSingleCabinForm }: { onOldSingleCabinForm: () => void }) {
   const { bookings } = useSelectedBookings();
+  const navigate = useNavigate();
   return (
     <ActionMenu
       label="More booking actions"
@@ -47,6 +45,11 @@ function BookingsPageMenu() {
         {
           label: "Export CSV",
           onClick: () => void exportBookings(bookings).catch(() => toast.error("Export failed")),
+        },
+        { label: "Old single-cabin form", onClick: onOldSingleCabinForm },
+        {
+          label: "Old multi-cabin form",
+          onClick: () => void navigate({ to: "/admin/bookings/new-multi" }),
         },
       ]}
     />
@@ -81,44 +84,13 @@ function BookingsPage() {
             <p className="text-muted-foreground">Manage all resort bookings and reservations</p>
           </div>
           <div className="flex items-center gap-2">
-            <BookingsPageMenu />
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button>
-                  <Plus className="mr-2 h-4 w-4" />
-                  New Booking
-                  <ChevronDown className="ml-2 h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-64">
-                <DropdownMenuItem
-                  onClick={() => setShowBookingForm(true)}
-                  className="flex cursor-pointer flex-col items-start gap-1 p-3"
-                >
-                  <div className="flex items-center gap-2">
-                    <Building2 className="h-4 w-4" />
-                    <span className="font-medium">Single Cabin Booking</span>
-                  </div>
-                  <span className="text-muted-foreground ml-6 text-xs">
-                    Book one cabin for a guest
-                  </span>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild className="cursor-pointer p-0">
-                  <Link
-                    to="/admin/bookings/new-multi"
-                    className="flex flex-col items-start gap-1 p-3"
-                  >
-                    <div className="flex items-center gap-2">
-                      <Users className="h-4 w-4" />
-                      <span className="font-medium">Multi-Cabin Booking</span>
-                    </div>
-                    <span className="text-muted-foreground ml-6 text-xs">
-                      Book multiple cabins for groups or events
-                    </span>
-                  </Link>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <BookingsPageMenu onOldSingleCabinForm={() => setShowBookingForm(true)} />
+            <Button asChild>
+              <Link to="/admin/bookings/new" search={{ step: "stay" }}>
+                <Plus aria-hidden="true" />
+                New booking
+              </Link>
+            </Button>
           </div>
         </div>
 

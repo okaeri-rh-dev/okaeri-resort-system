@@ -72,8 +72,8 @@ test.describe("Dark mode bookings and guests", () => {
   test("single cabin booking dialog reads in dark", async ({ page }) => {
     await loginInDark(page, COMPACT);
     await page.goto("/admin/bookings");
-    await page.getByRole("button", { name: /new booking/i }).click();
-    await page.getByRole("menuitem", { name: /single cabin booking/i }).click();
+    await page.getByRole("button", { name: "More booking actions" }).click();
+    await page.getByRole("menuitem", { name: "Old single-cabin form" }).click();
     const dialog = page.getByRole("dialog");
     await expect(dialog.getByText("Create New Booking")).toBeVisible();
     await expectReadable(page, "[role=dialog]");

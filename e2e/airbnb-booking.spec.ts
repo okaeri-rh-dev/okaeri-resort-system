@@ -11,8 +11,9 @@ test("staff create an Airbnb booking and find it with Source = Airbnb", async ({
   const bookings = new BookingsTablePage(page);
   await bookings.goto();
 
-  await bookings.clickNewBooking();
-  await page.getByRole("menuitem", { name: /single cabin booking/i }).click();
+  // Airbnb moves into the new booking flow in #340; until then it uses the old form.
+  await bookings.pageMenuButton.click();
+  await page.getByRole("menuitem", { name: "Old single-cabin form" }).click();
   const dialog = page.getByRole("dialog");
   await expect(dialog.getByText("Checking availability…")).toBeHidden();
   await dialog.getByLabel("Select Unit").click();

@@ -36,14 +36,14 @@ const PaymentProofView = lazy(() =>
 export function BookingSheet() {
   const { booking: bookingId } = useSearch({ from: "/admin/bookings" });
   const navigate = useNavigate({ from: "/admin/bookings" });
-  const { data: bookings, isLoading } = useAllBookings();
+  const { data: bookings, isFetching } = useAllBookings();
   const booking = bookings?.find((b) => b.booking_id === bookingId);
 
   const close = () =>
     void navigate({ search: (prev) => ({ ...prev, booking: undefined }), replace: true });
 
-  // An unknown id drops out of the URL with no error
-  const isUnknown = !!bookingId && !isLoading && !booking;
+  // An unknown id drops out of the URL with no error; a just-created booking arrives with the refetch
+  const isUnknown = !!bookingId && !isFetching && !booking;
   useEffect(() => {
     if (isUnknown) close();
   }, [isUnknown]);
