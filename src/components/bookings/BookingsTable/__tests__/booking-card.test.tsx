@@ -27,6 +27,7 @@ vi.mock("@tanstack/react-router", () => ({
 }));
 
 interface RoleFlags {
+  role: string;
   canEdit: boolean;
   canEditBookings: boolean;
   canDelete: boolean;
@@ -34,18 +35,21 @@ interface RoleFlags {
 }
 
 const ownerRole: RoleFlags = {
+  role: "owner",
   canEdit: true,
   canEditBookings: true,
   canDelete: true,
   canConfirmBookings: true,
 };
 const managerRole: RoleFlags = {
+  role: "manager",
   canEdit: true,
   canEditBookings: true,
   canDelete: false,
   canConfirmBookings: true,
 };
 const staffRole: RoleFlags = {
+  role: "staff",
   canEdit: false,
   canEditBookings: true,
   canDelete: false,
@@ -166,11 +170,58 @@ describe("BookingCard primary action", () => {
   it("hides Confirm primary when user lacks canConfirmBookings on a Pending booking", () => {
     renderCard({
       booking: { booking_status: "Pending", payment_status: "Pending" },
-      role: { ...managerRole, canConfirmBookings: false },
+      role: staffRole,
     });
     // No Confirm primary, falls through to Upload Payment because payment incomplete
     expect(screen.queryByRole("button", { name: /^confirm$/i })).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: /upload payment/i })).toBeInTheDocument();
+  });
+});
+
+describe("BookingCard check in and check out", () => {
+  // The global test clock reads 2025-09-25 in Manila
+  const checkInDay = { check_in: "2025-09-25T06:00:00Z", check_out: "2025-09-27T04:00:00Z" };
+
+  it.each([
+    ["Confirmed", "Check in", "CheckedIn"],
+    ["CheckedIn", "Check out", "CheckedOut"],
+  ] as const)("lets staff move a %s booking with %s", async (status, label, next) => {
+    const user = userEvent.setup();
+    const { updateBookingStatus } = renderCard({
+      booking: { ...checkInDay, booking_status: status, payment_status: "Completed" },
+      role: staffRole,
+    });
+    await user.click(screen.getByRole("button", { name: label }));
+    expect(updateBookingStatus.mutate).toHaveBeenCalledWith({
+      bookingId: baseBooking.booking_id,
+      status: next,
+    });
+  });
+
+  it("offers no Check in before the check-in day", () => {
+    renderCard({
+      booking: { booking_status: "Confirmed", payment_status: "Completed" },
+      role: staffRole,
+    });
+    expect(screen.queryByRole("button", { name: "Check in" })).not.toBeInTheDocument();
+  });
+
+  it("does not show staff Confirm on a Pending booking", () => {
+    renderCard({ booking: { booking_status: "Pending" }, role: staffRole });
+    expect(screen.queryByRole("button", { name: /^confirm$/i })).not.toBeInTheDocument();
+  });
+
+  it("sends a manager to Verify payment for a Pending Website booking", async () => {
+    const user = userEvent.setup();
+    renderCard({
+      booking: { booking_status: "Pending", booking_source: "Website" },
+      role: managerRole,
+    });
+    await user.click(screen.getByRole("button", { name: "Verify payment" }));
+    expect(navigateMock).toHaveBeenCalledWith({
+      to: "/admin/verify-payment/$bookingId",
+      params: { bookingId: baseBooking.booking_id },
+    });
   });
 });
 
@@ -215,7 +266,7 @@ describe("BookingCard ⋯ menu role gating", () => {
     const user = userEvent.setup();
     renderCard({
       booking: { booking_status: "Pending" },
-      role: { ...managerRole, canConfirmBookings: false },
+      role: staffRole,
     });
     const moreButtons = screen.getAllByRole("button");
     const trigger = moreButtons.find((b) => b.querySelector("svg.lucide-ellipsis"));

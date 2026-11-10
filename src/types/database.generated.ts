@@ -472,6 +472,8 @@ export type Database = {
           pricing_snapshot: Json | null;
           requested_unit_count: number | null;
           special_requests: string | null;
+          status_changed_at: string | null;
+          status_changed_by: string | null;
           tax_amount: number | null;
           total_amount: number;
           total_surcharges: number | null;
@@ -512,6 +514,8 @@ export type Database = {
           pricing_snapshot?: Json | null;
           requested_unit_count?: number | null;
           special_requests?: string | null;
+          status_changed_at?: string | null;
+          status_changed_by?: string | null;
           tax_amount?: number | null;
           total_amount: number;
           total_surcharges?: number | null;
@@ -551,6 +555,8 @@ export type Database = {
           pricing_snapshot?: Json | null;
           requested_unit_count?: number | null;
           special_requests?: string | null;
+          status_changed_at?: string | null;
+          status_changed_by?: string | null;
           tax_amount?: number | null;
           total_amount?: number;
           total_surcharges?: number | null;
