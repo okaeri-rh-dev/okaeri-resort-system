@@ -56,6 +56,18 @@ test.describe("DataTable switch on the bookings list", () => {
     await expect(amountCell).toHaveCSS("font-variant-numeric", "tabular-nums");
   });
 
+  test("a click anywhere on a table row opens that booking", async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await openBookings(page);
+
+    const pendingRow = page
+      .getByRole("table", { name: "Bookings" })
+      .getByRole("row")
+      .filter({ hasText: E2E_REF.PENDING });
+    await pendingRow.getByRole("cell", { name: "₱2,500.00" }).click();
+    await expect(page).toHaveURL(/[?&]booking=[0-9a-f-]{36}/);
+  });
+
   // The virtualized list has a sticky header, so it cannot scroll sideways: low-priority columns go.
   test("a slim table pane drops low-priority columns and keeps the row menu in view", async ({
     page,
@@ -66,8 +78,9 @@ test.describe("DataTable switch on the bookings list", () => {
 
     const table = page.getByRole("table", { name: "Bookings" });
     const pane = table.locator("xpath=../..");
-    await expect(table.getByRole("columnheader", { name: "Status" })).toBeVisible();
-    await expect(table.getByRole("columnheader", { name: "Reference" })).toHaveCount(0);
+    await expect(table.getByRole("columnheader", { name: "Reference" })).toBeVisible();
+    await expect(table.getByRole("columnheader", { name: "Payment" })).toHaveCount(0);
+    await expect(table.getByRole("columnheader", { name: "Amount" })).toHaveCount(0);
     const paneBox = (await pane.boundingBox())!;
     const tableBox = (await table.boundingBox())!;
     expect(tableBox.x + tableBox.width).toBeLessThanOrEqual(paneBox.x + paneBox.width);

@@ -62,6 +62,11 @@ export interface DataTableProps<TData> {
    * `priority: "low"` columns to fit slim panes. `renderExpandedRow` is not supported.
    */
   virtualize?: boolean;
+  /**
+   * In table form, a click anywhere on a row that is not on a link or button. Mouse only: give
+   * the row a link or button for keyboard users too.
+   */
+  onRowClick?: (row: Row<TData>) => void;
   /** Placement only. */
   className?: string;
 }
@@ -102,6 +107,7 @@ export function DataTable<TData>({
   renderExpandedRow,
   isStale = false,
   virtualize = false,
+  onRowClick,
   className,
 }: DataTableProps<TData>) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -258,7 +264,18 @@ export function DataTable<TData>({
                     ref={item ? virtualizer.measureElement : undefined}
                     data-index={item?.index}
                     aria-rowindex={item ? headerRowCount + item.index + 1 : undefined}
-                    className="group h-10 duration-150"
+                    onClick={
+                      onRowClick &&
+                      ((event) => {
+                        const target = event.target as Element;
+                        // Clicks inside a menu portal bubble through React too, so check the DOM.
+                        if (!event.currentTarget.contains(target)) return;
+                        if (target.closest("a, button, input, select, textarea, [role=menuitem]"))
+                          return;
+                        onRowClick(row);
+                      })
+                    }
+                    className={cn("group h-10 duration-150", onRowClick && "cursor-pointer")}
                   >
                     {cells.map((cell) => (
                       <TableCell

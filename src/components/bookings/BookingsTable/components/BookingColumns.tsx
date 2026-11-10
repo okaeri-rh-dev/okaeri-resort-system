@@ -91,7 +91,7 @@ export const useBookingColumns = ({
       columnHelper.accessor("total_amount", {
         header: "Amount",
         cell: ({ getValue }) => <span className="font-semibold">{formatCurrency(getValue())}</span>,
-        meta: { align: "right" },
+        meta: { align: "right", priority: "low" },
         size: 120,
       }),
 
@@ -119,7 +119,6 @@ export const useBookingColumns = ({
             {row.getValue("booking_reference")}
           </Link>
         ),
-        meta: { priority: "low" },
         size: 120,
       }),
 

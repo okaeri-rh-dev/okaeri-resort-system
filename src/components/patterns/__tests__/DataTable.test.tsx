@@ -376,3 +376,70 @@ describe("DataTable virtualized", () => {
     expect(await axe(container)).toHaveNoViolations();
   });
 });
+
+describe("DataTable row click", () => {
+  const openedGuests: string[] = [];
+  const menuClicks: string[] = [];
+  const clickableColumns: ColumnDef<StayRow>[] = [
+    ...columns,
+    {
+      id: "menu",
+      header: "Menu",
+      cell: ({ row }) => (
+        <button type="button" onClick={() => menuClicks.push(row.original.guest)}>
+          Menu for {row.original.guest}
+        </button>
+      ),
+    },
+  ];
+
+  function ClickableStaysTable() {
+    const table = useReactTable({
+      data: stays,
+      columns: clickableColumns,
+      getCoreRowModel: getCoreRowModel(),
+    });
+    return (
+      <DataTable
+        table={table}
+        label="Stays"
+        onRowClick={(row) => openedGuests.push(row.original.guest)}
+        renderCard={(row) => <StayCard row={row} />}
+      />
+    );
+  }
+
+  beforeEach(() => {
+    openedGuests.length = 0;
+    menuClicks.length = 0;
+    ResizeObserverStub.instances = [];
+    vi.stubGlobal("ResizeObserver", ResizeObserverStub);
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("opens the row when any cell is clicked", () => {
+    render(<ClickableStaysTable />);
+    ResizeObserverStub.resizeAllTo(840);
+
+    act(() => screen.getByRole("cell", { name: "₱1,200.50" }).click());
+    expect(openedGuests).toEqual(["Jose Rizal"]);
+  });
+
+  it("leaves a button inside the row to its own handler", () => {
+    render(<ClickableStaysTable />);
+    ResizeObserverStub.resizeAllTo(840);
+
+    act(() => screen.getByRole("button", { name: "Menu for Maria Santos" }).click());
+    expect(menuClicks).toEqual(["Maria Santos"]);
+    expect(openedGuests).toEqual([]);
+  });
+
+  it("has no axe violations", async () => {
+    const { container } = render(<ClickableStaysTable />);
+    ResizeObserverStub.resizeAllTo(840);
+    expect(await axe(container)).toHaveNoViolations();
+  });
+});

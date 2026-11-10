@@ -1,3 +1,5 @@
+import { useNavigate } from "@tanstack/react-router";
+
 import { withErrorBoundary } from "@/components/ErrorBoundary";
 import {
   DataTable,
@@ -41,6 +43,7 @@ function BookingsTableComponent({ className }: BookingsTableProps) {
     cancelBooking,
     updateBookingStatus,
   } = useBookingsTable();
+  const navigate = useNavigate({ from: "/admin/bookings" });
 
   if (isLoading) {
     return <TableSkeleton rows={8} columns={8} toolbar label="Loading bookings" />;
@@ -85,6 +88,9 @@ function BookingsTableComponent({ className }: BookingsTableProps) {
         table={table}
         label="Bookings"
         virtualize
+        onRowClick={(row) =>
+          void navigate({ search: (prev) => ({ ...prev, booking: row.original.booking_id }) })
+        }
         isStale={isPlaceholderData}
         renderCard={(row) => (
           <BookingCard
