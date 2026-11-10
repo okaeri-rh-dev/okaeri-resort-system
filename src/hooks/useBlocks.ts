@@ -10,6 +10,7 @@ import {
 } from "@tanstack/react-query";
 import { toast } from "sonner";
 
+import { allUnitsQuery } from "@/hooks/useUnits";
 import { afterWrite, type TableName } from "@/lib/after-write";
 import { availabilityKeys } from "@/lib/query-keys";
 import {
@@ -19,7 +20,6 @@ import {
   type BlockNights,
   type CancelAndSaveResult,
 } from "@/lib/supabase";
-import { allUnitsQuery } from "@/stores/useUnitStore";
 import type { Tables, TablesUpdate } from "@/types/database.types";
 
 export type Block = Tables<"availability_blackouts">;

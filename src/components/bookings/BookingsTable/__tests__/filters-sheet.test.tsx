@@ -37,7 +37,7 @@ vi.mock("@/hooks/useBookings", async (importOriginal) => ({
   ]),
 }));
 
-vi.mock("@/stores/useUnitStore", () => ({
+vi.mock("@/hooks/useUnits", () => ({
   useAllUnits: () => ({
     data: [
       { unit_id: "unit-1", unit_code: "C1", unit_name: "Cabin 1" },
