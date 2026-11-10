@@ -36,13 +36,9 @@ import {
   TableSearch,
   TableSkeleton,
 } from "@/components/patterns";
+import { useAccountBalances, useDeleteAccount, useReactivateAccount } from "@/hooks/useAccounts";
 import { formatCurrency, pluralize } from "@/lib/formatters";
 import { cn } from "@/lib/utils";
-import {
-  useAccountBalances,
-  useDeleteAccount,
-  useReactivateAccount,
-} from "@/stores/useAccountStore";
 import type { AccountType, AccountWithBalance } from "@/types";
 
 const AccountTypeIcon: Record<AccountType, React.ComponentType<{ className?: string }>> = {

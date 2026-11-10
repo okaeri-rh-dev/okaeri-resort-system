@@ -1,11 +1,8 @@
 /**
  * Multi-Unit Booking Zustand Store (Phase 3)
  *
- * Comprehensive state management for multi-unit bookings with:
- * - Optimistic updates with automatic rollback
- * - Conflict resolution
- * - Real-time pricing calculation
- * - Unit availability tracking
+ * Draft state for the staff multi-unit booking form: selected units,
+ * guest assignments and pricing.
  *
  * @module useMultiUnitBookingStore
  */
@@ -15,39 +12,17 @@ import { create } from "zustand";
 import { devtools, persist, subscribeWithSelector } from "zustand/middleware";
 import { immer } from "zustand/middleware/immer";
 
-import { logger } from "@/lib/logger";
 import { priceCabin } from "@/lib/pricing/cabin-pricing";
-import { hasBooleanProperty, hasProperty, hasStringProperty } from "@/lib/type-guards";
-import type { MultiUnitBookingStore, OptimisticEntry } from "@/types";
+import type { MultiUnitBookingStore } from "@/types";
 
 // Enable Immer MapSet plugin for Map and Set support
 enableMapSet();
-
-// ============================================
-// TYPE GUARDS
-// ============================================
-
-interface AvailabilityResult {
-  unit_id: string;
-  is_available: boolean;
-}
-
-function isAvailabilityResult(value: unknown): value is AvailabilityResult {
-  return (
-    hasProperty(value, "unit_id") &&
-    hasProperty(value, "is_available") &&
-    hasStringProperty(value, "unit_id") &&
-    hasBooleanProperty(value, "is_available")
-  );
-}
 
 // ============================================
 // CONSTANTS
 // ============================================
 
 const MAX_UNITS_PER_BOOKING = 10;
-const OPTIMISTIC_TTL = 5 * 60 * 1000; // 5 minutes
-const MAX_OPTIMISTIC_ENTRIES = 100;
 
 // ============================================
 // STORE IMPLEMENTATION
@@ -60,15 +35,10 @@ export const useMultiUnitBookingStore = create<MultiUnitBookingStore>()(
         immer((set, get) => ({
           // ========== INITIAL STATE ==========
 
-          bookings: new Map(),
           selectedBooking: null,
           draftBooking: null,
           selectedUnits: [],
           unitPricingCache: new Map(),
-          availabilityCache: new Map(),
-          optimisticQueue: new Map(),
-          conflictResolutionStrategy: "last-write-wins",
-          isOnline: typeof navigator !== "undefined" ? navigator.onLine : true,
           isLoading: false,
           error: null,
 
@@ -404,304 +374,6 @@ export const useMultiUnitBookingStore = create<MultiUnitBookingStore>()(
               }
             }),
 
-          // ========== AVAILABILITY CHECKING ==========
-
-          checkUnitAvailability: async (unitId, checkIn, checkOut, checkFn?) => {
-            // Check cache first
-            const cacheKey = `${unitId}-${checkIn}-${checkOut}`;
-            const cached = get().availabilityCache.get(cacheKey);
-
-            if (cached && Date.now() - new Date(cached.last_checked || 0).getTime() < 60000) {
-              return cached.is_available;
-            }
-
-            set((state: Draft<MultiUnitBookingStore>) => {
-              state.availabilityCache.set(cacheKey, {
-                is_available: false,
-                checking: true,
-                last_checked: new Date().toISOString(),
-              });
-            });
-
-            try {
-              const isAvailable = checkFn
-                ? await checkFn()
-                : await (async () => {
-                    const response = await fetch(
-                      `/api/availability/multi-unit?unit_ids=${unitId}&check_in=${checkIn}&check_out=${checkOut}`
-                    );
-                    if (!response.ok) throw new Error("Availability check failed");
-                    const data = (await response.json()) as {
-                      data: { results: Array<{ is_available: boolean }> };
-                    };
-                    return data.data.results[0].is_available;
-                  })();
-
-              set((state: Draft<MultiUnitBookingStore>) => {
-                state.availabilityCache.set(cacheKey, {
-                  is_available: isAvailable,
-                  checking: false,
-                  last_checked: new Date().toISOString(),
-                });
-              });
-
-              return isAvailable;
-            } catch (error) {
-              set((state: Draft<MultiUnitBookingStore>) => {
-                state.availabilityCache.set(cacheKey, {
-                  is_available: false,
-                  checking: false,
-                  last_checked: new Date().toISOString(),
-                });
-                state.error = error as Error;
-              });
-
-              return false;
-            }
-          },
-
-          checkMultiUnitAvailability: async (unitIds, checkIn, checkOut, checkFn?) => {
-            const results: Array<{ unit_id: string; is_available: boolean }> = [];
-
-            try {
-              const data: unknown[] = (
-                checkFn
-                  ? await checkFn()
-                  : await (async () => {
-                      const response = await fetch(
-                        `/api/availability/multi-unit?unit_ids=${unitIds.join(",")}&check_in=${checkIn}&check_out=${checkOut}`
-                      );
-                      if (!response.ok) throw new Error("Availability check failed");
-                      const json = (await response.json()) as { data: { results: unknown[] } };
-                      return json.data.results;
-                    })()
-              ) as unknown[];
-
-              data.forEach((result: unknown) => {
-                if (!isAvailabilityResult(result)) {
-                  logger.warn("Invalid availability result format", { result });
-                  return;
-                }
-                const cacheKey = `${result.unit_id}-${checkIn}-${checkOut}`;
-                set((state: Draft<MultiUnitBookingStore>) => {
-                  state.availabilityCache.set(cacheKey, {
-                    is_available: result.is_available,
-                    checking: false,
-                    last_checked: new Date().toISOString(),
-                  });
-                });
-                results.push(result);
-              });
-            } catch (error) {
-              set({ error: error as Error });
-            }
-
-            return results;
-          },
-
-          clearAvailabilityCache: (unitId?) => {
-            if (unitId) {
-              set((state: Draft<MultiUnitBookingStore>) => {
-                const keysToDelete: string[] = [];
-                state.availabilityCache.forEach((_, key) => {
-                  if (key.startsWith(unitId)) {
-                    keysToDelete.push(key);
-                  }
-                });
-                keysToDelete.forEach((key) => state.availabilityCache.delete(key));
-              });
-            } else {
-              set((state: Draft<MultiUnitBookingStore>) => {
-                state.availabilityCache.clear();
-              });
-            }
-          },
-
-          checkAllUnitsAvailability: async () => {
-            const booking = get().draftBooking || get().selectedBooking;
-            if (!booking?.check_in || !booking?.check_out) {
-              return new Map();
-            }
-
-            const results = new Map<string, boolean>();
-            const unitIds = get().selectedUnits.map((u) => u.unit_id);
-
-            try {
-              const response = await fetch(
-                `/api/availability/multi-unit?unit_ids=${unitIds.join(",")}&check_in=${booking.check_in}&check_out=${booking.check_out}`
-              );
-
-              if (!response.ok) throw new Error("Availability check failed");
-
-              const data = (await response.json()) as { data: { results: unknown[] } };
-
-              data.data.results.forEach((result: unknown) => {
-                if (!isAvailabilityResult(result)) {
-                  logger.warn("Invalid availability result format", { result });
-                  return;
-                }
-                results.set(result.unit_id, result.is_available);
-
-                set((state: Draft<MultiUnitBookingStore>) => {
-                  const unit = state.selectedUnits.find((u) => u.unit_id === result.unit_id);
-                  if (unit) {
-                    const resultWithConflicts = result as AvailabilityResult & {
-                      conflicting_bookings?: number;
-                    };
-                    unit.availability = {
-                      is_available: result.is_available,
-                      checking: false,
-                      last_checked: new Date().toISOString(),
-                      conflicts: resultWithConflicts.conflicting_bookings,
-                    };
-                  }
-                });
-              });
-            } catch (error) {
-              set({ error: error as Error });
-            }
-
-            return results;
-          },
-
-          // ========== OPTIMISTIC UPDATES ==========
-
-          addOptimisticBooking: (booking) =>
-            set((state: Draft<MultiUnitBookingStore>) => {
-              const entry: OptimisticEntry = {
-                booking,
-                timestamp: Date.now(),
-                operation: "create",
-                status: "pending",
-              };
-
-              state.optimisticQueue.set(booking.booking_id, entry);
-              state.bookings.set(booking.booking_id, booking);
-
-              // Enforce size limit
-              if (state.optimisticQueue.size > MAX_OPTIMISTIC_ENTRIES) {
-                const sortedEntries = Array.from(state.optimisticQueue.entries()).sort(
-                  (a, b) => a[1].timestamp - b[1].timestamp
-                );
-
-                const toRemove = sortedEntries.slice(
-                  0,
-                  state.optimisticQueue.size - MAX_OPTIMISTIC_ENTRIES
-                );
-                toRemove.forEach(([id]) => state.optimisticQueue.delete(id));
-              }
-            }),
-
-          updateOptimisticBooking: (bookingId, updates) =>
-            set((state: Draft<MultiUnitBookingStore>) => {
-              const existing = state.bookings.get(bookingId);
-              if (existing) {
-                const updated = { ...existing, ...updates };
-                const entry: OptimisticEntry = {
-                  booking: updated,
-                  timestamp: Date.now(),
-                  operation: "update",
-                  status: "pending",
-                };
-
-                state.optimisticQueue.set(bookingId, entry);
-                state.bookings.set(bookingId, updated);
-              }
-            }),
-
-          removeOptimisticBooking: (bookingId) =>
-            set((state: Draft<MultiUnitBookingStore>) => {
-              state.optimisticQueue.delete(bookingId);
-            }),
-
-          clearOptimisticEntry: (bookingId) =>
-            set((state: Draft<MultiUnitBookingStore>) => {
-              state.optimisticQueue.delete(bookingId);
-            }),
-
-          clearExpiredOptimistic: () =>
-            set((state: Draft<MultiUnitBookingStore>) => {
-              const now = Date.now();
-              const toRemove: string[] = [];
-
-              state.optimisticQueue.forEach((entry, id) => {
-                if (now - entry.timestamp > OPTIMISTIC_TTL) {
-                  toRemove.push(id);
-                }
-              });
-
-              toRemove.forEach((id) => state.optimisticQueue.delete(id));
-            }),
-
-          syncFromRealtime: (booking) =>
-            set((state: Draft<MultiUnitBookingStore>) => {
-              const optimisticEntry = state.optimisticQueue.get(booking.booking_id);
-
-              if (optimisticEntry) {
-                // Conflict resolution
-                const strategy = state.conflictResolutionStrategy;
-
-                if (strategy === "last-write-wins") {
-                  // Compare timestamps
-                  const localTime = new Date(optimisticEntry.booking.updated_at || 0).getTime();
-                  const serverTime = new Date(booking.updated_at || 0).getTime();
-
-                  if (serverTime > localTime) {
-                    state.selectedBooking = booking;
-                    state.bookings.set(booking.booking_id, booking);
-                  }
-                } else if (strategy === "server-wins") {
-                  state.selectedBooking = booking;
-                  state.bookings.set(booking.booking_id, booking);
-                }
-
-                state.optimisticQueue.delete(booking.booking_id);
-              } else {
-                // No conflict
-                state.selectedBooking = booking;
-                state.bookings.set(booking.booking_id, booking);
-              }
-            }),
-
-          resolveOptimisticConflict: (bookingId, serverData) =>
-            set((state: Draft<MultiUnitBookingStore>) => {
-              const optimisticEntry = state.optimisticQueue.get(bookingId);
-
-              if (!optimisticEntry) {
-                // No conflict, use server data
-                state.bookings.set(bookingId, serverData);
-                return;
-              }
-
-              switch (state.conflictResolutionStrategy) {
-                case "last-write-wins":
-                  // Keep optimistic update
-                  break;
-
-                case "server-wins":
-                  // Use server data
-                  state.bookings.set(bookingId, serverData);
-                  break;
-
-                case "user-prompt":
-                  // Store both for UI to handle
-                  logger.info("Conflict detected:", {
-                    optimistic: optimisticEntry.booking,
-                    server: serverData,
-                  });
-                  break;
-              }
-
-              state.optimisticQueue.delete(bookingId);
-            }),
-
-          // ========== NETWORK STATUS ==========
-
-          setOnlineStatus: (isOnline) =>
-            set((state: Draft<MultiUnitBookingStore>) => {
-              state.isOnline = isOnline;
-            }),
-
           // ========== STATE MANAGEMENT ==========
 
           setSelectedBooking: (booking) =>
@@ -723,11 +395,6 @@ export const useMultiUnitBookingStore = create<MultiUnitBookingStore>()(
               state.selectedUnits = [];
               state.unitPricingCache.clear();
               state.error = null;
-            }),
-
-          setConflictResolutionStrategy: (strategy) =>
-            set((state: Draft<MultiUnitBookingStore>) => {
-              state.conflictResolutionStrategy = strategy;
             }),
 
           saveDraftBooking: () =>
@@ -756,13 +423,10 @@ export const useMultiUnitBookingStore = create<MultiUnitBookingStore>()(
 
           reset: () =>
             set((state: Draft<MultiUnitBookingStore>) => {
-              state.bookings = new Map();
               state.selectedBooking = null;
               state.draftBooking = null;
               state.selectedUnits = [];
               state.unitPricingCache.clear();
-              state.availabilityCache.clear();
-              state.optimisticQueue.clear();
               state.isLoading = false;
               state.error = null;
             }),
@@ -803,7 +467,6 @@ export const useMultiUnitBookingStore = create<MultiUnitBookingStore>()(
           name: "multi-unit-booking-store",
           partialize: (state) => ({
             draftBooking: state.draftBooking,
-            conflictResolutionStrategy: state.conflictResolutionStrategy,
           }),
         }
       ),
@@ -813,35 +476,3 @@ export const useMultiUnitBookingStore = create<MultiUnitBookingStore>()(
     )
   )
 );
-
-// ============================================
-// NETWORK STATUS LISTENER
-// ============================================
-
-if (typeof window !== "undefined") {
-  window.addEventListener("online", () => {
-    useMultiUnitBookingStore.getState().setOnlineStatus(true);
-  });
-
-  window.addEventListener("offline", () => {
-    useMultiUnitBookingStore.getState().setOnlineStatus(false);
-  });
-}
-
-// ============================================
-// AUTOMATIC CLEANUP
-// ============================================
-
-// Cleanup expired optimistic entries every minute
-if (typeof window !== "undefined") {
-  setInterval(() => {
-    const store = useMultiUnitBookingStore.getState();
-    const now = Date.now();
-
-    store.optimisticQueue.forEach((entry, id) => {
-      if (now - entry.timestamp > OPTIMISTIC_TTL) {
-        store.removeOptimisticBooking(id);
-      }
-    });
-  }, 60 * 1000);
-}

@@ -6,11 +6,11 @@ import { parseISO, startOfMonth } from "date-fns";
 import { ChevronRight } from "lucide-react";
 
 import { useBlockCabins } from "@/hooks/useBlocks";
+import { useAllBookings } from "@/hooks/useBookings";
+import { allUnitsQuery } from "@/hooks/useUnits";
 import { isNeedsAction } from "@/lib/bookings/list";
 import { manilaDayOf, type ManilaDay } from "@/lib/bookings/stay";
 import { monthNumbers } from "@/lib/dashboard";
-import { useAllBookings } from "@/stores/useBookingStore";
-import { allUnitsQuery } from "@/stores/useUnitStore";
 
 import { DashboardCalendar } from "./DashboardCalendar";
 import { DashboardHeader } from "./DashboardHeader";

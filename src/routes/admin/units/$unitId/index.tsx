@@ -6,10 +6,10 @@ import { createFileRoute } from "@tanstack/react-router";
 import { DetailPageSkeleton } from "@/components/entity-detail/DetailPageSkeleton";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { Button } from "@/components/patterns";
+import { unitDetailQuery } from "@/hooks/useUnits";
 import { recentRecordAuditLogsQuery } from "@/lib/audit-hooks";
 import { AuditRole, hasAuditRole } from "@/lib/audit-roles";
 import { requireManager } from "@/lib/route-guards";
-import { unitDetailQuery } from "@/stores/useUnitStore";
 
 // Lazy load the detail page component
 const UnitDetailPage = lazy(() =>

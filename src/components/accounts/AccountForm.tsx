@@ -15,9 +15,9 @@ import {
   SelectItem,
   Textarea,
 } from "@/components/patterns";
+import { useCreateAccount, useUpdateAccount } from "@/hooks/useAccounts";
 import { sanitizeFormData } from "@/lib/security/sanitize";
 import { typeError } from "@/lib/validation/type-error";
-import { useCreateAccount, useUpdateAccount } from "@/stores/useAccountStore";
 import type { Account, AccountType } from "@/types";
 
 // Account type options

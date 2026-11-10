@@ -20,9 +20,9 @@ import {
   Textarea,
 } from "@/components/patterns";
 import { useActiveExpenseCategories } from "@/hooks/useExpenseCategories";
+import { useCreateExpense, useUpdateExpense } from "@/hooks/useExpenses";
 import { sanitizeFormData } from "@/lib/security/sanitize";
 import { toISODateString } from "@/lib/timezone";
-import { useCreateExpense, useUpdateExpense } from "@/stores/useExpenseStore";
 import type { Expense } from "@/types";
 
 // Validation schema

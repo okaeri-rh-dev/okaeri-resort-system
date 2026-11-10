@@ -4,7 +4,9 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, renderHook } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { useExpenses, useExpenseStore } from "../useExpenseStore";
+import { useExpenseStore } from "@/stores/useExpenseStore";
+
+import { useExpenses } from "../useExpenses";
 
 const searchSpy = vi.fn();
 

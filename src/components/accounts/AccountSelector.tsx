@@ -3,9 +3,9 @@ import React from "react";
 import { Building2, CreditCard, Wallet } from "lucide-react";
 
 import { SelectControl, SelectItem, type SelectControlProps } from "@/components/patterns";
+import { useActiveAccounts } from "@/hooks/useAccounts";
 import { formatCurrency } from "@/lib/formatters";
 import { cn } from "@/lib/utils";
-import { useActiveAccounts } from "@/stores/useAccountStore";
 import type { Account, AccountType } from "@/types";
 
 const AccountTypeIcon: Record<AccountType, React.ComponentType<{ className?: string }>> = {

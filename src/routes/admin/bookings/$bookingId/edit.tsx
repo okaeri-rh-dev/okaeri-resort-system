@@ -5,9 +5,9 @@ import { createFileRoute } from "@tanstack/react-router";
 import { DetailPageSkeleton } from "@/components/entity-detail/DetailPageSkeleton";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { Button } from "@/components/patterns";
+import { bookingDetailQuery } from "@/hooks/useBookings";
+import { allUnitsQuery } from "@/hooks/useUnits";
 import { AuditRole, hasAuditRole } from "@/lib/audit-roles";
-import { bookingDetailQuery } from "@/stores/useBookingStore";
-import { allUnitsQuery } from "@/stores/useUnitStore";
 
 // Lazy load the edit page component
 const BookingEditPage = lazy(() =>

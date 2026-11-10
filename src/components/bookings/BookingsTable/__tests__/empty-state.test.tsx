@@ -24,13 +24,13 @@ vi.mock("@tanstack/react-router", async () => ({
   useSearch: () => router.search,
 }));
 
-vi.mock("@/stores/useBookingStore", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("@/stores/useBookingStore")>()),
-  ...(await import("@/test/booking-store-stub")).bookingStoreHookStubs([]),
+vi.mock("@/hooks/useBookings", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/hooks/useBookings")>()),
+  ...(await import("@/test/booking-hook-stubs")).bookingHookStubs([]),
   useAllBookings: () => ({ data: loaded.bookings, isLoading: false, error: null }),
 }));
 
-vi.mock("@/stores/useUnitStore", () => ({ useAllUnits: () => ({ data: [] }) }));
+vi.mock("@/hooks/useUnits", () => ({ useAllUnits: () => ({ data: [] }) }));
 
 const checkedOut = {
   booking_id: "booking-1",

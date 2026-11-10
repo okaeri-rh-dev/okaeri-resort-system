@@ -4,7 +4,9 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { usePayments, usePaymentStore } from "../usePaymentStore";
+import { usePaymentStore } from "@/stores/usePaymentStore";
+
+import { usePayments } from "../usePayments";
 
 const rows = [
   {

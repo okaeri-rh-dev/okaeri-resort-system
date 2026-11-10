@@ -10,9 +10,9 @@ import {
   CardTitle,
   Skeleton,
 } from "@/components/patterns";
+import { useActiveAccountBalances } from "@/hooks/useAccounts";
 import { formatCurrency } from "@/lib/formatters";
 import { cn } from "@/lib/utils";
-import { useActiveAccountBalances } from "@/stores/useAccountStore";
 import type { AccountType } from "@/types";
 
 // Icon mapping

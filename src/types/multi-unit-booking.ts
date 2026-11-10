@@ -1,8 +1,7 @@
 /**
  * Type definitions for Multi-Unit Booking System (Phase 3)
  *
- * Supports booking multiple units in a single transaction with unified payment,
- * optimistic updates and conflict resolution.
+ * Supports booking multiple units in a single transaction with unified payment.
  *
  * @module MultiUnitBookingTypes
  */
@@ -151,32 +150,10 @@ export interface AdminMultiUnitBookingCreate {
 }
 
 // ============================================
-// OPTIMISTIC UPDATE TYPES
-// ============================================
-
-export interface OptimisticEntry {
-  booking: MultiUnitBooking;
-  timestamp: number;
-  operation: "create" | "update" | "delete";
-  status?: "pending" | "success" | "error";
-}
-
-// ============================================
 // STORE STATE TYPES
 // ============================================
 
-export type ConflictResolutionStrategy = "last-write-wins" | "server-wins" | "user-prompt";
-
-export interface AvailabilityStatus {
-  is_available: boolean;
-  checking: boolean;
-  last_checked?: string;
-  conflicts?: number;
-}
-
 export interface MultiUnitBookingState {
-  // Bookings collection
-  bookings: Map<string, MultiUnitBooking>;
   selectedBooking: MultiUnitBooking | null;
 
   // Draft booking state (during creation)
@@ -185,16 +162,6 @@ export interface MultiUnitBookingState {
 
   // Pricing cache
   unitPricingCache: Map<string, BookingUnit["pricing"]>;
-
-  // Availability cache
-  availabilityCache: Map<string, AvailabilityStatus>;
-
-  // Optimistic updates
-  optimisticQueue: Map<string, OptimisticEntry>;
-  conflictResolutionStrategy: ConflictResolutionStrategy;
-
-  // Network status
-  isOnline: boolean;
 
   // UI state
   isLoading: boolean;
@@ -228,40 +195,6 @@ export interface MultiUnitBookingActions {
   applyBulkDiscount: (discountPercent: number) => void;
   clearDiscount: () => void;
 
-  // ========== AVAILABILITY ACTIONS ==========
-
-  checkUnitAvailability: (
-    unitId: string,
-    checkIn: string,
-    checkOut: string,
-    checkFn?: () => Promise<boolean>
-  ) => Promise<boolean>;
-
-  checkMultiUnitAvailability: (
-    unitIds: string[],
-    checkIn: string,
-    checkOut: string,
-    checkFn?: () => Promise<unknown>
-  ) => Promise<Array<{ unit_id: string; is_available: boolean }>>;
-
-  clearAvailabilityCache: (unitId?: string) => void;
-
-  checkAllUnitsAvailability: () => Promise<Map<string, boolean>>;
-
-  // ========== OPTIMISTIC UPDATE ACTIONS ==========
-
-  addOptimisticBooking: (booking: MultiUnitBooking) => void;
-  updateOptimisticBooking: (bookingId: string, updates: Partial<MultiUnitBooking>) => void;
-  removeOptimisticBooking: (bookingId: string) => void;
-  clearOptimisticEntry: (bookingId: string) => void;
-  clearExpiredOptimistic: () => void;
-  syncFromRealtime: (booking: MultiUnitBooking) => void;
-  resolveOptimisticConflict: (bookingId: string, serverData: MultiUnitBooking) => void;
-
-  // ========== NETWORK STATUS ACTIONS ==========
-
-  setOnlineStatus: (isOnline: boolean) => void;
-
   // ========== STATE MANAGEMENT ACTIONS ==========
 
   setSelectedBooking: (booking: MultiUnitBooking | null) => void;
@@ -269,7 +202,6 @@ export interface MultiUnitBookingActions {
   clearDraftBooking: () => void;
   saveDraftBooking: () => void;
   loadDraftBooking: () => void;
-  setConflictResolutionStrategy: (strategy: ConflictResolutionStrategy) => void;
   setLoading: (loading: boolean) => void;
   setError: (error: Error | null) => void;
   reset: () => void;

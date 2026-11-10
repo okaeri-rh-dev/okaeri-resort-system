@@ -16,8 +16,8 @@ import {
   SheetTrigger,
   TableSearch,
 } from "@/components/patterns";
+import { useAllUnits } from "@/hooks/useUnits";
 import { BOOKING_SOURCES, pickedDay, type BookingsSearch } from "@/lib/bookings";
-import { useAllUnits } from "@/stores/useUnitStore";
 import { PAYMENT_STATUSES } from "@/types";
 
 import type { BookingFiltersProps } from "../types";

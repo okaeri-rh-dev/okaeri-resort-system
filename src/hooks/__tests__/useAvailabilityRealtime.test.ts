@@ -7,7 +7,6 @@ import { useAvailabilityRealtime } from "../useAvailabilityRealtime";
 const listeners = vi.hoisted(() => new Map<string, () => void>());
 const store = vi.hoisted(() => ({
   selectedUnits: [] as { unit_id: string }[],
-  clearAvailabilityCache: vi.fn(),
 }));
 
 vi.mock("@/lib/supabase", () => {
@@ -39,7 +38,6 @@ describe("useAvailabilityRealtime", () => {
 
     listeners.get("availability_blackouts")?.();
 
-    expect(store.clearAvailabilityCache).toHaveBeenCalledOnce();
     expect(toast.warning).toHaveBeenCalledWith("Availability updated", expect.anything());
   });
 
@@ -49,7 +47,6 @@ describe("useAvailabilityRealtime", () => {
 
     listeners.get("availability_blackouts")?.();
 
-    expect(store.clearAvailabilityCache).toHaveBeenCalledOnce();
     expect(toast.warning).not.toHaveBeenCalled();
   });
 });

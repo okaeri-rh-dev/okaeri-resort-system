@@ -4,8 +4,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { renderHook, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi, type MockInstance } from "vitest";
 
+import { useAnonymizeGuest, useDeleteGuest } from "@/hooks/useGuests";
 import { afterWrite } from "@/lib/after-write";
-import { useAnonymizeGuest, useDeleteGuest } from "@/stores/useGuestStore";
 
 vi.mock("@/lib/after-write", () => ({ afterWrite: vi.fn() }));
 vi.mock("@/hooks/useAuthToken", () => ({ getAccessToken: vi.fn(async () => "token") }));

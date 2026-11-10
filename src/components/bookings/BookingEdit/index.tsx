@@ -24,10 +24,10 @@ import {
   Textarea,
 } from "@/components/patterns";
 import { useUserRole } from "@/hooks";
+import { useUpdateBooking } from "@/hooks/useBookings";
 import { useMultiUnitAvailability } from "@/hooks/useMultiUnitBookingQueries";
 import { manilaDayOf, pickedDay, unavailableReason, unitNotFreeMessage } from "@/lib/bookings";
 import { bookingEditSchema, type BookingEditInput } from "@/lib/validation/entity-schemas";
-import { useUpdateBooking } from "@/stores/useBookingStore";
 import type { Booking, Unit } from "@/types/entity-detail.types";
 
 import { BookingSourceField, ConfirmationCodeField } from "../form-fields";

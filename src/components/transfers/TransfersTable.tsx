@@ -34,8 +34,8 @@ import {
   TableSearch,
   TableSkeleton,
 } from "@/components/patterns";
+import { useDeleteTransfer, useTransfers } from "@/hooks/useTransfers";
 import { formatCurrency, pluralize } from "@/lib/formatters";
-import { useDeleteTransfer, useTransfers } from "@/stores/useTransferStore";
 import type { Account, AccountTransfer, AccountType } from "@/types";
 
 const AccountTypeIcon: Record<AccountType, React.ComponentType<{ className?: string }>> = {

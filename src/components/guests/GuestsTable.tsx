@@ -23,6 +23,7 @@ import {
   Download,
   Edit,
   Eye,
+  Loader2,
   Mail,
   Phone,
 } from "lucide-react";
@@ -55,19 +56,14 @@ import {
   TableSkeleton,
 } from "@/components/patterns";
 import { useUserRole } from "@/hooks";
+import { useDeleteGuest, useExportGuests, useGuestBookings, useGuests } from "@/hooks/useGuests";
 import { formatCurrency, formatPhoneNumber, formatTableDate } from "@/lib/formatters";
 import { logger } from "@/lib/logger";
 import { statusBadgeProps } from "@/lib/status-tone";
 import { cn } from "@/lib/utils";
+import { useGuestStore } from "@/stores/useGuestStore";
 import type { Guest } from "@/types";
 
-import {
-  useDeleteGuest,
-  useExportGuests,
-  useGuestBookings,
-  useGuests,
-  useGuestStore,
-} from "../../stores/useGuestStore";
 import { GuestEditDialog } from "./GuestEditDialog";
 
 const columnHelper = createColumnHelper<Guest>();
@@ -262,18 +258,23 @@ const GuestsTableComponent: React.FC<GuestsTableProps> = ({
     }
   };
 
-  const confirmDeleteGuest = useCallback(async () => {
-    if (!guestToDelete) return;
-    try {
-      await deleteGuest.mutateAsync(guestToDelete.guest_id);
-      toast.success("Guest deleted successfully");
-      logger.info("Guest deleted successfully");
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to delete guest");
-    } finally {
-      setGuestToDelete(null);
-    }
-  }, [deleteGuest, guestToDelete]);
+  const confirmDeleteGuest = useCallback(
+    async (event: React.MouseEvent) => {
+      // Keep the dialog open while the server decides; delete can refuse with a 409
+      event.preventDefault();
+      if (!guestToDelete) return;
+      try {
+        await deleteGuest.mutateAsync(guestToDelete.guest_id);
+        toast.success("Guest deleted successfully");
+        logger.info("Guest deleted successfully");
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : "Failed to delete guest");
+      } finally {
+        setGuestToDelete(null);
+      }
+    },
+    [deleteGuest, guestToDelete]
+  );
 
   // Export action
   const handleExport = () => {
@@ -631,7 +632,10 @@ const GuestsTableComponent: React.FC<GuestsTableProps> = ({
       )}
 
       {/* Delete Guest Confirmation Dialog */}
-      <AlertDialog open={!!guestToDelete} onOpenChange={(open) => !open && setGuestToDelete(null)}>
+      <AlertDialog
+        open={!!guestToDelete}
+        onOpenChange={(open) => !open && !deleteGuest.isPending && setGuestToDelete(null)}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Guest</AlertDialogTitle>
@@ -641,11 +645,15 @@ const GuestsTableComponent: React.FC<GuestsTableProps> = ({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={deleteGuest.isPending}>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={confirmDeleteGuest}
+              disabled={deleteGuest.isPending}
               className={buttonVariants({ variant: "destructive" })}
             >
+              {deleteGuest.isPending && (
+                <Loader2 className="size-4 animate-spin" aria-hidden="true" />
+              )}
               Delete
             </AlertDialogAction>
           </AlertDialogFooter>

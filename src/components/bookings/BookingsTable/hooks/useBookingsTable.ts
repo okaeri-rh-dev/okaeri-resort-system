@@ -8,12 +8,12 @@ import {
   type VisibilityState,
 } from "@tanstack/react-table";
 
-import { hasBookingFilters, parseBookingsSearch } from "@/lib/bookings";
 import {
   useCancelBooking,
   useUpdateBookingStatus,
   useUploadPaymentProof,
-} from "@/stores/useBookingStore";
+} from "@/hooks/useBookings";
+import { hasBookingFilters, parseBookingsSearch } from "@/lib/bookings";
 import type { Booking } from "@/types";
 
 import { useBookingColumns } from "../components/BookingColumns";
