@@ -100,3 +100,25 @@ _Avoid_: Remaining amount, due
 **Contact channel**:
 One way a guest can reach the resort, one of: mobile number, Viber, WhatsApp, Messenger, email, Facebook or Instagram. Each has an optional label and can be hidden from guests without being deleted. The resort keeps an ordered list of them.
 _Avoid_: Contact details, contact info, social link, contact (alone, which means a guest's own phone or email)
+
+### Documents
+
+**Document**:
+A quotation or invoice that staff make as a PDF for a client. Internal tracking only, never an official receipt.
+_Avoid_: Receipt, official receipt
+
+**Quotation**:
+A document that offers a price before a stay is booked.
+_Avoid_: Quote, estimate
+
+**Invoice**:
+A document that asks a client to pay for a stay.
+_Avoid_: Bill, receipt
+
+**Document number**:
+The number on a document: its type prefix, the Manila year, and a count that restarts each year for each type (for example `QUO-2026-0001`). Numbers are unique, but gaps are allowed.
+_Avoid_: Reference, receipt number
+
+**Letterhead**:
+The resort's name, tagline, address and contact lines printed at the top of every document. The resort has one letterhead.
+_Avoid_: Header, branding
