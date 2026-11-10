@@ -11,7 +11,7 @@ interface MutationLike<TVariables> {
 
 export interface BookingCardProps {
   booking: Booking;
-  onUploadPayment: () => void;
+  onRecordPayment: () => void;
   onCancel: () => void;
   updateBookingStatus: MutationLike<{ bookingId: string; status: BookingStatus }>;
 }

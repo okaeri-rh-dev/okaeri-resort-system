@@ -10,7 +10,7 @@ import { ROUTES, TIMEOUTS } from "../fixtures/test-data";
  * - Desktop: Table view with rows
  * - Mobile: Card-based layout with ListCard components
  * - Booking references: links to /admin/bookings/$bookingId
- * - Actions menu: Edit Booking, Upload Payment, Confirm, Cancel, Delete
+ * - Actions menu: Record payment, Edit, Undo check-in / check-out, Cancel
  * - BookingFilters component for search/filters
  */
 export class BookingsTablePage {
@@ -273,7 +273,7 @@ export class BookingsTablePage {
 
   /**
    * Click action in menu
-   * Menu items: Edit Booking, Upload Payment, Confirm, Cancel, Delete
+   * Menu items: Record payment, Edit, Undo check-in / check-out, Cancel
    */
   async clickAction(actionName: string) {
     await this.page.getByRole("menuitem", { name: new RegExp(actionName, "i") }).click();
@@ -291,24 +291,16 @@ export class BookingsTablePage {
    */
   async editBooking(reference: string) {
     await this.openActionsMenu(reference);
-    await this.clickAction("Edit Booking");
+    await this.clickAction("^Edit$");
     await this.page.waitForURL(/\/edit/);
   }
 
   /**
-   * Upload payment via actions menu
+   * Record payment via actions menu
    */
-  async uploadPayment(reference: string) {
+  async recordPayment(reference: string) {
     await this.openActionsMenu(reference);
-    await this.clickAction("Upload Payment");
-  }
-
-  /**
-   * Confirm booking via actions menu
-   */
-  async confirmBooking(reference: string) {
-    await this.openActionsMenu(reference);
-    await this.clickAction("Confirm");
+    await this.clickAction("Record payment");
   }
 
   /**

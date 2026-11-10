@@ -158,6 +158,7 @@ export const multiUnitBookingKeys = {
 
 export const userRoleKeys = {
   current: ["user-role", "current"] as const,
+  currentId: ["user-role", "current-id"] as const,
 };
 
 export const pendingUsersKeys = {

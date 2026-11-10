@@ -25,6 +25,19 @@ test("staff check in a Confirmed booking on its check-in day", async ({ page }) 
   await expect(row.getByRole("button", { name: "Check in" })).toHaveCount(0);
 });
 
+test("staff check out a booking with a balance through the dialog", async ({ page }) => {
+  const row = await openBooking(page, E2E_REF.CHECK_OUT);
+  await expect(row).toContainText("₱2,500.00 due");
+  await row.getByRole("button", { name: "Check out" }).click();
+
+  const dialog = page.getByRole("alertdialog");
+  await expect(dialog.getByRole("button", { name: "Record payment" })).toBeVisible();
+  await dialog.getByRole("button", { name: "Check out anyway" }).click();
+
+  await expect(row.getByRole("button", { name: "Check out" })).toHaveCount(0);
+  await expect(row).toContainText("Checked Out");
+});
+
 test("staff do not see Confirm on a Pending booking", async ({ page }) => {
   const row = await openBooking(page, E2E_REF.PENDING);
   await expect(row.getByRole("button", { name: /^Confirm$/ })).toHaveCount(0);

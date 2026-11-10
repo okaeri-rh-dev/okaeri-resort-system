@@ -4,6 +4,7 @@ import {
   isNeedsAction,
   mainActionFor,
   needsActionReason,
+  overflowActionsFor,
   parseBookingsSearch,
   selectBookings,
   toStayInstants,
@@ -316,5 +317,52 @@ describe("mainActionFor", () => {
       check_in: "2026-10-15T16:30:00.000Z",
     });
     expect(mainActionFor(early, "staff", TODAY)).toBeUndefined();
+  });
+});
+
+describe("overflowActionsFor", () => {
+  const NOW = new Date("2026-10-15T04:00:00Z");
+  const due = { total_amount: 5000, payments: [{ amount: 2000, status: "Active" }] };
+  const paid = { total_amount: 5000, payments: [{ amount: 5000, status: "Active" }] };
+  const items = (
+    status: BookingStatus,
+    role: "staff" | "manager" | "owner" | "admin" | undefined,
+    fields: Partial<Booking> = due,
+    actor?: string
+  ) =>
+    overflowActionsFor(
+      booking(status, "2026-10-15", "2026-10-17", fields),
+      role,
+      TODAY,
+      actor,
+      NOW
+    );
+
+  it.each([
+    ["Pending", "manager", due, ["Record payment", "Edit", "Cancel"]],
+    ["Pending", "staff", due, ["Record payment", "Edit"]],
+    ["Confirmed", "owner", paid, ["Edit", "Cancel"]],
+    ["Confirmed", "staff", paid, ["Edit"]],
+    ["CheckedIn", "staff", due, ["Record payment", "Edit"]],
+    ["CheckedIn", "admin", paid, ["Edit", "Undo check-in"]],
+    ["CheckedOut", "staff", due, ["Record payment"]],
+    ["CheckedOut", "staff", paid, []],
+    ["CheckedOut", "manager", due, ["Record payment", "Undo check-out"]],
+    ["Cancelled", "admin", due, []],
+    ["Pending", undefined, due, []],
+  ] as const)("lists %s for %s (%o): %o", (status, role, fields, expected) => {
+    expect(items(status, role, fields)).toEqual(expected);
+  });
+
+  it("lets the user who checked in undo it within 2 minutes, not after", () => {
+    const changed = (secondsAgo: number) => ({
+      ...paid,
+      status_changed_by: "staff-1",
+      status_changed_at: new Date(NOW.getTime() - secondsAgo * 1000).toISOString(),
+    });
+    expect(items("CheckedIn", "staff", changed(119), "staff-1")).toContain("Undo check-in");
+    expect(items("CheckedOut", "staff", changed(60), "staff-1")).toEqual(["Undo check-out"]);
+    expect(items("CheckedIn", "staff", changed(121), "staff-1")).not.toContain("Undo check-in");
+    expect(items("CheckedIn", "staff", changed(30), "staff-2")).not.toContain("Undo check-in");
   });
 });

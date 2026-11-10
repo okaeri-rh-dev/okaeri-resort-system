@@ -1,32 +1,17 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback } from "react";
 
 import { useNavigate } from "@tanstack/react-router";
 import { format } from "date-fns";
-import { Upload } from "lucide-react";
 
-import {
-  ActionMenu,
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  Button,
-  ListCard,
-  StatusBadge,
-} from "@/components/patterns";
-import { useUserRole } from "@/hooks";
-import { canTransitionStatus } from "@/lib/bookings";
+import { ListCard, StatusBadge } from "@/components/patterns";
 import { formatCurrency } from "@/lib/formatters";
 import { statusBadgeProps } from "@/lib/status-tone";
 import { cn } from "@/lib/utils";
-import type { BookingStatus } from "@/types";
 import { utcToResortTime } from "@/utils/date-helpers";
 
 import type { BookingCardProps } from "../types";
+import { BalanceLabel } from "./BalanceLabel";
+import { BookingOverflowMenu } from "./BookingOverflowMenu";
 import { CabinChip } from "./CabinChip";
 import { MainActionButton } from "./MainActionButton";
 import { SourceBadge } from "./SourceBadge";
@@ -76,14 +61,11 @@ const PaymentDot: React.FC<{ status: string | null | undefined }> = ({ status })
 
 export const BookingCard: React.FC<BookingCardProps> = ({
   booking,
-  onUploadPayment,
+  onRecordPayment,
   onCancel,
   updateBookingStatus,
 }) => {
   const navigate = useNavigate({ from: "/admin/bookings" });
-  const { canEdit, canEditBookings, canConfirmBookings } = useUserRole();
-  const [showCancelDialog, setShowCancelDialog] = useState(false);
-
   const units = booking.booking_units || [];
   const nights = getNights(booking.check_in, booking.check_out);
 
@@ -94,48 +76,6 @@ export const BookingCard: React.FC<BookingCardProps> = ({
     });
   }, [navigate, booking.booking_id]);
 
-  const handleEdit = useCallback(() => {
-    navigate({
-      to: "/admin/bookings/$bookingId/edit",
-      params: { bookingId: booking.booking_id },
-    });
-  }, [navigate, booking.booking_id]);
-
-  const handleConfirm = useCallback(() => {
-    updateBookingStatus.mutate({
-      bookingId: booking.booking_id,
-      status: "Confirmed" as BookingStatus,
-    });
-  }, [updateBookingStatus, booking.booking_id]);
-
-  const confirmCancel = useCallback(() => {
-    onCancel();
-    setShowCancelDialog(false);
-  }, [onCancel]);
-
-  const isPending = booking.booking_status === "Pending";
-  const isCancelled = booking.booking_status === "Cancelled";
-  const paymentIncomplete = booking.payment_status !== "Completed";
-
-  const showPaymentPrimary = !isCancelled && paymentIncomplete;
-
-  const menuActions = [
-    ...(canEditBookings ? [{ label: "Edit Booking", onClick: handleEdit }] : []),
-    ...(paymentIncomplete && !isCancelled
-      ? [{ label: "Upload Payment", onClick: onUploadPayment }]
-      : []),
-    ...(canConfirmBookings && isPending ? [{ label: "Confirm", onClick: handleConfirm }] : []),
-    ...(canEdit && canTransitionStatus(booking.booking_status as BookingStatus, "Cancelled")
-      ? [
-          {
-            label: "Cancel",
-            onClick: () => setShowCancelDialog(true),
-            variant: "destructive" as const,
-          },
-        ]
-      : []),
-  ];
-
   const handleInfoKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
     if (e.key === "Enter" || e.key === " ") {
       e.preventDefault();
@@ -144,101 +84,77 @@ export const BookingCard: React.FC<BookingCardProps> = ({
   };
 
   return (
-    <>
-      <ListCard className="space-y-2">
-        {/* Header: identity (left) + status/menu (right) */}
-        <div className="flex items-start justify-between gap-2">
-          <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-1.5">
-              <span className="text-foreground text-base font-semibold">{booking.guest_name}</span>
-              <SourceBadge source={booking.booking_source} />
-            </div>
-            <div className="text-muted-foreground text-xs tabular-nums">
-              {booking.booking_reference}
-            </div>
+    <ListCard className="space-y-2">
+      {/* Header: identity (left) + status/menu (right) */}
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className="text-foreground text-base font-semibold">{booking.guest_name}</span>
+            <SourceBadge source={booking.booking_source} />
           </div>
-          <div className="flex items-center gap-1">
-            <StatusBadge {...statusBadgeProps(booking.booking_status, "Pending")} />
-            {menuActions.length > 0 && <ActionMenu actions={menuActions} />}
+          <div className="text-muted-foreground text-xs tabular-nums">
+            {booking.booking_reference}
           </div>
         </div>
+        <div className="flex items-center gap-1">
+          <StatusBadge {...statusBadgeProps(booking.booking_status, "Pending")} />
+          <BookingOverflowMenu
+            booking={booking}
+            updateBookingStatus={updateBookingStatus}
+            onRecordPayment={onRecordPayment}
+            onCancel={onCancel}
+          />
+        </div>
+      </div>
 
-        {/* Tappable info zone: dates + facts */}
-        <div
-          role="button"
-          tabIndex={0}
-          onClick={handleViewBooking}
-          onKeyDown={handleInfoKeyDown}
-          aria-label={`View booking ${booking.booking_reference}`}
-          className="focus-visible:bg-muted active:bg-muted -mx-1 cursor-pointer space-y-1.5 rounded px-1 py-1 transition-colors focus-visible:outline-none"
-        >
-          {/* Facts strip: dates on the left, nights · guests pushed right */}
-          <div className="text-muted-foreground flex flex-wrap items-start justify-between gap-x-3 gap-y-0.5 text-sm">
-            <span className="text-foreground font-semibold">
-              {formatStayRange(booking.check_in, booking.check_out)}
+      {/* Tappable info zone: dates + facts */}
+      <div
+        role="button"
+        tabIndex={0}
+        onClick={handleViewBooking}
+        onKeyDown={handleInfoKeyDown}
+        aria-label={`View booking ${booking.booking_reference}`}
+        className="focus-visible:bg-muted active:bg-muted -mx-1 cursor-pointer space-y-1.5 rounded px-1 py-1 transition-colors focus-visible:outline-none"
+      >
+        {/* Facts strip: dates on the left, nights · guests pushed right */}
+        <div className="text-muted-foreground flex flex-wrap items-start justify-between gap-x-3 gap-y-0.5 text-sm">
+          <span className="text-foreground font-semibold">
+            {formatStayRange(booking.check_in, booking.check_out)}
+          </span>
+          <div className="flex items-center gap-x-2">
+            <span>
+              {nights} {nights === 1 ? "night" : "nights"}
             </span>
-            <div className="flex items-center gap-x-2">
-              <span>
-                {nights} {nights === 1 ? "night" : "nights"}
-              </span>
-              <span aria-hidden>·</span>
-              <span>
-                {booking.num_guests} {booking.num_guests === 1 ? "guest" : "guests"}
-              </span>
-            </div>
-          </div>
-
-          {/* Units · amount · payment dot */}
-          <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
-            <div className="flex flex-wrap gap-1">
-              {units.map((bu) => (
-                <CabinChip key={bu.booking_unit_id} bookingUnit={bu} />
-              ))}
-            </div>
-            <div className="flex items-center gap-3">
-              <span className="text-foreground text-sm font-semibold tabular-nums">
-                {formatCurrency(booking.total_amount)}
-              </span>
-              <PaymentDot status={booking.payment_status} />
-            </div>
+            <span aria-hidden>·</span>
+            <span>
+              {booking.num_guests} {booking.num_guests === 1 ? "guest" : "guests"}
+            </span>
           </div>
         </div>
 
-        <MainActionButton
-          booking={booking}
-          updateBookingStatus={updateBookingStatus}
-          className="w-full"
-          fallback={
-            showPaymentPrimary && (
-              <Button onClick={onUploadPayment} variant="outline" size="sm" className="w-full">
-                <Upload className="mr-1.5 h-4 w-4" />
-                Upload Payment
-              </Button>
-            )
-          }
-        />
-      </ListCard>
+        {/* Units · amount · payment dot */}
+        <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
+          <div className="flex flex-wrap gap-1">
+            {units.map((bu) => (
+              <CabinChip key={bu.booking_unit_id} bookingUnit={bu} />
+            ))}
+          </div>
+          <div className="flex items-center gap-3">
+            <span className="text-foreground text-sm font-semibold tabular-nums">
+              {formatCurrency(booking.total_amount)}
+            </span>
+            <BalanceLabel booking={booking} />
+            <PaymentDot status={booking.payment_status} />
+          </div>
+        </div>
+      </div>
 
-      <AlertDialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Cancel booking</AlertDialogTitle>
-            <AlertDialogDescription>
-              {booking.booking_reference} will be cancelled and its unit freed for these days. This
-              cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Keep booking</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={confirmCancel}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              Cancel booking
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </>
+      <MainActionButton
+        booking={booking}
+        updateBookingStatus={updateBookingStatus}
+        onRecordPayment={onRecordPayment}
+        className="w-full"
+      />
+    </ListCard>
   );
 };

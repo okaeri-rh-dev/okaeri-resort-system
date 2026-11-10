@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { outstandingBalance } from "@/lib/dashboard";
 import { PAYMENT_STATUSES, type Booking } from "@/types";
 import type { AppRoleName } from "@/types/app-role";
 
@@ -114,6 +115,36 @@ export const mainActionFor = (
     default:
       return undefined;
   }
+};
+
+export type OverflowAction =
+  "Record payment" | "Edit" | "Undo check-in" | "Undo check-out" | "Cancel";
+
+const SELF_UNDO_MS = 2 * 60 * 1000;
+
+/** The menu items beside the main action, in a fixed order; the database judges undo again (docs/adr/0007). */
+export const overflowActionsFor = (
+  booking: Booking,
+  role: AppRoleName | null | undefined,
+  _today: ManilaDay,
+  actor: string | null | undefined,
+  now: Date
+): OverflowAction[] => {
+  if (!role) return [];
+  const isManager = role !== "staff";
+  const status = booking.booking_status;
+  const changedAt = booking.status_changed_at ? Date.parse(booking.status_changed_at) : NaN;
+  const canUndo =
+    isManager ||
+    (!!actor && booking.status_changed_by === actor && now.getTime() - changedAt <= SELF_UNDO_MS);
+
+  const items: OverflowAction[] = [];
+  if (status !== "Cancelled" && outstandingBalance(booking) > 0) items.push("Record payment");
+  if (status === "Pending" || status === "Confirmed" || status === "CheckedIn") items.push("Edit");
+  if (status === "CheckedIn" && canUndo) items.push("Undo check-in");
+  if (status === "CheckedOut" && canUndo) items.push("Undo check-out");
+  if (isManager && (status === "Pending" || status === "Confirmed")) items.push("Cancel");
+  return items;
 };
 
 const inView = (booking: Booking, view: BookingView | undefined, today: ManilaDay) => {
