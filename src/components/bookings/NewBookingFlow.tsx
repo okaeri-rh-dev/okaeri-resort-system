@@ -52,10 +52,10 @@ const STEP_TITLES: Record<Step, string> = {
   review: "Review",
 };
 
-// Airbnb joins in #340 with its payout step.
 const SOURCES: { value: StaffBookingSource; hint: string }[] = [
   { value: "Direct", hint: "Phone, Messenger, a repeat guest" },
   { value: "Walk-in", hint: "The guest is here now" },
+  { value: "Airbnb", hint: "Booked and paid on Airbnb" },
 ];
 const METHODS = [
   { value: "GCash", label: "GCash" },
@@ -78,6 +78,8 @@ interface Draft {
   email: string;
   isNewGuest: boolean;
   method?: PaymentMethod;
+  payout: string;
+  confirmationCode: string;
   notes: string;
 }
 
@@ -88,6 +90,8 @@ const EMPTY_DRAFT: Draft = {
   phone: "",
   email: "",
   isNewGuest: false,
+  payout: "",
+  confirmationCode: "",
   notes: "",
 };
 
@@ -135,7 +139,11 @@ export function NewBookingFlow() {
     const pricing = nights > 0 ? priceCabin(unit, pricingConfig, draft, cabin.guests) : null;
     return [{ ...cabin, unit, subtotal: pricing?.unit_total ?? 0 }];
   });
-  const total = lines.reduce((sum, line) => sum + line.subtotal, 0);
+  const isAirbnb = draft.source === "Airbnb";
+  const payout = Number(draft.payout);
+  // An Airbnb booking's total is the payout (ADR 0006).
+  const total =
+    isAirbnb && payout > 0 ? payout : lines.reduce((sum, line) => sum + line.subtotal, 0);
 
   const takenCabin = lines.find((line) => notFree(line.unitId));
   const problems: Record<Step, string | null> = {
@@ -154,10 +162,16 @@ export function NewBookingFlow() {
         ? "Enter the guest's name or pick an existing guest"
         : !draft.guestId && !draft.isNewGuest
           ? "Pick an existing guest or choose New guest"
-          : !draft.guestId && !draft.phone.trim()
+          : !draft.guestId && !isAirbnb && !draft.phone.trim()
             ? "Enter a phone number"
             : null,
-    payment: draft.method ? null : "Pick how the guest pays",
+    payment: isAirbnb
+      ? payout > 0
+        ? null
+        : "Enter the Airbnb payout"
+      : draft.method
+        ? null
+        : "Pick how the guest pays",
     review: null,
   };
 
@@ -175,7 +189,8 @@ export function NewBookingFlow() {
 
   const createBooking = useCreateMultiUnitBooking();
   const save = async () => {
-    if (!draft.checkIn || !draft.checkOut || !draft.method) return;
+    const { method } = draft;
+    if (!draft.checkIn || !draft.checkOut || (!isAirbnb && !method)) return;
     try {
       const booking = await createBooking.mutateAsync({
         primary_guest: {
@@ -187,8 +202,10 @@ export function NewBookingFlow() {
         check_in: draft.checkIn,
         check_out: draft.checkOut,
         units: draft.cabins.map((cabin) => ({ unit_id: cabin.unitId, num_guests: cabin.guests })),
-        // No amount: the booking starts Pending with no payment recorded.
-        payment: { method: draft.method },
+        // Airbnb starts Confirmed and fully paid; otherwise no amount, so it starts Pending.
+        ...(isAirbnb
+          ? { payout, airbnb_confirmation_code: draft.confirmationCode.trim() || undefined }
+          : method && { payment: { method } }),
         special_requests: draft.notes.trim() || undefined,
         booking_source: draft.source,
         source: "web",
@@ -285,7 +302,9 @@ export function NewBookingFlow() {
             <>
               <SourceChoice
                 value={draft.source}
-                onChange={(source) => update({ source, method: undefined })}
+                onChange={(source) =>
+                  update({ source, method: undefined, payout: "", confirmationCode: "" })
+                }
               />
               <StayDates draft={draft} nights={nights} update={update} />
               <CabinPicker
@@ -299,7 +318,9 @@ export function NewBookingFlow() {
             </>
           )}
           {step === "guest" && <GuestPicker draft={draft} update={update} />}
-          {step === "payment" && <PaymentStep draft={draft} update={update} />}
+          {step === "payment" && (
+            <PaymentStep draft={draft} update={update} cabinCount={lines.length} />
+          )}
           {step === "review" && (
             <Card>
               <CardContent className="space-y-4 pt-4">
@@ -322,7 +343,17 @@ export function NewBookingFlow() {
                     </>
                   )}
                   <dt className="text-muted-foreground">Payment</dt>
-                  <dd>{METHODS.find((m) => m.value === draft.method)?.label}</dd>
+                  <dd>
+                    {isAirbnb
+                      ? "Airbnb payout"
+                      : METHODS.find((m) => m.value === draft.method)?.label}
+                  </dd>
+                  {isAirbnb && draft.confirmationCode.trim() && (
+                    <>
+                      <dt className="text-muted-foreground">Airbnb code</dt>
+                      <dd>{draft.confirmationCode.trim().toUpperCase()}</dd>
+                    </>
+                  )}
                   {draft.notes && (
                     <>
                       <dt className="text-muted-foreground">Notes</dt>
@@ -688,7 +719,9 @@ function GuestPicker({ draft, update }: { draft: Draft; update: Update }) {
       {draft.isNewGuest && (
         <>
           <div className="space-y-2">
-            <Label htmlFor={`${ids}-phone`}>Phone</Label>
+            <Label htmlFor={`${ids}-phone`}>
+              {draft.source === "Airbnb" ? "Phone (optional)" : "Phone"}
+            </Label>
             <Input
               id={`${ids}-phone`}
               type="tel"
@@ -716,8 +749,70 @@ function GuestPicker({ draft, update }: { draft: Draft; update: Update }) {
   );
 }
 
-function PaymentStep({ draft, update }: { draft: Draft; update: Update }) {
-  const notesId = useId();
+function PaymentStep({
+  draft,
+  update,
+  cabinCount,
+}: {
+  draft: Draft;
+  update: Update;
+  cabinCount: number;
+}) {
+  const ids = useId();
+  const notes = (
+    <div className="space-y-2">
+      <Label htmlFor={`${ids}-notes`}>Notes (optional)</Label>
+      <Textarea
+        id={`${ids}-notes`}
+        rows={2}
+        placeholder="Early check-in, extra bed, …"
+        value={draft.notes}
+        onChange={(e) => update({ notes: e.target.value })}
+      />
+    </div>
+  );
+
+  if (draft.source === "Airbnb") {
+    return (
+      <>
+        <div className="space-y-2">
+          <Label htmlFor={`${ids}-payout`}>Payout (₱)</Label>
+          <Input
+            id={`${ids}-payout`}
+            type="number"
+            inputMode="decimal"
+            step="0.01"
+            min={0}
+            placeholder="4500.00"
+            aria-describedby={`${ids}-payout-hint`}
+            value={draft.payout}
+            onChange={(e) => update({ payout: e.target.value })}
+          />
+          <p id={`${ids}-payout-hint`} className="text-muted-foreground text-xs">
+            The amount Airbnb pays the resort for this stay, after Airbnb&apos;s fee. Not the price
+            the guest paid on Airbnb.
+            {cabinCount > 1 &&
+              " The payout is split across cabins in proportion to their usual prices."}{" "}
+            The booking starts Confirmed and fully paid.
+          </p>
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor={`${ids}-code`}>Airbnb confirmation code (optional)</Label>
+          <Input
+            id={`${ids}-code`}
+            autoComplete="off"
+            autoCapitalize="characters"
+            spellCheck={false}
+            placeholder="HMABC123"
+            value={draft.confirmationCode}
+            onChange={(e) => update({ confirmationCode: e.target.value })}
+          />
+        </div>
+        {notes}
+      </>
+    );
+  }
+
   return (
     <>
       <fieldset className="space-y-2">
@@ -747,16 +842,7 @@ function PaymentStep({ draft, update }: { draft: Draft; update: Update }) {
           deposit is in.
         </p>
       </fieldset>
-      <div className="space-y-2">
-        <Label htmlFor={notesId}>Notes (optional)</Label>
-        <Textarea
-          id={notesId}
-          rows={2}
-          placeholder="Early check-in, extra bed, …"
-          value={draft.notes}
-          onChange={(e) => update({ notes: e.target.value })}
-        />
-      </div>
+      {notes}
     </>
   );
 }
@@ -799,7 +885,10 @@ function PriceSummary({
           {formatCurrency(total)}
         </span>
       </div>
-      <p className="text-muted-foreground text-xs">{draft.source} · Starts Pending</p>
+      <p className="text-muted-foreground text-xs">
+        {draft.source} ·{" "}
+        {draft.source === "Airbnb" ? "Total is the payout · Starts Confirmed" : "Starts Pending"}
+      </p>
     </div>
   );
 }

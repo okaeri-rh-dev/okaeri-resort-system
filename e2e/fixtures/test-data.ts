@@ -93,7 +93,6 @@ export const ROUTES = {
     bookingDetail: (id: string) => `/admin/bookings/${id}`,
     bookingEdit: (id: string) => `/admin/bookings/${id}/edit`,
     bookingAssignUnits: (id: string) => `/admin/bookings/${id}/assign-units`,
-    newMultiBooking: "/admin/bookings/new-multi",
     bookingsQueue: "/admin/bookings/queue",
     units: "/admin/units",
     unitDetail: (id: string) => `/admin/units/${id}`,
