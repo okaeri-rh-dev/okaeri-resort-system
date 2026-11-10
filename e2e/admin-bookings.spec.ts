@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 
+import { E2E_REF } from "../scripts/e2e/fixtures";
 import { loginAsAdmin, loginAsStaff } from "./fixtures/auth";
 import { ROUTES } from "./fixtures/test-data";
 import { BookingsTablePage } from "./pages/BookingsTablePage";
@@ -192,6 +193,57 @@ test.describe("Admin Bookings Management", () => {
 
       await expect(bookingsTable.viewTab("All")).toHaveAttribute("aria-selected", "true");
       await expect(bookingsTable.searchInput).toHaveValue("");
+    });
+  });
+
+  test.describe("Booking sheet", () => {
+    test("a booking opens in a sheet, links to its full page, and Back closes it", async ({
+      page,
+    }) => {
+      const bookingsTable = new BookingsTablePage(page);
+      await bookingsTable.goto();
+      await bookingsTable.search(E2E_REF.CONFIRMED);
+
+      await bookingsTable.openBookingSheet(E2E_REF.CONFIRMED);
+      const sheet = bookingsTable.bookingSheet;
+      await expect(sheet.getByText(E2E_REF.CONFIRMED)).toBeVisible();
+      // The table stays in view behind the right-side sheet (the modal hides it from roles)
+      await expect(page.locator("table")).toBeVisible();
+
+      await sheet.getByRole("link", { name: "Open full page" }).click();
+      await expect(page).toHaveURL(/\/admin\/bookings\/[0-9a-f-]{36}/);
+      await expect(
+        page.getByRole("navigation", { name: "Breadcrumb" }).getByText(E2E_REF.CONFIRMED)
+      ).toBeVisible();
+
+      await page.goBack();
+      await expect(page).toHaveURL(/[?&]booking=/);
+      await expect(sheet).toBeVisible();
+
+      await page.goBack();
+      await expect(page).not.toHaveURL(/[?&]booking=/);
+      await expect(sheet).toBeHidden();
+    });
+
+    test("the payment proof thumbnail opens the proof viewer", async ({ page }) => {
+      const bookingsTable = new BookingsTablePage(page);
+      await bookingsTable.goto();
+      await bookingsTable.search(E2E_REF.QUEUE);
+      await bookingsTable.openBookingSheet(E2E_REF.QUEUE);
+
+      await bookingsTable.bookingSheet.getByRole("button", { name: "View payment proof" }).click();
+      const viewer = page.getByRole("dialog", { name: "Payment proof" });
+      await expect(viewer.getByRole("img", { name: "Payment proof" })).toBeVisible();
+      await expect(viewer.getByRole("button", { name: "Zoom In" })).toBeVisible();
+    });
+
+    test("an unknown booking id is dropped with no error", async ({ page }) => {
+      await page.goto(`${ROUTES.admin.bookings}?booking=00000000-0000-0000-0000-000000000000`);
+      const bookingsTable = new BookingsTablePage(page);
+      await bookingsTable.waitForPageLoad();
+
+      await expect(page).not.toHaveURL(/[?&]booking=/);
+      await expect(bookingsTable.bookingSheet).toBeHidden();
     });
   });
 

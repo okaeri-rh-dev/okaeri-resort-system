@@ -65,8 +65,16 @@ test.describe("Mobile booking card", () => {
     await expect(menu.getByRole("menuitem", { name: "Confirm" })).toHaveCount(0);
   });
 
-  test("info-zone tap navigates to booking detail route", async ({ page }) => {
+  test("info-zone tap opens the booking sheet full screen, then its full page", async ({
+    page,
+  }) => {
     await page.getByRole("button", { name: `View booking ${E2E_REF.CONFIRMED}` }).click();
+    await expect(page).toHaveURL(/[?&]booking=[0-9a-f-]{36}/);
+    const sheet = page.getByRole("dialog");
+    const sheetBox = await sheet.boundingBox();
+    expect(sheetBox?.width).toBeCloseTo(page.viewportSize()?.width ?? 0, 0);
+
+    await sheet.getByRole("link", { name: "Open full page" }).click();
     await expect(page).toHaveURL(/\/admin\/bookings\/[0-9a-f-]{36}/);
     // Detail page must actually render — guard against the loader silently throwing
     // (e.g. a future schema mismatch like the payments.status filter we just removed).

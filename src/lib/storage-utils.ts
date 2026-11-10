@@ -4,13 +4,11 @@
  * Handles signed URL generation for private payment proof files
  * Features:
  * - 5-minute signed URL expiry
- * - Auto-renewal before expiry
+ * - Renewal lives in usePaymentProofUrl
  * - Private bucket access
  *
  * Source: vault note [[04-admin-interface]]
  */
-
-import { logger } from "@/lib/logger";
 
 import { supabase } from "./supabase";
 
@@ -43,7 +41,7 @@ export interface SignedUrlResult {
  * @returns Signed URL with expiry timestamp
  *
  * @example
- * const { url, expiresAt, error } = await generateSignedUrl('TEST-ABC123_1234567890.jpg', 3600);
+ * const { url, expiresAt, error } = await generateSignedUrl('TEST-ABC123_1234567890.jpg');
  * if (error) {
  *   console.error('Failed to generate URL:', error);
  * } else {
@@ -93,50 +91,4 @@ export async function generateSignedUrl(
       error: err instanceof Error ? err.message : "Unknown error",
     };
   }
-}
-
-/**
- * Checks if a signed URL needs renewal
- *
- * @param expiresAt - Expiry timestamp from generateSignedUrl()
- * @param thresholdSeconds - Renew this many seconds before expiry (default: 60 = 1 minute)
- * @returns True if URL should be renewed
- */
-export function shouldRenewSignedUrl(expiresAt: Date, thresholdSeconds: number = 60): boolean {
-  const now = Date.now();
-  const expiryTime = expiresAt.getTime();
-  const renewalThreshold = expiryTime - thresholdSeconds * 1000;
-
-  return now >= renewalThreshold;
-}
-
-/**
- * Auto-renews signed URL if approaching expiry
- *
- * Usage pattern:
- * ```typescript
- * const { url, expiresAt } = await renewSignedUrl(filePath, 3600);
- * setSignedUrl(url);
- * setUrlExpiry(expiresAt);
- * ```
- *
- * @param filePath - Path to file
- * @param expirySeconds - Optional expiry time in seconds (default: 300 = 5 minutes)
- * @returns SignedUrlResult with new URL and expiry
- */
-export async function renewSignedUrl(
-  filePath: string,
-  expirySeconds: number = SIGNED_URL_EXPIRY_SECONDS
-): Promise<SignedUrlResult> {
-  logger.info("Renewing signed URL for:", { filePath });
-
-  const result = await generateSignedUrl(filePath, expirySeconds);
-
-  if (result.error) {
-    console.error("Failed to renew signed URL:", result.error);
-  } else {
-    logger.info("Signed URL renewed, expires at:", { expiresAt: result.expiresAt });
-  }
-
-  return result;
 }

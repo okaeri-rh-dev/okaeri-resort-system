@@ -37,13 +37,7 @@ export const useBookingColumns = ({
         header: "Guest",
         cell: ({ row }) => (
           <div className="space-y-1">
-            <Link
-              to="/admin/guests"
-              search={{ search: row.original.guest_name }}
-              className="text-primary font-medium hover:underline"
-            >
-              {row.original.guest_name}
-            </Link>
+            <div className="font-medium">{row.original.guest_name}</div>
             <div className="text-muted-foreground flex flex-wrap items-center gap-1.5 text-xs">
               <SourceBadge source={row.original.booking_source} />
               {(row.original.contact_number && formatPhoneNumber(row.original.contact_number)) ||
@@ -118,8 +112,9 @@ export const useBookingColumns = ({
         header: "Reference",
         cell: ({ row }) => (
           <Link
-            to="/admin/bookings/$bookingId"
-            params={{ bookingId: row.original.booking_id }}
+            from="/admin/bookings"
+            to="."
+            search={(prev) => ({ ...prev, booking: row.original.booking_id })}
             className="text-primary text-sm font-medium whitespace-nowrap hover:underline"
           >
             {row.getValue("booking_reference")}
