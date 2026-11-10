@@ -266,7 +266,8 @@ test.describe("Booking Lifecycle", () => {
         return;
       }
 
-      await confirmedRow.locator(`a[href^="/admin/bookings/"]`).first().click();
+      await confirmedRow.locator("td a").first().click();
+      await page.getByRole("dialog").getByRole("link", { name: "Open full page" }).click();
 
       const detailPage = new BookingDetailPage(page);
       await detailPage.expectPageLoaded();

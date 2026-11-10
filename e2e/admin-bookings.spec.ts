@@ -349,22 +349,6 @@ test.describe("Admin Bookings Management", () => {
       await expect(bookingsTable.exportButton).toBeVisible();
     });
   });
-
-  test.describe("Pagination", () => {
-    test("pagination controls appear when needed", async ({ page }) => {
-      const bookingsTable = new BookingsTablePage(page);
-      await bookingsTable.goto();
-
-      // If there are many bookings, pagination should be visible
-      const rowCount = await bookingsTable.getRowCount();
-
-      if (rowCount >= 10) {
-        // Pagination should be present
-        await expect(bookingsTable.pagination).toBeVisible();
-      }
-      // If few bookings, pagination may not show - that's fine
-    });
-  });
 });
 
 test.describe("Needs action (replaces the Booking Queue)", () => {

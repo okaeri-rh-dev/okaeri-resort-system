@@ -28,6 +28,7 @@ async function openBookingDetail(page: Page, bookingReference: string) {
     .or(page.getByRole("button", { name: `View booking ${bookingReference}` }))
     .first()
     .click();
+  await page.getByRole("dialog").getByRole("link", { name: "Open full page" }).click();
   await expect(page.getByRole("heading", { name: `Booking #${bookingReference}` })).toBeVisible();
 }
 

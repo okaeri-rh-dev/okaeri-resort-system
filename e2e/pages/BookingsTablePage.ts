@@ -42,12 +42,6 @@ export class BookingsTablePage {
   readonly exportButton: Locator;
   readonly refreshButton: Locator;
 
-  // Pagination
-  readonly pagination: Locator;
-  readonly nextPageButton: Locator;
-  readonly previousPageButton: Locator;
-  readonly pageInfo: Locator;
-
   // Row actions - using ActionMenu dropdown
   readonly rowActionsMenu: Locator;
 
@@ -78,12 +72,6 @@ export class BookingsTablePage {
     this.pageMenuButton = page.getByRole("button", { name: "More booking actions" });
     this.exportButton = page.getByRole("menuitem", { name: "Export CSV" });
     this.refreshButton = page.getByRole("button", { name: /refresh/i });
-
-    // Pagination - TablePagination component
-    this.pagination = page.getByRole("navigation", { name: "Pagination" });
-    this.nextPageButton = page.getByRole("button", { name: /next/i });
-    this.previousPageButton = page.getByRole("button", { name: /previous/i });
-    this.pageInfo = page.getByText(/page \d+/i);
 
     // Row actions - ActionMenu with dropdown
     this.rowActionsMenu = page.getByRole("button", { name: /actions|more/i });
@@ -149,7 +137,10 @@ export class BookingsTablePage {
   /** Ticks one option in the Filters sheet, then closes the sheet. */
   async pickFilter(option: string) {
     await this.filtersButton.click();
-    await this.filtersSheet.getByRole("checkbox", { name: option, exact: true }).check();
+    const checkbox = this.filtersSheet.getByRole("checkbox", { name: option, exact: true });
+    // The tick follows the URL, which the router updates a moment after the click
+    await checkbox.click();
+    await expect(checkbox).toBeChecked();
     await this.page.keyboard.press("Escape");
     await expect(this.filtersSheet).toBeHidden();
   }
@@ -317,31 +308,6 @@ export class BookingsTablePage {
   async exportBookings() {
     await this.pageMenuButton.click();
     await this.exportButton.click();
-  }
-
-  // ================== Pagination ==================
-
-  /**
-   * Go to next page
-   */
-  async goToNextPage() {
-    await this.nextPageButton.click();
-    await this.waitForTableLoad();
-  }
-
-  /**
-   * Go to previous page
-   */
-  async goToPreviousPage() {
-    await this.previousPageButton.click();
-    await this.waitForTableLoad();
-  }
-
-  /**
-   * Check if there are more pages
-   */
-  async hasNextPage(): Promise<boolean> {
-    return this.nextPageButton.isEnabled();
   }
 
   // ================== Assertions ==================

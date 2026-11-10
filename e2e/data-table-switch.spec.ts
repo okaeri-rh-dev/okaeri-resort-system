@@ -7,7 +7,8 @@ import { serviceClient } from "./fixtures/service-client";
 /**
  * DataTable table ↔ card switch on the admin bookings list.
  *
- * DataTable measures its own pane: cards below ~600px, a table from 600px. Needs the E2E
+ * DataTable measures its own pane: cards below ~600px, a table from 600px. With the main action
+ * column, every column fits from a 1440px window and the slim table from 960px. Needs the E2E
  * fixtures: run `npm run seed:e2e` first (or `npm run test:e2e:hooked`).
  */
 
@@ -39,7 +40,7 @@ test.describe("DataTable switch on the bookings list", () => {
   });
 
   test("expanded window shows a table with 40px rows and right-aligned money", async ({ page }) => {
-    await page.setViewportSize({ width: 1280, height: 900 });
+    await page.setViewportSize({ width: 1440, height: 900 });
     await openBookings(page);
 
     const table = page.getByRole("table", { name: "Bookings" });
@@ -57,7 +58,7 @@ test.describe("DataTable switch on the bookings list", () => {
   });
 
   test("a click anywhere on a table row opens that booking", async ({ page }) => {
-    await page.setViewportSize({ width: 1280, height: 900 });
+    await page.setViewportSize({ width: 1440, height: 900 });
     await openBookings(page);
 
     const pendingRow = page
@@ -72,7 +73,7 @@ test.describe("DataTable switch on the bookings list", () => {
   test("a slim table pane drops low-priority columns and keeps the row menu in view", async ({
     page,
   }) => {
-    await page.setViewportSize({ width: 900, height: 900 });
+    await page.setViewportSize({ width: 960, height: 900 });
     await loginAsOwner(page);
     await page.goto("/admin/bookings");
 
