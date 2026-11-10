@@ -4,9 +4,9 @@
  * Schedule: Weekly on Sunday at 3:00 AM UTC ("0 3 * * 0")
  * Purpose: Delete old payment proof files based on retention policy
  * Retention Rules:
- * - Checked-out bookings: 90 days after check-out date
- * - Cancelled bookings: 30 days after cancellation (updated_at)
- * Both live in the cleanup_expired_payment_proofs SQL function.
+ * - Cancelled bookings: 30 days after cancellation (updated_at), in the
+ *   cleanup_expired_payment_proofs SQL function
+ * - Other bookings keep their proof until guest anonymization deletes it (24 months)
  * - Guest uploads (TEMP-) that nothing references: 30 days after upload (sweepOrphanedPaymentProofs)
  *
  * Free Tier Impact:

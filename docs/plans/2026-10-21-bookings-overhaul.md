@@ -70,6 +70,7 @@ Fewest taps and least confusion wins; parts may be mixed.
 - PR 399 review (2026-11-10): only a manager changes the dates of a Confirmed booking, so staff cannot move the check-in day and check in early (ADR 0007). Revisit: if staff need early check-ins without a manager.
 - PR 399 review: the new booking flow offers no Card method, because no card channel exists. The edit forms still offer "Card". Revisit: when a card channel exists.
 - PR 399 review: "Check out anyway" gives no Undo (#334 wins over #335; #335 text fixed). Revisit: never.
+- PR 399 review: 160 past stays on prod were still Confirmed, which would flood Needs action. Migration 20261110150000 closes the ones past check-out as CheckedOut. Proofs of CheckedOut bookings no longer go after 90 days; guest anonymization (24 months) deletes them, because shrunk uploads keep the bucket small. Revisit: if the payment-proofs bucket nears the 1 GB free limit.
 - PR 399 review: the row and card click guards stay separate, because they are 2 lines and DataTable is domain-free. Revisit: if a third copy appears.
 
 ## Resume state
