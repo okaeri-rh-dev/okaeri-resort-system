@@ -20,8 +20,8 @@ import {
 } from "@/components/patterns";
 import { CabinTonight } from "@/components/units/CabinTonight";
 import { usePricingConfig } from "@/hooks/usePricingConfig";
+import { useCabinStatesTonight } from "@/hooks/useUnits";
 import { statusBadgeProps } from "@/lib/status-tone";
-import { useCabinStatesTonight } from "@/stores/useUnitStore";
 import type { Booking, Unit } from "@/types";
 
 /**

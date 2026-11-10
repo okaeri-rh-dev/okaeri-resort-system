@@ -6,8 +6,8 @@ import { DetailPageSkeleton } from "@/components/entity-detail/DetailPageSkeleto
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { Button } from "@/components/patterns";
 import { expenseDetailQuery } from "@/hooks/useExpenses";
+import { allUnitsQuery } from "@/hooks/useUnits";
 import { AuditRole, hasAuditRole } from "@/lib/audit-roles";
-import { allUnitsQuery } from "@/stores/useUnitStore";
 
 // Lazy load the edit page component
 const ExpenseEditPage = lazy(() =>

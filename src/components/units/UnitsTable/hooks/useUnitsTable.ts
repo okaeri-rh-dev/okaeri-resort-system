@@ -13,12 +13,7 @@ import {
 } from "@tanstack/react-table";
 import { toast } from "sonner";
 
-import {
-  useCabinStatesTonight,
-  useDeleteUnit,
-  useUnits,
-  useUpdateUnit,
-} from "@/stores/useUnitStore";
+import { useCabinStatesTonight, useDeleteUnit, useUnits, useUpdateUnit } from "@/hooks/useUnits";
 import type { Unit } from "@/types";
 
 import { useUnitColumns } from "../components/UnitColumns";

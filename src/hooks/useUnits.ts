@@ -1,6 +1,4 @@
 import { queryOptions, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { create } from "zustand";
-import { devtools, persist } from "zustand/middleware";
 
 import { afterWrite } from "@/lib/after-write";
 import type { ManilaDay } from "@/lib/bookings/stay";
@@ -9,71 +7,6 @@ import { unitKeys } from "@/lib/query-keys";
 import { db, handleSupabaseError, supabase } from "@/lib/supabase";
 import { toManilaDateString } from "@/lib/timezone";
 import type { CabinNight, CabinState, Unit, UnitFilters } from "@/types";
-
-// ============================================
-// ZUSTAND STORE
-// ============================================
-interface UnitStore {
-  // Local state
-  selectedUnit: Unit | null;
-  filters: UnitFilters;
-  viewMode: "grid" | "list";
-
-  // Actions
-  setSelectedUnit: (unit: Unit | null) => void;
-  setFilters: (filters: UnitFilters) => void;
-  resetFilters: () => void;
-  setViewMode: (mode: "grid" | "list") => void;
-}
-
-export const useUnitStore = create<UnitStore>()(
-  devtools(
-    persist(
-      (set) => ({
-        // Initial state
-        selectedUnit: null,
-        filters: {},
-        viewMode: "grid",
-
-        // Actions
-        setSelectedUnit: (unit) => set({ selectedUnit: unit }),
-
-        setFilters: (filters) => set({ filters }),
-
-        resetFilters: () => set({ filters: {} }),
-
-        setViewMode: (mode) => set({ viewMode: mode }),
-      }),
-      {
-        name: "unit-storage",
-        storage: {
-          getItem: (name) => {
-            const value = sessionStorage.getItem(name);
-            return value ? JSON.parse(value) : null;
-          },
-          setItem: (name, value) => {
-            sessionStorage.setItem(name, JSON.stringify(value));
-          },
-          removeItem: (name) => {
-            sessionStorage.removeItem(name);
-          },
-        },
-        partialize: (state) =>
-          ({
-            viewMode: state.viewMode,
-            filters: state.filters,
-          }) as UnitStore,
-      }
-    ),
-    {
-      name: "UnitStore",
-    }
-  )
-);
-
-// ============================================
-// TANSTACK QUERY HOOKS
-// ============================================
 
 // One unit with amenities typed; the detail and edit routes share this cache entry
 export const unitDetailQuery = (unitId: string) =>
@@ -103,7 +36,7 @@ export const allUnitsQuery = () =>
   });
 
 // Fetch all units with filters
-const unitListQuery = (filters: UnitStore["filters"]) =>
+const unitListQuery = (filters: UnitFilters) =>
   queryOptions({
     queryKey: unitKeys.list(filters),
     queryFn: async () => {
@@ -136,11 +69,7 @@ const unitListQuery = (filters: UnitStore["filters"]) =>
 // Every cabin, ignoring the Units page filters
 export const useAllUnits = () => useQuery(allUnitsQuery());
 
-export const useUnits = () => {
-  const filters = useUnitStore((state) => state.filters);
-
-  return useQuery(unitListQuery(filters));
-};
+export const useUnits = () => useQuery(unitListQuery({}));
 
 // Fetch single unit
 
