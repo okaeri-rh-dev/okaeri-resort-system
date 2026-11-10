@@ -1,8 +1,9 @@
-import { lazy, Suspense, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
 import { Link, useNavigate, useSearch } from "@tanstack/react-router";
 import { FileText } from "lucide-react";
 
+import { LazyPaymentProofView } from "@/components/admin/LazyPaymentProofView";
 import { formatPhoneNumber, formatTableDate, RelatedEntityLink } from "@/components/entity-detail";
 import {
   Button,
@@ -30,11 +31,6 @@ import { CabinChip } from "./CabinChip";
 import { MainActionButton } from "./MainActionButton";
 import { NeedsActionLabel } from "./NeedsActionLabel";
 import { SourceBadge } from "./SourceBadge";
-
-// react-pdf is heavy, so it loads only when a proof opens
-const PaymentProofView = lazy(() =>
-  import("@/components/admin/PaymentProofView").then((m) => ({ default: m.PaymentProofView }))
-);
 
 interface BookingActions {
   updateBookingStatus: BookingCardProps["updateBookingStatus"];
@@ -205,7 +201,7 @@ function PaymentProofThumbnail({ path }: { path: string }) {
           aria-describedby={undefined}
         >
           <DialogTitle>Payment proof</DialogTitle>
-          <Suspense fallback={null}>{url && <PaymentProofView url={url} kind={kind} />}</Suspense>
+          {url && <LazyPaymentProofView url={url} kind={kind} />}
         </DialogContent>
       </Dialog>
     </>

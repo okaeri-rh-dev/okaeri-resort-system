@@ -1,8 +1,9 @@
-import { lazy, Suspense, useState } from "react";
+import { useState } from "react";
 
 import { queryOptions, useMutation, useQuery } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 
+import { LazyPaymentProofView } from "@/components/admin/LazyPaymentProofView";
 import {
   Button,
   Callout,
@@ -24,11 +25,6 @@ import { pluralize } from "@/lib/formatters";
 import { availabilityKeys } from "@/lib/query-keys";
 import { db, handleSupabaseError } from "@/lib/supabase";
 import type { Booking, PaymentStatus } from "@/types";
-
-// react-pdf is heavy, so it loads only when a proof opens
-const PaymentProofView = lazy(() =>
-  import("@/components/admin/PaymentProofView").then((m) => ({ default: m.PaymentProofView }))
-);
 
 // Tables verify_and_confirm_booking writes
 const VERIFY_WRITES = [
@@ -169,9 +165,13 @@ function ProofSection({ path }: { path: string | null | undefined }) {
       {!path && <Callout tone="warning">The guest has not uploaded a payment proof.</Callout>}
       {isError && <Callout tone="danger">Payment proof unavailable. Close and try again.</Callout>}
       {isLoading && <Skeleton className="h-64 w-full" />}
-      <Suspense fallback={<Skeleton className="h-64 w-full" />}>
-        {path && url && <PaymentProofView url={url} kind={paymentProofKind(path)} />}
-      </Suspense>
+      {path && url && (
+        <LazyPaymentProofView
+          url={url}
+          kind={paymentProofKind(path)}
+          fallback={<Skeleton className="h-64 w-full" />}
+        />
+      )}
     </section>
   );
 }

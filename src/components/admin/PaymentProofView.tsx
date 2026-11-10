@@ -8,7 +8,7 @@ import { Button, Callout } from "@/components/patterns";
 
 pdfjs.GlobalWorkerOptions.workerSrc = "/pdf.worker.js";
 
-interface PaymentProofViewProps {
+export interface PaymentProofViewProps {
   url: string;
   kind: "pdf" | "image";
 }
