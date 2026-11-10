@@ -12,7 +12,7 @@ import "./responsive-date-picker.css";
 import { Button } from "./button";
 import { Calendar } from "./calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "./popover";
-import { nextRangeOnTap } from "./range-tap-cycle";
+import { nextRangeOnTap, nextTapHint } from "./range-tap-cycle";
 import {
   Sheet,
   SheetContent,
@@ -175,6 +175,8 @@ export interface ResponsiveDateRangePickerProps {
   buttonDisabled?: boolean;
   /** Open in a bottom sheet with one month instead of a popover. */
   sheet?: boolean;
+  /** Stay dates: check-in/check-out wording, and the check-out day must come after check-in. */
+  stay?: boolean;
 }
 
 export function ResponsiveDateRangePicker({
@@ -192,6 +194,7 @@ export function ResponsiveDateRangePicker({
   "aria-describedby": ariaDescribedby,
   buttonDisabled = false,
   sheet = false,
+  stay = false,
 }: ResponsiveDateRangePickerProps) {
   const [open, setOpen] = React.useState(false);
   const autoCloseTimeout = React.useRef<ReturnType<typeof setTimeout>>(undefined);
@@ -199,7 +202,7 @@ export function ResponsiveDateRangePicker({
   React.useEffect(() => () => clearTimeout(autoCloseTimeout.current), []);
 
   const handleSelect = (_libraryRange: DateRange | undefined, tappedDay: Date) => {
-    const range = nextRangeOnTap(value, tappedDay);
+    const range = nextRangeOnTap(value, tappedDay, { stay });
     onChange?.(range);
     // Auto-close on mobile when both dates are selected
     if (sheet && range.to) {
@@ -207,6 +210,8 @@ export function ResponsiveDateRangePicker({
       autoCloseTimeout.current = setTimeout(() => setOpen(false), 200); // Small delay for visual feedback
     }
   };
+
+  const hint = nextTapHint(value, { stay });
 
   const displayText = React.useMemo(() => {
     if (!value?.from) return placeholder;
@@ -245,7 +250,7 @@ export function ResponsiveDateRangePicker({
         >
           <SheetHeader className="mb-4">
             <SheetTitle>Select Date Range</SheetTitle>
-            <SheetDescription>Choose your check-in and check-out dates</SheetDescription>
+            <SheetDescription role="status">{hint}</SheetDescription>
           </SheetHeader>
           <div className="flex justify-center">
             <Calendar
@@ -270,6 +275,9 @@ export function ResponsiveDateRangePicker({
     <Popover>
       <PopoverTrigger asChild>{triggerButton}</PopoverTrigger>
       <PopoverContent className="w-auto p-0" align={align} aria-label="Select date range">
+        <p role="status" className="text-muted-foreground px-3 pt-3 text-sm">
+          {hint}
+        </p>
         <Calendar
           mode="range"
           selected={value}

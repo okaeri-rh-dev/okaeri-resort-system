@@ -79,6 +79,8 @@ export interface DateRangePickerProps {
   disabled?: boolean;
   /** Placement only (width, margin), applied to the trigger. */
   className?: string;
+  /** Stay dates: check-in/check-out hint wording and no zero-night stay. Filters leave it off. */
+  stay?: boolean;
 }
 
 /**
@@ -100,6 +102,7 @@ export function DateRangePicker({
   "aria-describedby": ariaDescribedby,
   disabled,
   className,
+  stay,
 }: DateRangePickerProps) {
   const isCompact = useContext(CompactWindowContext);
   return (
@@ -114,6 +117,7 @@ export function DateRangePicker({
       aria-describedby={ariaDescribedby}
       buttonDisabled={disabled}
       buttonClassName={className}
+      stay={stay}
     />
   );
 }

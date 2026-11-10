@@ -22,6 +22,9 @@ beforeAll(() => {
   };
 });
 
+// the hint is a live region, so screen readers announce it
+const STATUS = "[role=status]";
+
 function dayButton(dayOfMonth: number) {
   const grid = screen.getByRole("grid");
   return within(grid)
@@ -83,7 +86,7 @@ describe("DatePicker", () => {
 });
 
 describe("DateRangePicker", () => {
-  function StayDates() {
+  function StayDates({ stay = false }: { stay?: boolean }) {
     const [range, setRange] = useState<DateRange | undefined>();
     return (
       <DateRangePicker
@@ -92,6 +95,7 @@ describe("DateRangePicker", () => {
         numberOfMonths={1}
         placeholder="Stay dates"
         aria-label="Stay dates"
+        stay={stay}
       />
     );
   }
@@ -148,6 +152,36 @@ describe("DateRangePicker", () => {
     await tapDays(10, 10);
 
     expect(trigger()).toHaveTextContent(/^\w{3} 10, \d{4} - \w{3} 10, \d{4}$/);
+  });
+
+  it("hints the next end to set, back to the start after a full range", async () => {
+    render(<StayDates />);
+
+    await userEvent.click(trigger());
+    expect(screen.getByText("Select start date", { selector: STATUS })).toBeInTheDocument();
+    await tapDays(10);
+    expect(screen.getByText("Select end date", { selector: STATUS })).toBeInTheDocument();
+    await tapDays(12);
+    expect(screen.getByText("Select start date", { selector: STATUS })).toBeInTheDocument();
+  });
+
+  it("hints check-in and check-out days for a stay", async () => {
+    render(<StayDates stay />);
+
+    await userEvent.click(trigger());
+    expect(screen.getByText("Select check-in day", { selector: STATUS })).toBeInTheDocument();
+    await tapDays(10);
+    expect(screen.getByText("Select check-out day", { selector: STATUS })).toBeInTheDocument();
+  });
+
+  it("ignores a second tap on the check-in day for a stay", async () => {
+    render(<StayDates stay />);
+
+    await userEvent.click(trigger());
+    await tapDays(10, 10);
+
+    expect(trigger()).toHaveTextContent(/^\w{3} 10, \d{4}$/);
+    expect(screen.getByText("Select check-out day", { selector: STATUS })).toBeInTheDocument();
   });
 
   it("has no axe violations", async () => {
@@ -207,6 +241,23 @@ describe("DatePicker in a shell", () => {
     await new Promise((resolve) => setTimeout(resolve, 300));
 
     expect(screen.getByRole("dialog", { name: "Select Date Range" })).toBeVisible();
+  });
+
+  it("shows the hint as the range sheet's description", async () => {
+    function StayDates() {
+      const [range, setRange] = useState<DateRange | undefined>();
+      return <DateRangePicker value={range} onChange={setRange} placeholder="Stay dates" stay />;
+    }
+    renderInShell(<StayDates />, true);
+
+    await userEvent.click(await screen.findByRole("button", { name: /Stay dates/ }));
+    const sheet = screen.getByRole("dialog", { name: "Select Date Range" });
+    expect(sheet).toHaveAccessibleDescription("Select check-in day");
+    await userEvent.click(dayButton(10) as HTMLElement);
+    expect(sheet).toHaveAccessibleDescription("Select check-out day");
+    expect(
+      within(sheet).getByText("Select check-out day", { selector: STATUS })
+    ).toBeInTheDocument();
   });
 
   it("opens in a popover on a wider window", async () => {

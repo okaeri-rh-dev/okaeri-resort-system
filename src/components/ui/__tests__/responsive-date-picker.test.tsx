@@ -323,7 +323,7 @@ describe("ResponsiveDateRangePicker", () => {
 
       await waitFor(() => {
         expect(screen.getByText("Select Date Range")).toBeInTheDocument();
-        expect(screen.getByText("Choose your check-in and check-out dates")).toBeInTheDocument();
+        expect(screen.getByText("Select start date")).toBeInTheDocument();
       });
     });
 

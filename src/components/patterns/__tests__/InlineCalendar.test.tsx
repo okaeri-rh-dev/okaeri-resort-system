@@ -8,6 +8,8 @@ import { axe } from "vitest-axe";
 import { InlineCalendar, type CalendarDayButtonProps, type DateRange } from "@/components/patterns";
 
 const OCTOBER_2026 = new Date(2026, 9, 1);
+// the hint is a live region, so screen readers announce it
+const STATUS = "[role=status]";
 
 function dayButton(dayOfMonth: number) {
   const grid = screen.getByRole("grid");
@@ -91,6 +93,16 @@ describe("InlineCalendar, range", () => {
     const range = onSelect.mock.lastCall?.[0] as DateRange;
     expect(range.from?.getDate()).toBe(from);
     expect(range.to?.getDate()).toBe(to);
+  });
+
+  it("hints the next end to set", async () => {
+    render(<StayRange onSelect={() => {}} />);
+
+    expect(screen.getByText("Select start date", { selector: STATUS })).toBeInTheDocument();
+    await userEvent.click(dayButton(12));
+    expect(screen.getByText("Select end date", { selector: STATUS })).toBeInTheDocument();
+    await userEvent.click(dayButton(15));
+    expect(screen.getByText("Select start date", { selector: STATUS })).toBeInTheDocument();
   });
 
   it("has no axe violations", async () => {
