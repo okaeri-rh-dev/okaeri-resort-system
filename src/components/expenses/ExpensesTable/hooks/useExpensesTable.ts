@@ -16,9 +16,9 @@ import {
   useDeleteExpense,
   useExpenses,
   useExpenseStats,
-  useExpenseStore,
   useExportExpenses,
-} from "@/stores/useExpenseStore";
+} from "@/hooks/useExpenses";
+import { useExpenseStore } from "@/stores/useExpenseStore";
 import type { Expense } from "@/types";
 
 import type { ExpensesTableProps } from "../types";

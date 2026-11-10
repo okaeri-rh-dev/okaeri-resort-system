@@ -2,13 +2,13 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { useAccountBalances } from "@/stores/useAccountStore";
+import { useAccountBalances } from "@/hooks/useAccounts";
 import { stubPaneWidth } from "@/test/pane-width";
 import type { AccountWithBalance } from "@/types";
 
 import { AccountsTable } from "../AccountsTable";
 
-vi.mock("@/stores/useAccountStore", () => ({
+vi.mock("@/hooks/useAccounts", () => ({
   useAccountBalances: vi.fn(),
   useDeleteAccount: () => ({ mutateAsync: vi.fn() }),
   useReactivateAccount: () => ({ mutateAsync: vi.fn() }),

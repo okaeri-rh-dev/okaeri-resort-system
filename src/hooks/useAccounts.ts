@@ -1,75 +1,10 @@
 import { queryOptions, useMutation, useQuery } from "@tanstack/react-query";
-import { create } from "zustand";
-import { devtools, persist } from "zustand/middleware";
 
 import { afterWrite } from "@/lib/after-write";
 import { accountKeys } from "@/lib/query-keys";
 import { handleSupabaseError, supabase } from "@/lib/supabase";
 import type { Account, AccountType, AccountWithBalance } from "@/types";
 import type { TablesInsert, TablesUpdate } from "@/types/database.types";
-
-// ============================================
-// ZUSTAND STORE
-// ============================================
-interface AccountFilters {
-  accountType?: AccountType;
-  isActive?: boolean;
-}
-
-interface AccountStore {
-  // Local state
-  selectedAccount: Account | null;
-  filters: AccountFilters;
-  searchQuery: string;
-  sortBy: "name" | "balance" | "type" | "created";
-  sortOrder: "asc" | "desc";
-
-  // Actions
-  setSelectedAccount: (account: Account | null) => void;
-  setFilters: (filters: AccountFilters) => void;
-  resetFilters: () => void;
-  setSearchQuery: (query: string) => void;
-  setSortBy: (sortBy: "name" | "balance" | "type" | "created") => void;
-  setSortOrder: (order: "asc" | "desc") => void;
-}
-
-export const useAccountStore = create<AccountStore>()(
-  devtools(
-    persist(
-      (set) => ({
-        // Initial state
-        selectedAccount: null,
-        filters: { isActive: true },
-        searchQuery: "",
-        sortBy: "name",
-        sortOrder: "asc",
-
-        // Actions
-        setSelectedAccount: (account) => set({ selectedAccount: account }),
-
-        setFilters: (filters) => set({ filters }),
-
-        resetFilters: () => set({ filters: { isActive: true } }),
-
-        setSearchQuery: (query) => set({ searchQuery: query }),
-
-        setSortBy: (sortBy) => set({ sortBy }),
-
-        setSortOrder: (order) => set({ sortOrder: order }),
-      }),
-      {
-        name: "account-store",
-        partialize: (state) => ({
-          filters: state.filters,
-          sortBy: state.sortBy,
-          sortOrder: state.sortOrder,
-        }),
-      }
-    )
-  )
-);
-
-// Fetch all accounts
 
 const activeAccountsQuery = () =>
   queryOptions({

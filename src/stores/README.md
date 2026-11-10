@@ -3,7 +3,7 @@
 Most files cover one entity and hold two layers:
 
 - A Zustand store (`useBookingStore`, `useGuestStore`, `useExpenseStore`, …) for client state: filters, search text, sort, selection, table state. Lists and details do not live here.
-- TanStack Query hooks beside it (`useAllBookings`, `useGuests`, `useCreateExpense`, …) for server data. Queries are `queryOptions` factories (`bookingDetailQuery`, `unitDetailQuery`, …) with keys from `src/lib/query-keys.ts`.
+- TanStack Query hooks beside it (`useAllBookings`, `useGuests`, …) for server data. Queries are `queryOptions` factories (`bookingDetailQuery`, `unitDetailQuery`, …) with keys from `src/lib/query-keys.ts`.
 
 ## Rules
 
@@ -19,5 +19,6 @@ Most files cover one entity and hold two layers:
 - `useAuditStore.ts`: audit log filters, quick filter presets and table state. It has no query hooks.
 - `useDocumentStore.ts`: document drafts, letterhead and numbering. It persists `letterhead` and `documentCounter`.
 - `useInstallPromptStore.ts`: the PWA install prompt (`useCanShowInstallBanner`).
+- `useExpenseStore.ts`, `usePaymentStore.ts`: expense and payment list filters, search and sort only. Their query and mutation hooks live in `src/hooks/useExpenses.ts` and `src/hooks/usePayments.ts`; accounts and transfers have no store (`src/hooks/useAccounts.ts`, `src/hooks/useTransfers.ts`).
 
 Shared hooks that are not entity CRUD live in `src/hooks/` (see its README). Terms follow `GLOSSARY.md`.

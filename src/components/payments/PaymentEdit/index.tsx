@@ -21,8 +21,8 @@ import {
   SelectItem,
   Textarea,
 } from "@/components/patterns";
+import { useUpdatePayment } from "@/hooks/usePayments";
 import { paymentEditSchema, type PaymentEditInput } from "@/lib/validation/entity-schemas";
-import { useUpdatePayment } from "@/stores/usePaymentStore";
 import type { Payment } from "@/types/entity-detail.types";
 
 export interface PaymentEditPageProps {

@@ -6,9 +6,9 @@ import { createFileRoute } from "@tanstack/react-router";
 import { DetailPageSkeleton } from "@/components/entity-detail/DetailPageSkeleton";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { Button } from "@/components/patterns";
+import { expenseDetailQuery } from "@/hooks/useExpenses";
 import { recentRecordAuditLogsQuery } from "@/lib/audit-hooks";
 import { AuditRole, hasAuditRole } from "@/lib/audit-roles";
-import { expenseDetailQuery } from "@/stores/useExpenseStore";
 
 // Lazy load the detail page component
 const ExpenseDetailPage = lazy(() =>

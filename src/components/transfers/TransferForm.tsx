@@ -8,7 +8,7 @@ import { z } from "zod";
 
 import { AccountSelector } from "@/components/accounts/AccountSelector";
 import { Button, DatePicker, Form, FormField, NumberInput, Textarea } from "@/components/patterns";
-import { useCreateTransfer } from "@/stores/useTransferStore";
+import { useCreateTransfer } from "@/hooks/useTransfers";
 
 // Validation schema
 const transferFormSchema = z

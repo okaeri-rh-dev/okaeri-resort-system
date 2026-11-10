@@ -1,8 +1,5 @@
 import { queryOptions, useMutation, useQuery } from "@tanstack/react-query";
-import { create } from "zustand";
-import { devtools, persist } from "zustand/middleware";
 
-import { SEARCH_DEBOUNCE_MS, useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { afterWrite } from "@/lib/after-write";
 import { transferKeys } from "@/lib/query-keys";
 import { ilikeAnyFilter } from "@/lib/search-filter";
@@ -10,9 +7,6 @@ import { handleSupabaseError, supabase } from "@/lib/supabase";
 import type { AccountTransfer } from "@/types";
 import type { TablesInsert } from "@/types/database.types";
 
-// ============================================
-// ZUSTAND STORE
-// ============================================
 interface TransferFilters {
   fromAccountId?: string;
   toAccountId?: string;
@@ -22,71 +16,17 @@ interface TransferFilters {
   maxAmount?: number;
 }
 
-interface TransferStore {
-  // Local state
-  selectedTransfer: AccountTransfer | null;
-  filters: TransferFilters;
-  searchQuery: string;
-  sortBy: "date" | "amount" | "from" | "to";
-  sortOrder: "asc" | "desc";
-
-  // Actions
-  setSelectedTransfer: (transfer: AccountTransfer | null) => void;
-  setFilters: (filters: TransferFilters) => void;
-  resetFilters: () => void;
-  setSearchQuery: (query: string) => void;
-  setSortBy: (sortBy: "date" | "amount" | "from" | "to") => void;
-  setSortOrder: (order: "asc" | "desc") => void;
-}
-
-export const useTransferStore = create<TransferStore>()(
-  devtools(
-    persist(
-      (set) => ({
-        // Initial state
-        selectedTransfer: null,
-        filters: {},
-        searchQuery: "",
-        sortBy: "date",
-        sortOrder: "desc",
-
-        // Actions
-        setSelectedTransfer: (transfer) => set({ selectedTransfer: transfer }),
-
-        setFilters: (filters) => set({ filters }),
-
-        resetFilters: () => set({ filters: {} }),
-
-        setSearchQuery: (query) => set({ searchQuery: query }),
-
-        setSortBy: (sortBy) => set({ sortBy }),
-
-        setSortOrder: (order) => set({ sortOrder: order }),
-      }),
-      {
-        name: "transfer-store",
-        partialize: (state) => ({
-          filters: state.filters,
-          sortBy: state.sortBy,
-          sortOrder: state.sortOrder,
-        }),
-      }
-    )
-  )
-);
-
-// ============================================
-// TANSTACK QUERY HOOKS
-// ============================================
-
-const transferListQuery = (params: {
-  filters: TransferFilters;
-  searchQuery: string;
-  sortBy: TransferStore["sortBy"];
-  sortOrder: TransferStore["sortOrder"];
-}) => {
-  const { filters, searchQuery, sortBy, sortOrder } = params;
-
+const transferListQuery = ({
+  filters = {},
+  searchQuery = "",
+  sortBy = "date",
+  sortOrder = "desc",
+}: {
+  filters?: TransferFilters;
+  searchQuery?: string;
+  sortBy?: "date" | "amount" | "from" | "to";
+  sortOrder?: "asc" | "desc";
+} = {}) => {
   return queryOptions({
     queryKey: transferKeys.list({ filters, searchQuery, sortBy, sortOrder }),
     queryFn: async () => {
@@ -152,13 +92,7 @@ const transferListQuery = (params: {
 };
 
 // Fetch all transfers with account relations
-export const useTransfers = () => {
-  const { filters, searchQuery, sortBy, sortOrder } = useTransferStore();
-  const debouncedSearchQuery = useDebouncedValue(searchQuery, SEARCH_DEBOUNCE_MS);
-  return useQuery(
-    transferListQuery({ filters, searchQuery: debouncedSearchQuery, sortBy, sortOrder })
-  );
-};
+export const useTransfers = () => useQuery(transferListQuery());
 
 // Fetch single transfer
 

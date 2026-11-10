@@ -11,9 +11,9 @@ import {
   useDeleteAccount,
   useReactivateAccount,
   useUpdateAccount,
-} from "../useAccountStore";
-import { useCreateExpense, useDeleteExpense, useUpdateExpense } from "../useExpenseStore";
-import { useCreateTransfer, useDeleteTransfer } from "../useTransferStore";
+} from "../useAccounts";
+import { useCreateExpense, useDeleteExpense, useUpdateExpense } from "../useExpenses";
+import { useCreateTransfer, useDeleteTransfer } from "../useTransfers";
 
 vi.mock("@/lib/after-write", () => ({ afterWrite: vi.fn() }));
 
