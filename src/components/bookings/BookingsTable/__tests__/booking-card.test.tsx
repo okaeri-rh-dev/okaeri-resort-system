@@ -350,6 +350,30 @@ describe("BookingCard info-zone navigation", () => {
     });
   });
 
+  it("tapping the guest name, outside the info zone, opens the booking sheet", async () => {
+    const user = userEvent.setup();
+    renderCard();
+    await user.click(screen.getByText("Jonah Soriano-Tan"));
+    expect(navigateMock).toHaveBeenCalledOnce();
+  });
+
+  it("opens the booking sheet from the keyboard", async () => {
+    const user = userEvent.setup();
+    renderCard();
+    screen.getByRole("button", { name: /view booking BK-TEST-001/i }).focus();
+    await user.keyboard("{Enter}");
+    expect(navigateMock).toHaveBeenCalledOnce();
+  });
+
+  it("opening the menu does not open the booking sheet", async () => {
+    const user = userEvent.setup();
+    renderCard();
+    await user.click(screen.getByRole("button", { name: "Actions for BK-TEST-001" }));
+    await user.click(await screen.findByText("Edit"));
+    expect(navigateMock).toHaveBeenCalledOnce();
+    expect(navigateMock.mock.calls[0][0]).toMatchObject({ to: "/admin/bookings/$bookingId/edit" });
+  });
+
   it("clicking the primary Confirm button does not also trigger info-zone navigation", async () => {
     const user = userEvent.setup();
     renderCard({ booking: { booking_status: "Pending" }, role: managerRole });

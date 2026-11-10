@@ -125,7 +125,11 @@ function BookingsTableComponent({ className }: BookingsTableProps) {
         }
       />
 
-      <BookingSheet />
+      <BookingSheet
+        updateBookingStatus={updateBookingStatus}
+        onRecordPayment={handleUploadPayment}
+        onCancel={(booking) => cancelBooking.mutate(booking.booking_id)}
+      />
     </div>
   );
 }

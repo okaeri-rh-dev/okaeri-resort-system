@@ -38,7 +38,7 @@ vi.mock("@/stores/useBookingStore", async (importOriginal) => ({
 }));
 
 vi.mock("@/stores/useUnitStore", () => ({
-  useUnits: () => ({
+  useAllUnits: () => ({
     data: [
       { unit_id: "unit-1", unit_code: "C1", unit_name: "Cabin 1" },
       { unit_id: "unit-2", unit_code: "C2", unit_name: "Cabin 2" },

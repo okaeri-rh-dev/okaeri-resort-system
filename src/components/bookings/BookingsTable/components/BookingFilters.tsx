@@ -17,7 +17,7 @@ import {
   TableSearch,
 } from "@/components/patterns";
 import { BOOKING_SOURCES, pickedDay, type BookingsSearch } from "@/lib/bookings";
-import { useUnits } from "@/stores/useUnitStore";
+import { useAllUnits } from "@/stores/useUnitStore";
 import { PAYMENT_STATUSES } from "@/types";
 
 import type { BookingFiltersProps } from "../types";
@@ -92,7 +92,7 @@ export const BookingFilters: React.FC<BookingFiltersProps> = ({
   resultCount,
   totalCount,
 }) => {
-  const { data: units = [] } = useUnits();
+  const { data: units = [] } = useAllUnits();
   const cabinOptions: Option[] = units.map((unit) => ({
     value: unit.unit_id,
     label: unit.unit_code || unit.unit_name,

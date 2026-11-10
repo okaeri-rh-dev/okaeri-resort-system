@@ -30,7 +30,7 @@ vi.mock("@/stores/useBookingStore", async (importOriginal) => ({
   useAllBookings: () => ({ data: loaded.bookings, isLoading: false, error: null }),
 }));
 
-vi.mock("@/stores/useUnitStore", () => ({ useUnits: () => ({ data: [] }) }));
+vi.mock("@/stores/useUnitStore", () => ({ useAllUnits: () => ({ data: [] }) }));
 
 const checkedOut = {
   booking_id: "booking-1",

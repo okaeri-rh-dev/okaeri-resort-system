@@ -24,7 +24,10 @@ import { statusBadgeProps } from "@/lib/status-tone";
 import { useAllBookings } from "@/stores/useBookingStore";
 import type { Booking } from "@/types";
 
+import type { BookingCardProps } from "../types";
+import { BookingOverflowMenu } from "./BookingOverflowMenu";
 import { CabinChip } from "./CabinChip";
+import { MainActionButton } from "./MainActionButton";
 import { SourceBadge } from "./SourceBadge";
 
 // react-pdf is heavy, so it loads only when a proof opens
@@ -32,18 +35,25 @@ const PaymentProofView = lazy(() =>
   import("@/components/admin/PaymentProofView").then((m) => ({ default: m.PaymentProofView }))
 );
 
+interface BookingActions {
+  updateBookingStatus: BookingCardProps["updateBookingStatus"];
+  onRecordPayment: (booking: Booking) => void;
+  onCancel: (booking: Booking) => void;
+}
+
 /** The booking in `?booking=<id>`: a right-side sheet over the list, full screen on a phone. */
-export function BookingSheet() {
+export function BookingSheet(actions: BookingActions) {
   const { booking: bookingId } = useSearch({ from: "/admin/bookings" });
   const navigate = useNavigate({ from: "/admin/bookings" });
-  const { data: bookings, isFetching } = useAllBookings();
+  const { data: bookings, isFetching, isStale } = useAllBookings();
   const booking = bookings?.find((b) => b.booking_id === bookingId);
 
   const close = () =>
     void navigate({ search: (prev) => ({ ...prev, booking: undefined }), replace: true });
 
-  // An unknown id drops out of the URL with no error; a just-created booking arrives with the refetch
-  const isUnknown = !!bookingId && !isFetching && !booking;
+  // An unknown id drops out of the URL with no error; a just-saved booking left the list
+  // invalidated (stale), so its id waits for the refetch that brings it
+  const isUnknown = !!bookingId && !isFetching && !isStale && !booking;
   useEffect(() => {
     if (isUnknown) close();
   }, [isUnknown]);
@@ -51,13 +61,18 @@ export function BookingSheet() {
   return (
     <Sheet open={!!booking} onOpenChange={(open) => !open && close()}>
       <SheetContent className="medium:max-w-md w-full overflow-y-auto">
-        {booking && <BookingSheetBody booking={booking} />}
+        {booking && <BookingSheetBody booking={booking} {...actions} />}
       </SheetContent>
     </Sheet>
   );
 }
 
-function BookingSheetBody({ booking }: { booking: Booking }) {
+function BookingSheetBody({
+  booking,
+  updateBookingStatus,
+  onRecordPayment,
+  onCancel,
+}: BookingActions & { booking: Booking }) {
   const balance = outstandingBalance(booking);
 
   return (
@@ -69,6 +84,21 @@ function BookingSheetBody({ booking }: { booking: Booking }) {
           <StatusBadge {...statusBadgeProps(booking.booking_status, "Pending")} />
           <SourceBadge source={booking.booking_source} />
         </SheetDescription>
+      </div>
+
+      <div className="flex items-center gap-2">
+        <MainActionButton
+          booking={booking}
+          updateBookingStatus={updateBookingStatus}
+          onRecordPayment={() => onRecordPayment(booking)}
+          className="flex-1"
+        />
+        <BookingOverflowMenu
+          booking={booking}
+          updateBookingStatus={updateBookingStatus}
+          onRecordPayment={() => onRecordPayment(booking)}
+          onCancel={() => onCancel(booking)}
+        />
       </div>
 
       <Button asChild variant="outline" className="w-full">
