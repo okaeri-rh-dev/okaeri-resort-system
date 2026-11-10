@@ -140,7 +140,7 @@ export const useBookingColumns = ({
             />
           );
         },
-        size: 80,
+        size: 180,
       }),
     ],
     [updateBookingStatus, cancelBooking, handleUploadPayment]

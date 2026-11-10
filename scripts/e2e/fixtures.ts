@@ -51,12 +51,26 @@ export const E2E_REF = {
   CONFIRMED: "E2E-CONFIRMED",
   CONF_PAID: "E2E-CONF-PAID",
   CANCELLED: "E2E-CANCELLED",
+  CHECK_IN: "E2E-CHECK-IN",
   QUEUE: "E2E-QUEUE",
   QUEUE_PAID: "E2E-PAID-QUEUE",
   ASSIGN_PAID: "E2E-ASSIGN-PAID",
 } as const;
 
+const manilaDay = (msFromNow: number) =>
+  new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Manila" }).format(Date.now() + msFromNow);
+
 export const E2E_BOOKINGS: E2EBookingFixture[] = [
+  // Checks in today, so staff can check it in
+  {
+    booking_reference: E2E_REF.CHECK_IN,
+    booking_status: "Confirmed",
+    payment_status: "Completed",
+    check_in: `${manilaDay(0)}T06:00:00Z`,
+    check_out: `${manilaDay(24 * 60 * 60 * 1000)}T04:00:00Z`,
+    total_amount: 2500,
+    num_guests: 2,
+  },
   {
     booking_reference: E2E_REF.PENDING,
     booking_status: "Pending",
