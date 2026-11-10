@@ -349,7 +349,7 @@ describe("ResponsiveDateRangePicker", () => {
       });
     });
 
-    it("should auto-close after selecting both dates on mobile", async () => {
+    it("should stay open after both dates and close on Done on mobile", async () => {
       const user = userEvent.setup();
       function ControlledRange() {
         const [range, setRange] = useState<DateRange | undefined>();
@@ -400,15 +400,11 @@ describe("ResponsiveDateRangePicker", () => {
         await user.click(endButton);
       }
 
-      // Sheet should close after both dates selected (with delay for visual feedback)
-      await waitFor(
-        () => {
-          expect(screen.queryByText("Select Date Range")).not.toBeInTheDocument();
-        },
-        { timeout: 500 }
-      );
+      expect(screen.getByText("Select Date Range")).toBeInTheDocument();
+      expect(mockOnChange).toHaveBeenCalledTimes(2);
 
-      expect(mockOnChange).toHaveBeenCalled();
+      await user.click(screen.getByRole("button", { name: "Done" }));
+      expect(screen.queryByText("Select Date Range")).not.toBeInTheDocument();
     });
 
     it("should truncate long date ranges on mobile", () => {

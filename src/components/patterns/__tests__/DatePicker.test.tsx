@@ -26,7 +26,7 @@ beforeAll(() => {
 const STATUS = "[role=status]";
 
 function dayButton(dayOfMonth: number) {
-  const grid = screen.getByRole("grid");
+  const [grid] = screen.getAllByRole("grid");
   return within(grid)
     .getAllByRole("button")
     .find(
@@ -228,19 +228,104 @@ describe("DatePicker in a shell", () => {
     expect(screen.queryByRole("dialog", { name: "Select Date" })).not.toBeInTheDocument();
   });
 
-  it("keeps the range sheet open after the first tap", async () => {
+  describe("range picker", () => {
     function StayDates() {
       const [range, setRange] = useState<DateRange | undefined>();
-      return <DateRangePicker value={range} onChange={setRange} placeholder="Stay dates" />;
+      return (
+        <DateRangePicker
+          value={range}
+          onChange={setRange}
+          placeholder="Stay dates"
+          aria-label="Stay dates"
+        />
+      );
     }
-    renderInShell(<StayDates />, true);
 
-    await userEvent.click(await screen.findByRole("button", { name: /Stay dates/ }));
-    await userEvent.click(dayButton(10) as HTMLElement);
+    // an open sheet aria-hides the page, trigger included
+    const rangeTrigger = () => screen.getByRole("button", { name: "Stay dates", hidden: true });
+    const rangeSheet = () => screen.queryByRole("dialog", { name: "Select Date Range" });
     // the sheet used to close on a timer once both ends were set
-    await new Promise((resolve) => setTimeout(resolve, 300));
+    const outlastOldAutoClose = () => new Promise((resolve) => setTimeout(resolve, 300));
 
-    expect(screen.getByRole("dialog", { name: "Select Date Range" })).toBeVisible();
+    async function openAndTap(compact: boolean, ...days: number[]) {
+      renderInShell(<StayDates />, compact);
+      await userEvent.click(await screen.findByRole("button", { name: "Stay dates" }));
+      for (const day of days) await userEvent.click(dayButton(day) as HTMLElement);
+      await outlastOldAutoClose();
+    }
+
+    it("keeps the sheet open after tap 1, tap 2 and tap 3", async () => {
+      await openAndTap(true, 10);
+      expect(rangeSheet()).toBeVisible();
+
+      await userEvent.click(dayButton(12) as HTMLElement);
+      await outlastOldAutoClose();
+      expect(rangeSheet()).toBeVisible();
+
+      await userEvent.click(dayButton(20) as HTMLElement);
+      await outlastOldAutoClose();
+      expect(rangeSheet()).toBeVisible();
+      expect(rangeTrigger()).toHaveTextContent(/^\w{3} 20, \d{4}$/);
+    });
+
+    it("closes the sheet with Done and keeps the selection", async () => {
+      await openAndTap(true, 10, 12);
+
+      await userEvent.click(screen.getByRole("button", { name: "Done" }));
+
+      expect(rangeSheet()).not.toBeInTheDocument();
+      expect(rangeTrigger()).toHaveTextContent(/10, \d{4} - .*12/);
+    });
+
+    it("enables Done with no selection and with only a start", async () => {
+      await openAndTap(true);
+      expect(screen.getByRole("button", { name: "Done" })).toBeEnabled();
+
+      await userEvent.click(dayButton(10) as HTMLElement);
+      await userEvent.click(screen.getByRole("button", { name: "Done" }));
+
+      expect(rangeSheet()).not.toBeInTheDocument();
+      expect(rangeTrigger()).toHaveTextContent(/^\w{3} 10, \d{4}$/);
+    });
+
+    it("keeps the selection when the sheet is dismissed without Done", async () => {
+      await openAndTap(true, 10, 12);
+
+      await userEvent.keyboard("{Escape}");
+
+      expect(rangeSheet()).not.toBeInTheDocument();
+      expect(rangeTrigger()).toHaveTextContent(/10, \d{4} - .*12/);
+    });
+
+    it("reaches Done by keyboard", async () => {
+      await openAndTap(true, 10);
+
+      const done = screen.getByRole("button", { name: "Done" });
+      for (let tab = 0; tab < 60 && document.activeElement !== done; tab++) {
+        await userEvent.tab();
+      }
+      expect(done).toHaveFocus();
+      await userEvent.keyboard("{Enter}");
+      expect(rangeSheet()).not.toBeInTheDocument();
+    });
+
+    it("has no axe violations with the sheet open", async () => {
+      await openAndTap(true, 10);
+
+      expect(await axe(rangeSheet() as HTMLElement)).toHaveNoViolations();
+    });
+
+    it("keeps the popover open after tap 2 and closes it on Escape", async () => {
+      await openAndTap(false, 10, 12);
+
+      const popover = screen.getByRole("dialog", { name: "Select date range" });
+      expect(popover).toBeVisible();
+      expect(within(popover).queryByRole("button", { name: "Done" })).not.toBeInTheDocument();
+
+      await userEvent.keyboard("{Escape}");
+      expect(screen.queryByRole("dialog", { name: "Select date range" })).not.toBeInTheDocument();
+      expect(rangeTrigger()).toHaveTextContent(/10, \d{4} - .*12/);
+    });
   });
 
   it("shows the hint as the range sheet's description", async () => {

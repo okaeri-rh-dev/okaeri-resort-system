@@ -15,8 +15,10 @@ import { Popover, PopoverContent, PopoverTrigger } from "./popover";
 import { nextRangeOnTap, nextTapHint } from "./range-tap-cycle";
 import {
   Sheet,
+  SheetClose,
   SheetContent,
   SheetDescription,
+  SheetFooter,
   SheetHeader,
   SheetTitle,
   SheetTrigger,
@@ -196,19 +198,8 @@ export function ResponsiveDateRangePicker({
   sheet = false,
   stay = false,
 }: ResponsiveDateRangePickerProps) {
-  const [open, setOpen] = React.useState(false);
-  const autoCloseTimeout = React.useRef<ReturnType<typeof setTimeout>>(undefined);
-
-  React.useEffect(() => () => clearTimeout(autoCloseTimeout.current), []);
-
   const handleSelect = (_libraryRange: DateRange | undefined, tappedDay: Date) => {
-    const range = nextRangeOnTap(value, tappedDay, { stay });
-    onChange?.(range);
-    // Auto-close on mobile when both dates are selected
-    if (sheet && range.to) {
-      clearTimeout(autoCloseTimeout.current);
-      autoCloseTimeout.current = setTimeout(() => setOpen(false), 200); // Small delay for visual feedback
-    }
+    onChange?.(nextRangeOnTap(value, tappedDay, { stay }));
   };
 
   const hint = nextTapHint(value, { stay });
@@ -242,7 +233,7 @@ export function ResponsiveDateRangePicker({
   // Mobile: Bottom Sheet with single month view
   if (sheet) {
     return (
-      <Sheet open={open} onOpenChange={setOpen}>
+      <Sheet>
         <SheetTrigger asChild>{triggerButton}</SheetTrigger>
         <SheetContent
           side="bottom"
@@ -265,6 +256,11 @@ export function ResponsiveDateRangePicker({
               className={cn("mobile-calendar touch-manipulation", calendarClassName)}
             />
           </div>
+          <SheetFooter className="mt-4">
+            <SheetClose asChild>
+              <Button className="w-full">Done</Button>
+            </SheetClose>
+          </SheetFooter>
         </SheetContent>
       </Sheet>
     );
