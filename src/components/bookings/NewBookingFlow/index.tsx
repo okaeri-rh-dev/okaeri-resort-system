@@ -24,11 +24,11 @@ import {
   useMultiUnitAvailability,
 } from "@/hooks/useMultiUnitBookingQueries";
 import { usePricingConfig } from "@/hooks/usePricingConfig";
+import { useUnits } from "@/hooks/useUnits";
 import { nightsBetween, unavailableReason } from "@/lib/bookings";
 import { formatCurrency } from "@/lib/formatters";
 import { cabinRates, priceCabin } from "@/lib/pricing/cabin-pricing";
 import { cn } from "@/lib/utils";
-import { useUnits } from "@/stores/useUnitStore";
 
 import {
   EMPTY_DRAFT,

@@ -5,8 +5,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { DetailPageSkeleton } from "@/components/entity-detail/DetailPageSkeleton";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { Button } from "@/components/patterns";
+import { unitDetailQuery } from "@/hooks/useUnits";
 import { requireManager } from "@/lib/route-guards";
-import { unitDetailQuery } from "@/stores/useUnitStore";
 
 // Lazy load the edit page component
 const UnitEditPage = lazy(() =>
