@@ -6,6 +6,7 @@ import { queryOptions, useQuery } from "@tanstack/react-query";
 
 import { AuditRole, getUserAuditRole } from "@/lib/audit-roles";
 import { userRoleKeys } from "@/lib/query-keys";
+import { supabase } from "@/lib/supabase";
 
 const currentUserRoleQuery = queryOptions({
   queryKey: userRoleKeys.current,
@@ -13,6 +14,12 @@ const currentUserRoleQuery = queryOptions({
   staleTime: 5 * 60 * 1000, // 5 minutes - role changes are infrequent
   gcTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
   retry: 1,
+});
+
+// Local session read, no network; the 2-minute self-undo compares it with status_changed_by
+const currentUserIdQuery = queryOptions({
+  queryKey: userRoleKeys.currentId,
+  queryFn: async () => (await supabase.auth.getSession()).data.session?.user.id ?? null,
 });
 
 // ============================================
@@ -38,6 +45,7 @@ const currentUserRoleQuery = queryOptions({
  */
 export function useUserRole() {
   const { data: role, isLoading } = useQuery(currentUserRoleQuery);
+  const { data: userId } = useQuery(currentUserIdQuery);
 
   // ============================================
   // PERMISSION FLAGS
@@ -78,6 +86,7 @@ export function useUserRole() {
   return {
     // Role value
     role,
+    userId,
     isLoading,
 
     // Role type flags

@@ -56,7 +56,7 @@ const renderCard = (overrides: Partial<Booking>) =>
   render(
     <BookingCard
       booking={{ ...baseBooking, ...overrides }}
-      onUploadPayment={() => undefined}
+      onRecordPayment={() => undefined}
       onCancel={() => undefined}
       updateBookingStatus={noopMutation}
     />

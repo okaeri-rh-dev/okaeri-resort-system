@@ -118,7 +118,8 @@ describe("afterWrite", () => {
   });
 
   it("reaches every key root from some table, except data that is not table data", () => {
-    const notTableData = [publicAvailabilityKeys.all];
+    // The signed-in user id comes from the session, not a table
+    const notTableData = [publicAvailabilityKeys.all, userRoleKeys.currentId];
     const keys: unknown[][] = [];
     const collect = (value: unknown) => {
       if (Array.isArray(value)) keys.push(value);

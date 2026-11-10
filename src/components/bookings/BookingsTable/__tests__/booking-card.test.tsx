@@ -97,17 +97,17 @@ interface RenderOptions {
 const renderCard = ({ booking = {}, role = ownerRole }: RenderOptions = {}) => {
   currentRole = role;
   const updateBookingStatus = { mutate: vi.fn() };
-  const onUploadPayment = vi.fn();
+  const onRecordPayment = vi.fn();
   const onCancel = vi.fn();
   const utils = render(
     <BookingCard
       booking={{ ...baseBooking, ...booking }}
-      onUploadPayment={onUploadPayment}
+      onRecordPayment={onRecordPayment}
       onCancel={onCancel}
       updateBookingStatus={updateBookingStatus}
     />
   );
-  return { ...utils, updateBookingStatus, onUploadPayment, onCancel };
+  return { ...utils, updateBookingStatus, onRecordPayment, onCancel };
 };
 
 beforeEach(() => {
@@ -123,10 +123,10 @@ describe("BookingCard primary action", () => {
     expect(buttons).toHaveLength(1);
   });
 
-  it("Confirm primary button fires updateBookingStatus with Confirmed", async () => {
+  it("confirms at once when a payment is recorded", async () => {
     const user = userEvent.setup();
     const { updateBookingStatus } = renderCard({
-      booking: { booking_status: "Pending" },
+      booking: { booking_status: "Pending", payments: [{ amount: 2000, status: "Active" }] },
       role: managerRole,
     });
     await user.click(screen.getByRole("button", { name: /confirm/i }));
@@ -136,34 +136,20 @@ describe("BookingCard primary action", () => {
     });
   });
 
-  it("falls back to Upload Payment primary for Confirmed booking with incomplete payment", () => {
+  it("shows a balance as a label, never a button", () => {
     renderCard({
-      booking: { booking_status: "Confirmed", payment_status: "Pending" },
+      booking: {
+        booking_status: "Confirmed",
+        total_amount: 5000,
+        payments: [{ amount: 3000, status: "Active" }],
+      },
     });
-    expect(screen.getByRole("button", { name: /upload payment/i })).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /^confirm$/i })).not.toBeInTheDocument();
-  });
-
-  it("Upload Payment primary fires onUploadPayment", async () => {
-    const user = userEvent.setup();
-    const { onUploadPayment } = renderCard({
-      booking: { booking_status: "Confirmed", payment_status: "Pending" },
-    });
-    await user.click(screen.getByRole("button", { name: /upload payment/i }));
-    expect(onUploadPayment).toHaveBeenCalledTimes(1);
-  });
-
-  it("hides action zone when booking is Confirmed and payment is Completed", () => {
-    renderCard({
-      booking: { booking_status: "Confirmed", payment_status: "Completed" },
-    });
-    expect(screen.queryByRole("button", { name: /upload payment/i })).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /^confirm$/i })).not.toBeInTheDocument();
+    expect(screen.getByText(/2,000\.00 due/)).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /due|upload payment|record payment/i })).toBeNull();
   });
 
   it("hides action zone for Cancelled booking", () => {
     renderCard({ booking: { booking_status: "Cancelled" } });
-    expect(screen.queryByRole("button", { name: /upload payment/i })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /^confirm$/i })).not.toBeInTheDocument();
   });
 
@@ -172,9 +158,47 @@ describe("BookingCard primary action", () => {
       booking: { booking_status: "Pending", payment_status: "Pending" },
       role: staffRole,
     });
-    // No Confirm primary, falls through to Upload Payment because payment incomplete
     expect(screen.queryByRole("button", { name: /^confirm$/i })).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /upload payment/i })).toBeInTheDocument();
+  });
+});
+
+describe("BookingCard status dialogs", () => {
+  const checkInDay = { check_in: "2025-09-25T06:00:00Z", check_out: "2025-09-27T04:00:00Z" };
+
+  it("warns before confirming a booking with no payment recorded", async () => {
+    const user = userEvent.setup();
+    const { updateBookingStatus } = renderCard({
+      booking: { booking_status: "Pending" },
+      role: managerRole,
+    });
+    await user.click(screen.getByRole("button", { name: "Confirm" }));
+    expect(await screen.findByText("No payment recorded")).toBeInTheDocument();
+    expect(updateBookingStatus.mutate).not.toHaveBeenCalled();
+
+    await user.click(screen.getByRole("button", { name: "Confirm anyway" }));
+    expect(updateBookingStatus.mutate).toHaveBeenCalledWith({
+      bookingId: baseBooking.booking_id,
+      status: "Confirmed",
+    });
+  });
+
+  it("offers Record payment before checking out a booking with a balance", async () => {
+    const user = userEvent.setup();
+    const { updateBookingStatus, onRecordPayment } = renderCard({
+      booking: { ...checkInDay, booking_status: "CheckedIn", total_amount: 5000 },
+      role: staffRole,
+    });
+    await user.click(screen.getByRole("button", { name: "Check out" }));
+    await user.click(await screen.findByRole("button", { name: "Record payment" }));
+    expect(onRecordPayment).toHaveBeenCalledOnce();
+    expect(updateBookingStatus.mutate).not.toHaveBeenCalled();
+
+    await user.click(screen.getByRole("button", { name: "Check out" }));
+    await user.click(await screen.findByRole("button", { name: "Check out anyway" }));
+    expect(updateBookingStatus.mutate).toHaveBeenCalledWith({
+      bookingId: baseBooking.booking_id,
+      status: "CheckedOut",
+    });
   });
 });
 
@@ -185,10 +209,15 @@ describe("BookingCard check in and check out", () => {
   it.each([
     ["Confirmed", "Check in", "CheckedIn"],
     ["CheckedIn", "Check out", "CheckedOut"],
-  ] as const)("lets staff move a %s booking with %s", async (status, label, next) => {
+  ] as const)("lets staff move a paid %s booking with %s", async (status, label, next) => {
     const user = userEvent.setup();
     const { updateBookingStatus } = renderCard({
-      booking: { ...checkInDay, booking_status: status, payment_status: "Completed" },
+      booking: {
+        ...checkInDay,
+        booking_status: status,
+        payment_status: "Completed",
+        payments: [{ amount: baseBooking.total_amount, status: "Active" }],
+      },
       role: staffRole,
     });
     await user.click(screen.getByRole("button", { name: label }));
@@ -226,6 +255,14 @@ describe("BookingCard check in and check out", () => {
 });
 
 describe("BookingCard ⋯ menu role gating", () => {
+  it("records a payment from the menu", async () => {
+    const user = userEvent.setup();
+    const { onRecordPayment } = renderCard({ booking: { total_amount: 5000 } });
+    await user.click(screen.getByRole("button", { name: "Actions for BK-TEST-001" }));
+    await user.click(await screen.findByText("Record payment"));
+    expect(onRecordPayment).toHaveBeenCalledOnce();
+  });
+
   it("never offers Delete", async () => {
     const user = userEvent.setup();
     renderCard({ role: ownerRole });
@@ -233,7 +270,7 @@ describe("BookingCard ⋯ menu role gating", () => {
       .getAllByRole("button")
       .find((b) => b.querySelector("svg.lucide-ellipsis"));
     await user.click(trigger!);
-    expect(await screen.findByText("Edit Booking")).toBeInTheDocument();
+    expect(await screen.findByText("Edit")).toBeInTheDocument();
     expect(screen.queryByText("Delete")).not.toBeInTheDocument();
   });
 
@@ -258,7 +295,7 @@ describe("BookingCard ⋯ menu role gating", () => {
       .getAllByRole("button")
       .find((b) => b.querySelector("svg.lucide-ellipsis"));
     await user.click(trigger!);
-    expect(await screen.findByText("Edit Booking")).toBeInTheDocument();
+    expect(await screen.findByText("Edit")).toBeInTheDocument();
     expect(screen.queryByText("Cancel")).not.toBeInTheDocument();
   });
 
@@ -272,7 +309,7 @@ describe("BookingCard ⋯ menu role gating", () => {
     const trigger = moreButtons.find((b) => b.querySelector("svg.lucide-ellipsis"));
     expect(trigger).toBeDefined();
     await user.click(trigger!);
-    expect(await screen.findByText("Edit Booking")).toBeInTheDocument();
+    expect(await screen.findByText("Edit")).toBeInTheDocument();
     // No "Confirm" menu item should exist
     expect(screen.queryByText(/^Confirm$/)).not.toBeInTheDocument();
   });
@@ -287,7 +324,7 @@ describe("BookingCard ⋯ menu role gating", () => {
       .getAllByRole("button")
       .find((b) => b.querySelector("svg.lucide-ellipsis"));
     await user.click(trigger!);
-    expect(await screen.findByText("Edit Booking")).toBeInTheDocument();
+    expect(await screen.findByText("Edit")).toBeInTheDocument();
     expect(screen.queryByText("Cancel")).not.toBeInTheDocument();
   });
 });

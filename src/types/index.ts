@@ -122,6 +122,8 @@ export interface Booking {
       multiplier?: number;
     }>;
   } | null;
+  status_changed_by?: string | null;
+  status_changed_at?: string | null;
   created_at: string | null;
   updated_at: string | null;
   // Relations (NEW: junction table pattern)

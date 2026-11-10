@@ -40,14 +40,15 @@ test.describe("Mobile booking card", () => {
     const card = cardFor(page, E2E_REF.CONF_PAID);
     await expect(card).toContainText("Jun 30 → Jul 2");
     // Paid + Confirmed → no primary action button rendered
-    await expect(card.getByRole("button", { name: /Upload Payment|^Confirm$/ })).toHaveCount(0);
+    await expect(card.getByRole("button", { name: /Record payment|^Confirm$/ })).toHaveCount(0);
   });
 
   test("Confirm primary button transitions Pending → Confirmed", async ({ page }) => {
     const card = cardFor(page, E2E_REF.PENDING);
     await card.getByRole("button", { name: /^Confirm$/ }).click();
-    // After mutation, the same card should now show Upload Payment as primary.
-    await expect(card.getByRole("button", { name: /Upload Payment/ })).toBeVisible();
+    // No payment recorded yet, so Confirm warns first
+    await page.getByRole("alertdialog").getByRole("button", { name: "Confirm anyway" }).click();
+    await expect(card).toContainText("₱2,500.00 due");
     await expect(card.getByRole("button", { name: /^Confirm$/ })).toHaveCount(0);
   });
 
@@ -56,8 +57,8 @@ test.describe("Mobile booking card", () => {
     // ⋯ trigger is an unlabeled icon button inside the card header.
     await card.locator("button:has(svg.lucide-ellipsis)").click();
     const menu = page.getByRole("menu");
-    await expect(menu.getByRole("menuitem", { name: "Edit Booking" })).toBeVisible();
-    await expect(menu.getByRole("menuitem", { name: "Upload Payment" })).toBeVisible();
+    await expect(menu.getByRole("menuitem", { name: "Edit" })).toBeVisible();
+    await expect(menu.getByRole("menuitem", { name: "Record payment" })).toBeVisible();
     await expect(menu.getByRole("menuitem", { name: "Cancel" })).toBeVisible();
     // Bookings are cancelled, never deleted, even by an owner.
     await expect(menu.getByRole("menuitem", { name: "Delete" })).toHaveCount(0);
