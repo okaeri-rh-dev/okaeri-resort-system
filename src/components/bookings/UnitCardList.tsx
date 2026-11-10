@@ -24,6 +24,7 @@ import {
 } from "@/components/patterns";
 import type { PricingConfig } from "@/hooks/usePricingConfig";
 import { formatCurrency } from "@/lib/formatters";
+import { cabinRates } from "@/lib/pricing/cabin-pricing";
 import type { BookingUnit } from "@/types/multi-unit-booking";
 
 // ============================================
@@ -105,6 +106,7 @@ function UnitCardItem({
   pricingConfig,
 }: UnitCardItemProps) {
   const guestCount = unit.guest_assignment?.num_guests || unit.base_occupancy;
+  const rates = cabinRates(unit, pricingConfig);
 
   const handleGuestCountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = parseInt(e.target.value);
@@ -218,7 +220,7 @@ function UnitCardItem({
             <div className="flex justify-between">
               <span>
                 Base ({unit.pricing.nights} night{unit.pricing.nights !== 1 ? "s" : ""} ×{" "}
-                {formatCurrency(pricingConfig?.base_rate ?? unit.base_rate)})
+                {formatCurrency(rates.base_rate)})
               </span>
               <span className="tabular-nums">{formatCurrency(unit.pricing.base_total)}</span>
             </div>
@@ -236,7 +238,7 @@ function UnitCardItem({
                   Extra persons (
                   {(unit.guest_assignment?.num_guests || unit.base_occupancy) - unit.base_occupancy}{" "}
                   × {unit.pricing.nights} night{unit.pricing.nights !== 1 ? "s" : ""} ×{" "}
-                  {formatCurrency(pricingConfig?.extra_person_rate ?? unit.extra_person_rate)})
+                  {formatCurrency(rates.extra_person_rate)})
                 </span>
                 <span className="tabular-nums">
                   +{formatCurrency(unit.pricing.extra_person_fee)}

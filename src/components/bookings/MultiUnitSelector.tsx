@@ -32,6 +32,7 @@ import {
 } from "@/components/patterns";
 import type { PricingConfig } from "@/hooks/usePricingConfig";
 import { formatCurrency } from "@/lib/formatters";
+import { cabinRates } from "@/lib/pricing/cabin-pricing";
 import { cn } from "@/lib/utils";
 import type { Unit } from "@/types";
 import type { BookingUnit } from "@/types/multi-unit-booking";
@@ -291,7 +292,7 @@ function UnitCard({
   onRemove,
   pricingConfig,
 }: UnitCardProps) {
-  const displayRate = pricingConfig?.base_rate ?? unit.base_rate;
+  const displayRate = cabinRates(unit, pricingConfig).base_rate;
 
   return (
     <Card
