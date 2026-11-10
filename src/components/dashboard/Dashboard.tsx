@@ -6,8 +6,9 @@ import { parseISO, startOfMonth } from "date-fns";
 import { ChevronRight } from "lucide-react";
 
 import { useBlockCabins } from "@/hooks/useBlocks";
+import { isNeedsAction } from "@/lib/bookings/list";
 import { manilaDayOf, type ManilaDay } from "@/lib/bookings/stay";
-import { monthNumbers, pendingCount } from "@/lib/dashboard";
+import { monthNumbers } from "@/lib/dashboard";
 import { useAllBookings } from "@/stores/useBookingStore";
 import { allUnitsQuery } from "@/stores/useUnitStore";
 
@@ -50,18 +51,19 @@ export function Dashboard() {
 
   const allBookings = useMemo(() => bookings ?? [], [bookings]);
   const numbers = monthNumbers(allBookings, month, sortedUnits.length);
-  const waiting = pendingCount(allBookings);
+  const needsAction = allBookings.filter((booking) => isNeedsAction(booking, today)).length;
 
   return (
     <div className="space-y-4">
       <DashboardHeader dataUpdatedAt={dataUpdatedAt} isFetching={isFetching} onRefresh={refresh} />
 
-      {waiting > 0 && (
+      {needsAction > 0 && (
         <Link
-          to="/admin/bookings/queue"
+          to="/admin/bookings"
+          search={{ view: "needs-action" }}
           className="bg-warning text-warning-foreground focus-visible:ring-ring coarse:min-h-11 flex items-center justify-between rounded-md px-4 py-3 text-sm font-medium focus-visible:ring-2 focus-visible:outline-none"
         >
-          {waiting} booking{waiting !== 1 ? "s" : ""} waiting for verification
+          {needsAction === 1 ? "1 booking needs action" : `${needsAction} bookings need action`}
           <ChevronRight className="size-4" aria-hidden="true" />
         </Link>
       )}
