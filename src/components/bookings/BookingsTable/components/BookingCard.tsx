@@ -80,7 +80,7 @@ export const BookingCard: React.FC<BookingCardProps> = ({
   onCancel,
   updateBookingStatus,
 }) => {
-  const navigate = useNavigate();
+  const navigate = useNavigate({ from: "/admin/bookings" });
   const { canEdit, canEditBookings, canConfirmBookings } = useUserRole();
   const [showCancelDialog, setShowCancelDialog] = useState(false);
 
@@ -88,9 +88,9 @@ export const BookingCard: React.FC<BookingCardProps> = ({
   const nights = getNights(booking.check_in, booking.check_out);
 
   const handleViewBooking = useCallback(() => {
-    navigate({
-      to: "/admin/bookings/$bookingId",
-      params: { bookingId: booking.booking_id },
+    void navigate({
+      to: "/admin/bookings",
+      search: (prev) => ({ ...prev, booking: booking.booking_id }),
     });
   }, [navigate, booking.booking_id]);
 

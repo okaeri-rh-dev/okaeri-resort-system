@@ -13,6 +13,7 @@ import { cn } from "@/lib/utils";
 
 import { BookingCard } from "./components/BookingCard";
 import { BookingFilters } from "./components/BookingFilters";
+import { BookingSheet } from "./components/BookingSheet";
 import { useBookingsTable } from "./hooks/useBookingsTable";
 import type { BookingsTableProps } from "./types";
 
@@ -120,6 +121,8 @@ function BookingsTableComponent({ className }: BookingsTableProps) {
       />
 
       <TablePagination table={table} totalItems={bookings.length} />
+
+      <BookingSheet />
     </div>
   );
 }

@@ -1,21 +1,7 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 import { useMutation } from "@tanstack/react-query";
-// Note: CSS imports removed as they cause build issues
-// import "react-pdf/dist/esm/Page/AnnotationLayer.css";
-// import "react-pdf/dist/esm/Page/TextLayer.css";
-
-import {
-  CheckCircle,
-  ChevronLeft,
-  ChevronRight,
-  RotateCcw,
-  XCircle,
-  ZoomIn,
-  ZoomOut,
-} from "lucide-react";
-import { Document, Page, pdfjs } from "react-pdf";
-import { TransformComponent, TransformWrapper } from "react-zoom-pan-pinch";
+import { CheckCircle, XCircle } from "lucide-react";
 
 import {
   Button,
@@ -34,13 +20,12 @@ import {
   Textarea,
 } from "@/components/patterns";
 import { useAuthToken } from "@/hooks/useAuthToken";
+import { paymentProofKind, usePaymentProofUrl } from "@/hooks/usePaymentProofUrl";
 import { afterWrite, type TableName } from "@/lib/after-write";
 import { isPaymentReceived } from "@/lib/bookings";
-import { generateSignedUrl, renewSignedUrl, shouldRenewSignedUrl } from "@/lib/storage-utils";
 import type { PaymentStatus } from "@/types";
 
-// Configure PDF.js worker
-pdfjs.GlobalWorkerOptions.workerSrc = "/pdf.worker.js";
+import { PaymentProofView } from "./PaymentProofView";
 
 // Tables POST /api/admin/verify-payment writes
 const VERIFY_PAYMENT_WRITES = ["payments"] as const satisfies readonly TableName[];
@@ -66,74 +51,11 @@ export function PaymentProofViewer({
 }: PaymentProofViewerProps) {
   const { token: authToken, isLoading: isAuthLoading, error: authError } = useAuthToken();
 
-  // State management
-  const [signedUrl, setSignedUrl] = useState<string | null>(null);
-  const [urlExpiry, setUrlExpiry] = useState<Date | null>(null);
-  const [fileType, setFileType] = useState<"pdf" | "image" | null>(null);
+  const { data: signedUrl, error: urlError } = usePaymentProofUrl(paymentProofPath);
   const [error, setError] = useState<string | null>(null);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [numPages, setNumPages] = useState<number | null>(null);
   const [isRejectDialogOpen, setIsRejectDialogOpen] = useState(false);
   const [rejectionReason, setRejectionReason] = useState("");
   const [showVerifyConfirm, setShowVerifyConfirm] = useState(false);
-
-  // Determine file type from path extension
-  useEffect(() => {
-    if (!paymentProofPath) return;
-
-    const extension = paymentProofPath.split(".").pop()?.toLowerCase();
-    if (extension === "pdf") {
-      setFileType("pdf");
-    } else if (["jpg", "jpeg", "png"].includes(extension || "")) {
-      setFileType("image");
-    }
-  }, [paymentProofPath]);
-
-  // Generate initial signed URL
-  useEffect(() => {
-    if (!paymentProofPath) return;
-
-    const initializeSignedUrl = async () => {
-      const {
-        url,
-        expiresAt,
-        error: signError,
-      } = await generateSignedUrl(
-        paymentProofPath,
-        3600 // 1 hour
-      );
-      if (signError) {
-        setError("Failed to load payment proof. Please try again.");
-        return;
-      }
-      setSignedUrl(url);
-      setUrlExpiry(expiresAt);
-      setError(null);
-    };
-
-    void initializeSignedUrl();
-  }, [paymentProofPath]);
-
-  // Auto-renewal of signed URL
-  useEffect(() => {
-    if (!paymentProofPath || !urlExpiry) return;
-
-    const checkAndRenew = async () => {
-      if (shouldRenewSignedUrl(urlExpiry, 60)) {
-        // Renew 1 minute before expiry
-        const { url, expiresAt, error: renewError } = await renewSignedUrl(paymentProofPath, 3600);
-        if (renewError) {
-          setError("Session expired. Please refresh the page.");
-          return;
-        }
-        setSignedUrl(url);
-        setUrlExpiry(expiresAt);
-      }
-    };
-
-    const interval = setInterval(() => void checkAndRenew(), 30000); // Check every 30 seconds
-    return () => clearInterval(interval);
-  }, [paymentProofPath, urlExpiry]);
 
   // Mutation for verify/reject actions
   const verifyMutation = useMutation({
@@ -192,11 +114,6 @@ export function PaymentProofViewer({
     });
   };
 
-  const onDocumentLoadSuccess = ({ numPages }: { numPages: number }) => {
-    setNumPages(numPages);
-    setCurrentPage(1);
-  };
-
   // Render status badge
   const renderStatusBadge = () => {
     if (isPaymentReceived(currentPaymentStatus)) {
@@ -204,121 +121,6 @@ export function PaymentProofViewer({
     }
 
     return <Callout tone="info">Payment pending verification - Review proof below</Callout>;
-  };
-
-  // Render image viewer
-  const renderImageViewer = () => {
-    if (!signedUrl) return null;
-
-    return (
-      <TransformWrapper initialScale={1} minScale={0.5} maxScale={3} centerOnInit>
-        {({ zoomIn, zoomOut, resetTransform }) => (
-          <div className="space-y-4">
-            <div className="flex flex-wrap gap-2">
-              <Button
-                onClick={() => zoomIn()}
-                size="sm"
-                variant="outline"
-                className="flex items-center gap-2"
-              >
-                <ZoomIn className="h-4 w-4" />
-                Zoom In
-              </Button>
-              <Button
-                onClick={() => zoomOut()}
-                size="sm"
-                variant="outline"
-                className="flex items-center gap-2"
-              >
-                <ZoomOut className="h-4 w-4" />
-                Zoom Out
-              </Button>
-              <Button
-                onClick={() => resetTransform()}
-                size="sm"
-                variant="outline"
-                className="flex items-center gap-2"
-              >
-                <RotateCcw className="h-4 w-4" />
-                Reset
-              </Button>
-            </div>
-            <div className="bg-muted overflow-hidden rounded-lg border">
-              <TransformComponent
-                wrapperStyle={{
-                  width: "100%",
-                  height: "600px",
-                }}
-                contentStyle={{
-                  width: "100%",
-                  height: "100%",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <img
-                  src={signedUrl}
-                  alt="Payment proof"
-                  width={800}
-                  height={600}
-                  className="max-h-full max-w-full object-contain"
-                />
-              </TransformComponent>
-            </div>
-          </div>
-        )}
-      </TransformWrapper>
-    );
-  };
-
-  // Render PDF viewer
-  const renderPdfViewer = () => {
-    if (!signedUrl) return null;
-
-    return (
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Button
-              onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
-              disabled={currentPage <= 1}
-              size="sm"
-              variant="outline"
-            >
-              <ChevronLeft className="h-4 w-4" />
-              Previous
-            </Button>
-            <span className="text-muted-foreground text-sm tabular-nums">
-              Page {currentPage} of {numPages || "?"}
-            </span>
-            <Button
-              onClick={() => setCurrentPage((prev) => Math.min(numPages || prev, prev + 1))}
-              disabled={currentPage >= (numPages || 1)}
-              size="sm"
-              variant="outline"
-            >
-              Next
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-        <div className="bg-muted overflow-auto rounded-lg border">
-          <div className="flex justify-center p-4">
-            <Document
-              file={signedUrl}
-              onLoadSuccess={onDocumentLoadSuccess}
-              onLoadError={(error) => {
-                console.error("PDF load error:", error);
-                setError("Failed to load PDF. Please try again.");
-              }}
-            >
-              <Page pageNumber={currentPage} width={800} />
-            </Document>
-          </div>
-        </div>
-      </div>
-    );
   };
 
   // Render action buttons
@@ -415,8 +217,13 @@ export function PaymentProofViewer({
 
           {error && <Callout tone="danger">{error}</Callout>}
 
-          {signedUrl && fileType === "image" && renderImageViewer()}
-          {signedUrl && fileType === "pdf" && renderPdfViewer()}
+          {urlError && (
+            <Callout tone="danger">Failed to load payment proof. Please try again.</Callout>
+          )}
+
+          {signedUrl && (
+            <PaymentProofView url={signedUrl} kind={paymentProofKind(paymentProofPath)} />
+          )}
 
           {renderActionButtons()}
         </CardContent>
