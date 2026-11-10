@@ -270,31 +270,26 @@ describe("Dashboard", () => {
     expect(within(paidRow).queryByText("Waiting for verification")).not.toBeInTheDocument();
   });
 
-  it("links to the queue when bookings wait for verification", async () => {
-    const inQueue = {
-      status: "Pending" as const,
-      is_guest_booking: true,
-      unit_assignment_status: "pending",
-    };
+  it("links to the Needs action view with the count of bookings that need action", async () => {
     data.bookings = [
-      booking("p1", "Maria Santos", "2026-11-20", "2026-11-22", inQueue),
-      booking("p2", "Jose Rizal", "2026-12-20", "2026-12-22", inQueue),
-      booking("s1", "Ana Cruz", "2026-11-25", "2026-11-27", { status: "Pending" }),
+      booking("p1", "Maria Santos", "2026-11-20", "2026-11-22", { status: "Pending" }),
+      booking("c1", "Jose Rizal", "2026-11-08", "2026-11-12"),
+      booking("i1", "Ana Cruz", "2026-11-05", "2026-11-09", { status: "CheckedIn" }),
+      booking("c2", "Lea Reyes", "2026-11-10", "2026-11-12"),
+      booking("i2", "Ben Lim", "2026-11-09", "2026-11-10", { status: "CheckedIn" }),
     ];
     renderDashboard();
 
-    const queueLine = await screen.findByRole("link", {
-      name: "2 bookings waiting for verification",
-    });
-    expect(queueLine).toHaveAttribute("href", "/admin/bookings/queue");
+    const banner = await screen.findByRole("link", { name: "3 bookings need action" });
+    expect(banner).toHaveAttribute("href", "/admin/bookings?view=needs-action");
   });
 
-  it("shows no queue line when nothing waits", async () => {
+  it("shows no banner when nothing needs action", async () => {
     data.bookings = [booking("c1", "Maria Santos", "2026-11-20", "2026-11-22")];
     renderDashboard();
 
     await screen.findByText("2% occupancy · 1 confirmed");
-    expect(screen.queryByText(/waiting for verification/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/need action|needs action/)).not.toBeInTheDocument();
   });
 
   it("shows the numbers of the month the calendar shows", async () => {
