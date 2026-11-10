@@ -19,15 +19,9 @@ export interface BookingCardProps {
 export interface BookingFiltersProps {
   search: BookingsSearch;
   setSearch: (next: Partial<BookingsSearch>) => void;
-  resetFilters: () => void;
   hasActiveFilters: boolean;
   /** Number of bookings after filtering */
   resultCount?: number;
   /** Total number of bookings before filtering */
   totalCount?: number;
-}
-
-export interface DateRange {
-  from: Date | undefined;
-  to?: Date | undefined;
 }
