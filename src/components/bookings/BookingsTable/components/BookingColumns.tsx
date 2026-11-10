@@ -4,10 +4,11 @@ import { Link } from "@tanstack/react-router";
 import { createColumnHelper } from "@tanstack/react-table";
 
 import { StatusBadge } from "@/components/patterns";
-import { formatCurrency, formatPhoneNumber, formatTableDate } from "@/lib/formatters";
+import { formatCurrency, formatPhoneNumber } from "@/lib/formatters";
 import { statusBadgeProps } from "@/lib/status-tone";
 import type { Booking, BookingStatus } from "@/types";
 
+import { formatStayRange, getNights } from "../utils/stay";
 import { BalanceLabel } from "./BalanceLabel";
 import { BookingActionsCell } from "./BookingActionsCell";
 import { CabinChip } from "./CabinChip";
@@ -71,23 +72,21 @@ export const useBookingColumns = ({
       }),
 
       columnHelper.accessor("check_in", {
-        header: "Dates",
-        cell: ({ getValue, row }) => (
-          <div className="space-y-0.5">
-            <div className="text-sm font-medium">{formatTableDate(getValue())}</div>
-            <div className="text-muted-foreground text-xs">
-              {formatTableDate(row.original.check_out)}
+        header: "Stay",
+        cell: ({ row }) => {
+          const { check_in, check_out, num_guests } = row.original;
+          const nights = getNights(check_in, check_out);
+          return (
+            <div className="space-y-0.5 whitespace-nowrap">
+              <div className="text-sm font-medium">{formatStayRange(check_in, check_out)}</div>
+              <div className="text-muted-foreground text-xs">
+                {nights} {nights === 1 ? "night" : "nights"} · {num_guests}{" "}
+                {num_guests === 1 ? "guest" : "guests"}
+              </div>
             </div>
-          </div>
-        ),
-        size: 100,
-      }),
-
-      columnHelper.accessor("num_guests", {
-        header: "Guests",
-        cell: ({ getValue }) => getValue(),
-        meta: { align: "center" },
-        size: 80,
+          );
+        },
+        size: 120,
       }),
 
       columnHelper.accessor("total_amount", {
@@ -98,7 +97,7 @@ export const useBookingColumns = ({
             <BalanceLabel booking={row.original} />
           </div>
         ),
-        meta: { align: "right" },
+        meta: { align: "right", priority: "low" },
         size: 120,
       }),
 
@@ -111,6 +110,7 @@ export const useBookingColumns = ({
       columnHelper.accessor("payment_status", {
         header: "Payment",
         cell: ({ getValue }) => <StatusBadge {...statusBadgeProps(getValue(), "Pending")} />,
+        meta: { priority: "low" },
         size: 100,
       }),
 

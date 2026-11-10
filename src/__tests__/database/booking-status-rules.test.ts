@@ -14,8 +14,8 @@ import { createRoleClients, type RoleClients } from "../setup/role-clients";
 import {
   cleanupTestData,
   createTestBooking,
-  shouldRunDatabaseTests,
   testSupabaseAdmin as service,
+  shouldRunDatabaseTests,
 } from "../setup/test-db";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
