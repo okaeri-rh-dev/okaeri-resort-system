@@ -45,6 +45,8 @@ describe("booking column grants", () => {
       unit: await createTestUnit({}),
       guest,
       booking_reference: `GRT${Date.now() % 1000000}`,
+      // Pending, since only a manager moves the dates of a Confirmed booking
+      booking_status: "Pending",
       payment_status: "Pending",
       unit_price: 5000,
       subtotal: 5000,

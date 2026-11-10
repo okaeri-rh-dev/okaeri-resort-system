@@ -411,13 +411,13 @@ describe("blocks", () => {
       await addBlock(unitId, "2030-07-10", "2030-07-12");
       const { bookingId } = await createBooking([unitId], "2030-07-05", "2030-07-07");
 
-      const moved = await roles.byRole.staff
+      const moved = await roles.byRole.manager
         .from("bookings")
         .update(toStayInstants("2030-07-08", "2030-07-11"))
         .eq("booking_id", bookingId!);
       expect(moved.error?.code).toBe(BLOCKED_NIGHT_CODE);
 
-      const clear = await roles.byRole.staff
+      const clear = await roles.byRole.manager
         .from("bookings")
         .update(toStayInstants("2030-07-08", "2030-07-10"))
         .eq("booking_id", bookingId!);
@@ -430,7 +430,7 @@ describe("blocks", () => {
       await addBlock(null, "2031-03-10", "2031-03-10");
       const { bookingId } = await createBooking([unitId], "2031-03-05", "2031-03-07");
 
-      const { error } = await roles.byRole.staff
+      const { error } = await roles.byRole.manager
         .from("bookings")
         .update(toStayInstants("2031-03-09", "2031-03-11"))
         .eq("booking_id", bookingId!);
