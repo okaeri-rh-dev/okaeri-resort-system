@@ -19,7 +19,8 @@ export class BookingsTablePage {
   // Search and filters
   readonly searchInput: Locator;
   readonly viewTabs: Locator;
-  readonly dateRangeFilter: Locator;
+  readonly filtersButton: Locator;
+  readonly filtersSheet: Locator;
   readonly clearFiltersButton: Locator;
 
   // Table elements
@@ -31,6 +32,7 @@ export class BookingsTablePage {
   readonly tableHeaders: Locator;
   readonly noBookingsState: Locator;
   readonly noMatchesState: Locator;
+  readonly emptyViewState: Locator;
   readonly emptyState: Locator;
   readonly loadingState: Locator;
 
@@ -52,15 +54,11 @@ export class BookingsTablePage {
   constructor(page: Page) {
     this.page = page;
 
-    // Search and filters - BookingFilters component uses FilterPopover
     this.searchInput = page.getByPlaceholder(/^search/i);
     this.viewTabs = page.getByRole("tablist", { name: "Booking views" });
-    // Date filter is a FilterPopover trigger
-    this.dateRangeFilter = page.getByRole("button", { name: "Dates" });
-    this.clearFiltersButton = page.getByRole("button", {
-      name: "Clear Filters",
-      exact: true,
-    });
+    this.filtersButton = page.getByRole("button", { name: /^Filters/ });
+    this.filtersSheet = page.getByRole("dialog", { name: "Filters" });
+    this.clearFiltersButton = page.getByRole("button", { name: "Clear filters", exact: true });
 
     // Table elements
     this.table = page.getByRole("table");
@@ -70,8 +68,9 @@ export class BookingsTablePage {
     this.tableBodyRows = page.locator("table tbody tr");
     this.tableHeaders = page.getByRole("columnheader");
     this.noBookingsState = page.getByText("No bookings yet");
-    this.noMatchesState = page.getByText("No bookings found");
-    this.emptyState = this.noBookingsState.or(this.noMatchesState);
+    this.noMatchesState = page.getByText("No bookings match");
+    this.emptyViewState = page.getByText("No bookings found");
+    this.emptyState = this.noBookingsState.or(this.noMatchesState).or(this.emptyViewState);
     this.loadingState = page.locator(".animate-pulse, .animate-spin");
 
     // Action buttons
@@ -145,6 +144,18 @@ export class BookingsTablePage {
     await this.viewTab(name).click();
     await expect(this.viewTab(name)).toHaveAttribute("aria-selected", "true");
     await this.waitForTableLoad();
+  }
+
+  /** Ticks one option in the Filters sheet, then closes the sheet. */
+  async pickFilter(option: string) {
+    await this.filtersButton.click();
+    await this.filtersSheet.getByRole("checkbox", { name: option, exact: true }).check();
+    await this.page.keyboard.press("Escape");
+    await expect(this.filtersSheet).toBeHidden();
+  }
+
+  filterChip(label: string): Locator {
+    return this.page.getByRole("button", { name: `Remove filter ${label}`, exact: true });
   }
 
   /**

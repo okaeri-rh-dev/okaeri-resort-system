@@ -34,8 +34,6 @@ export function movementsOn(bookings: Booking[], day: ManilaDay): DayMovements {
 export const isPending = (booking: Booking) =>
   booking.is_guest_booking === true && booking.unit_assignment_status === "pending";
 
-export const pendingCount = (bookings: Booking[]) => bookings.filter(isPending).length;
-
 /** Total price minus counted payments (GLOSSARY), never below 0. */
 export function outstandingBalance(booking: Booking): number {
   const paid = (booking.payments ?? [])
