@@ -1,6 +1,6 @@
 # Hooks
 
-React hooks shared across components. Entity CRUD (guests, documents) lives in `src/stores/`; the hooks here cover bookings, money (accounts, expenses, payments, transfers), settings, roles, multi-unit booking, pricing, realtime and UI helpers.
+React hooks shared across components. Entity client state (filters, drafts) lives in `src/stores/`; the hooks here cover bookings, guests, money (accounts, expenses, payments, transfers), settings, roles, multi-unit booking, pricing, realtime and UI helpers.
 
 ## Conventions
 
@@ -33,6 +33,7 @@ React hooks shared across components. Entity CRUD (guests, documents) lives in `
 | `useBlocks.ts`                  | `useBlocks` (current and upcoming, past on request), create/update/delete block mutations    |
 | `useDebouncedValue.ts`          | `useDebouncedValue`, `SEARCH_DEBOUNCE_MS`: delay list search queries until typing pauses     |
 | `useCalendarBookings.ts`        | `useCalendarBookings` plus `getBookingStatusPriority`, `formatCurrency` for the calendar view |
+| `useGuests.ts`                  | `useGuests`, `useGuestPick`, `useGuestBookings`, `guestDetailQuery`, update/anonymize/delete/export mutations |
 | `useAccounts.ts`                | `useActiveAccounts`, `useAccountBalances`, `useActiveAccountBalances`, create/update/delete/reactivate mutations |
 | `useExpenses.ts`                | `useExpenses` (reads `useExpenseStore` filters), `expenseDetailQuery`, `useExpenseStats`, create/update/delete/export mutations |
 | `usePayments.ts`                | `usePayments` (reads `usePaymentStore` filters), `paymentDetailQuery`, create/update/soft-delete/verify/export mutations |

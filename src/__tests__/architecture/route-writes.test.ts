@@ -16,11 +16,11 @@ const repoRoot = join(__dirname, "..", "..", "..");
 const ROUTE_WRITES: Record<string, { constant: string; constantFile: string }> = {
   "functions/api/admin/guests/[guestId].ts": {
     constant: "GUEST_RETENTION_WRITES",
-    constantFile: "src/stores/useGuestStore.ts",
+    constantFile: "src/hooks/useGuests.ts",
   },
   "functions/api/admin/guests/[guestId]/anonymize.ts": {
     constant: "GUEST_RETENTION_WRITES",
-    constantFile: "src/stores/useGuestStore.ts",
+    constantFile: "src/hooks/useGuests.ts",
   },
   "functions/api/bookings/multi-unit.ts": {
     constant: "BOOKING_CREATE_WRITES",
