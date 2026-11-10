@@ -12,6 +12,7 @@ import "./responsive-date-picker.css";
 import { Button } from "./button";
 import { Calendar } from "./calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "./popover";
+import { nextRangeOnTap } from "./range-tap-cycle";
 import {
   Sheet,
   SheetContent,
@@ -197,10 +198,11 @@ export function ResponsiveDateRangePicker({
 
   React.useEffect(() => () => clearTimeout(autoCloseTimeout.current), []);
 
-  const handleSelect = (range: DateRange | undefined) => {
+  const handleSelect = (_libraryRange: DateRange | undefined, tappedDay: Date) => {
+    const range = nextRangeOnTap(value, tappedDay);
     onChange?.(range);
     // Auto-close on mobile when both dates are selected
-    if (sheet && range?.from && range?.to) {
+    if (sheet && range.to) {
       clearTimeout(autoCloseTimeout.current);
       autoCloseTimeout.current = setTimeout(() => setOpen(false), 200); // Small delay for visual feedback
     }
@@ -271,7 +273,7 @@ export function ResponsiveDateRangePicker({
         <Calendar
           mode="range"
           selected={value}
-          onSelect={onChange}
+          onSelect={handleSelect}
           disabled={disabled}
           initialFocus
           numberOfMonths={numberOfMonths}

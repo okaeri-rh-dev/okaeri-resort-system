@@ -231,7 +231,7 @@ export function AuditFilters() {
 
   const applyDateRange = (range: DateRange | undefined) => {
     const fromDate = range?.from;
-    const toDate = range?.to || fromDate;
+    const toDate = range?.to;
     setFilters({
       ...filters,
       startDate: fromDate?.toISOString(),

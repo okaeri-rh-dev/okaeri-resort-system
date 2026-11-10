@@ -3,6 +3,7 @@ import type { ComponentProps, JSX } from "react";
 import type { DateRange, DayButton } from "react-day-picker";
 
 import { Calendar } from "@/components/ui/calendar";
+import { nextRangeOnTap } from "@/components/ui/range-tap-cycle";
 import { cn } from "@/lib/utils";
 
 /** Props the month grid passes to a caller's day cell: spread the rest onto its `<button>`. */
@@ -98,7 +99,7 @@ export function InlineCalendar(props: InlineCalendarProps) {
     <Calendar
       mode="range"
       selected={selected}
-      onSelect={onSelect}
+      onSelect={(_libraryRange, tappedDay) => onSelect(nextRangeOnTap(selected, tappedDay))}
       defaultMonth={defaultMonth ?? selected?.from}
       required={false}
       className={cn("rounded-md border", className)}

@@ -108,6 +108,48 @@ describe("DateRangePicker", () => {
     );
   });
 
+  async function tapDays(...days: number[]) {
+    for (const day of days) await userEvent.click(dayButton(day) as HTMLElement);
+  }
+
+  const trigger = () => screen.getByRole("button", { name: "Stay dates" });
+
+  it("sets only the start on the first tap", async () => {
+    render(<StayDates />);
+
+    await userEvent.click(trigger());
+    await tapDays(10);
+
+    expect(trigger()).toHaveTextContent(/^\w{3} 10, \d{4}$/);
+  });
+
+  it("makes a second tap before the start the new start, with no end", async () => {
+    render(<StayDates />);
+
+    await userEvent.click(trigger());
+    await tapDays(10, 8);
+
+    expect(trigger()).toHaveTextContent(/^\w{3} 08, \d{4}$/);
+  });
+
+  it("starts a new range on a third tap", async () => {
+    render(<StayDates />);
+
+    await userEvent.click(trigger());
+    await tapDays(10, 12, 20);
+
+    expect(trigger()).toHaveTextContent(/^\w{3} 20, \d{4}$/);
+  });
+
+  it("gives a one-day range for two taps on the same day", async () => {
+    render(<StayDates />);
+
+    await userEvent.click(trigger());
+    await tapDays(10, 10);
+
+    expect(trigger()).toHaveTextContent(/^\w{3} 10, \d{4} - \w{3} 10, \d{4}$/);
+  });
+
   it("has no axe violations", async () => {
     const { container } = render(<StayDates />);
 
@@ -150,6 +192,21 @@ describe("DatePicker in a shell", () => {
     await userEvent.click(dayButton(15) as HTMLElement);
     expect(onChange).toHaveBeenCalledTimes(1);
     expect(screen.queryByRole("dialog", { name: "Select Date" })).not.toBeInTheDocument();
+  });
+
+  it("keeps the range sheet open after the first tap", async () => {
+    function StayDates() {
+      const [range, setRange] = useState<DateRange | undefined>();
+      return <DateRangePicker value={range} onChange={setRange} placeholder="Stay dates" />;
+    }
+    renderInShell(<StayDates />, true);
+
+    await userEvent.click(await screen.findByRole("button", { name: /Stay dates/ }));
+    await userEvent.click(dayButton(10) as HTMLElement);
+    // the sheet used to close on a timer once both ends were set
+    await new Promise((resolve) => setTimeout(resolve, 300));
+
+    expect(screen.getByRole("dialog", { name: "Select Date Range" })).toBeVisible();
   });
 
   it("opens in a popover on a wider window", async () => {

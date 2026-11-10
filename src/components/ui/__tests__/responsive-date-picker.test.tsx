@@ -1,5 +1,8 @@
+import { useState } from "react";
+
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import type { DateRange } from "react-day-picker";
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { ResponsiveDatePicker, ResponsiveDateRangePicker } from "../responsive-date-picker";
@@ -348,7 +351,20 @@ describe("ResponsiveDateRangePicker", () => {
 
     it("should auto-close after selecting both dates on mobile", async () => {
       const user = userEvent.setup();
-      render(<ResponsiveDateRangePicker sheet onChange={mockOnChange} />);
+      function ControlledRange() {
+        const [range, setRange] = useState<DateRange | undefined>();
+        return (
+          <ResponsiveDateRangePicker
+            sheet
+            value={range}
+            onChange={(next) => {
+              setRange(next);
+              mockOnChange(next);
+            }}
+          />
+        );
+      }
+      render(<ControlledRange />);
 
       const button = screen.getByRole("button");
       await user.click(button);
