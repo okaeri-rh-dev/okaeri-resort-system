@@ -74,8 +74,9 @@ export async function updateBooking(
 const STATUS_TRANSITIONS: Record<BookingStatus, BookingStatus[]> = {
   Pending: ["Confirmed", "Cancelled"],
   Confirmed: ["CheckedIn", "Cancelled"],
-  CheckedIn: ["CheckedOut"],
-  CheckedOut: [],
+  // The backward moves are the undos; the database judges who may make them
+  CheckedIn: ["CheckedOut", "Confirmed"],
+  CheckedOut: ["CheckedIn"],
   Cancelled: [],
 };
 

@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 import { outstandingBalance } from "@/lib/dashboard";
-import { PAYMENT_STATUSES, type Booking } from "@/types";
+import { PAYMENT_STATUSES, type Booking, type BookingStatus } from "@/types";
 import type { AppRoleName } from "@/types/app-role";
 
 import { BOOKING_SOURCES } from "./source";
@@ -117,10 +117,45 @@ export const mainActionFor = (
   }
 };
 
-export type OverflowAction =
-  "Record payment" | "Edit" | "Undo check-in" | "Undo check-out" | "Cancel";
+export type UndoAction = "Undo check-in" | "Undo check-out";
+
+/** The status each undo returns the booking to. */
+export const UNDO_STATUS = {
+  "Undo check-in": "Confirmed",
+  "Undo check-out": "CheckedIn",
+} as const satisfies Record<UndoAction, BookingStatus>;
+
+/** A status update; `undo` is the Undo its success toast offers. */
+export interface StatusChange {
+  bookingId: string;
+  status: BookingStatus;
+  undo?: UndoAction;
+}
 
 const SELF_UNDO_MS = 2 * 60 * 1000;
+
+/** The user who made the change within 2 minutes, or a manager at any time (docs/adr/0007). */
+export const undoActionFor = (
+  booking: Booking,
+  role: AppRoleName | null | undefined,
+  actorId: string | null | undefined,
+  now: Date
+): UndoAction | undefined => {
+  const action =
+    booking.booking_status === "CheckedIn"
+      ? "Undo check-in"
+      : booking.booking_status === "CheckedOut"
+        ? "Undo check-out"
+        : undefined;
+  if (!action || !role) return undefined;
+  if (role !== "staff") return action;
+  const changedAt = Date.parse(booking.status_changed_at ?? "");
+  const isOwnRecentChange =
+    !!actorId && booking.status_changed_by === actorId && now.getTime() - changedAt < SELF_UNDO_MS;
+  return isOwnRecentChange ? action : undefined;
+};
+
+export type OverflowAction = "Record payment" | "Edit" | UndoAction | "Cancel";
 
 /** The menu items beside the main action, in a fixed order; the database judges undo again (docs/adr/0007). */
 export const overflowActionsFor = (
@@ -133,16 +168,12 @@ export const overflowActionsFor = (
   if (!role) return [];
   const isManager = role !== "staff";
   const status = booking.booking_status;
-  const changedAt = booking.status_changed_at ? Date.parse(booking.status_changed_at) : NaN;
-  const canUndo =
-    isManager ||
-    (!!actor && booking.status_changed_by === actor && now.getTime() - changedAt <= SELF_UNDO_MS);
+  const undo = undoActionFor(booking, role, actor, now);
 
   const items: OverflowAction[] = [];
   if (status !== "Cancelled" && outstandingBalance(booking) > 0) items.push("Record payment");
   if (status === "Pending" || status === "Confirmed" || status === "CheckedIn") items.push("Edit");
-  if (status === "CheckedIn" && canUndo) items.push("Undo check-in");
-  if (status === "CheckedOut" && canUndo) items.push("Undo check-out");
+  if (undo) items.push(undo);
   if (isManager && (status === "Pending" || status === "Confirmed")) items.push("Cancel");
   return items;
 };

@@ -202,6 +202,7 @@ describe("BookingCard status dialogs", () => {
       bookingId: baseBooking.booking_id,
       status: "CheckedOut",
     });
+    expect(updateBookingStatus.mutate.mock.calls[0][0]).not.toHaveProperty("undo");
   });
 });
 
@@ -209,26 +210,27 @@ describe("BookingCard check in and check out", () => {
   // The global test clock reads 2025-09-25 in Manila
   const checkInDay = { check_in: "2025-09-25T06:00:00Z", check_out: "2025-09-27T04:00:00Z" };
 
+  const paidInFull = { payments: [{ amount: 10000, status: "Active" }] };
+
   it.each([
-    ["Confirmed", "Check in", "CheckedIn"],
-    ["CheckedIn", "Check out", "CheckedOut"],
-  ] as const)("lets staff move a paid %s booking with %s", async (status, label, next) => {
-    const user = userEvent.setup();
-    const { updateBookingStatus } = renderCard({
-      booking: {
-        ...checkInDay,
-        booking_status: status,
-        payment_status: "Completed",
-        payments: [{ amount: baseBooking.total_amount, status: "Active" }],
-      },
-      role: staffRole,
-    });
-    await user.click(screen.getByRole("button", { name: label }));
-    expect(updateBookingStatus.mutate).toHaveBeenCalledWith({
-      bookingId: baseBooking.booking_id,
-      status: next,
-    });
-  });
+    ["Confirmed", "Check in", "CheckedIn", "Undo check-in"],
+    ["CheckedIn", "Check out", "CheckedOut", "Undo check-out"],
+  ] as const)(
+    "lets staff move a %s booking with %s to %s, offering %s",
+    async (status, label, next, undo) => {
+      const user = userEvent.setup();
+      const { updateBookingStatus } = renderCard({
+        booking: { ...checkInDay, ...paidInFull, booking_status: status },
+        role: staffRole,
+      });
+      await user.click(screen.getByRole("button", { name: label }));
+      expect(updateBookingStatus.mutate).toHaveBeenCalledWith({
+        bookingId: baseBooking.booking_id,
+        status: next,
+        undo,
+      });
+    }
+  );
 
   it("offers no Check in before the check-in day", () => {
     renderCard({
