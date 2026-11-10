@@ -92,7 +92,6 @@ export const ROUTES = {
     bookings: "/admin/bookings",
     bookingDetail: (id: string) => `/admin/bookings/${id}`,
     bookingEdit: (id: string) => `/admin/bookings/${id}/edit`,
-    newMultiBooking: "/admin/bookings/new-multi",
     units: "/admin/units",
     unitDetail: (id: string) => `/admin/units/${id}`,
     unitEdit: (id: string) => `/admin/units/${id}/edit`,

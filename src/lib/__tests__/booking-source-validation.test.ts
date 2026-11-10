@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 
 import { bookingEditSchema } from "@/lib/validation/entity-schemas";
-import { multiUnitBookingSchema } from "@/lib/validation/multi-unit-booking";
 import { completeBookingSchema } from "@/lib/validations";
 
 describe("booking source validation across booking schemas", () => {
@@ -50,36 +49,6 @@ describe("booking source validation across booking schemas", () => {
 
   it("completeBookingSchema rejects when booking_source is omitted", () => {
     expect(() => completeBookingSchema.parse(baseCompleteInput)).toThrow();
-  });
-
-  const baseMultiInput = {
-    check_in: new Date("2099-02-01"),
-    check_out: new Date("2099-02-02"),
-    guest_name: "Multi Walk",
-    email: "",
-    contact_number: "",
-    payment_method: "Cash" as const,
-  };
-
-  it("multiUnitBookingSchema accepts Airbnb with a payout", () => {
-    const parsed = multiUnitBookingSchema.parse({
-      ...baseMultiInput,
-      booking_source: "Airbnb",
-      payout: 9000,
-    });
-    expect(parsed.booking_source).toBe("Airbnb");
-  });
-
-  it("multiUnitBookingSchema rejects Airbnb without a payout", () => {
-    expect(() =>
-      multiUnitBookingSchema.parse({ ...baseMultiInput, booking_source: "Airbnb" })
-    ).toThrow();
-  });
-
-  it("multiUnitBookingSchema rejects Website", () => {
-    expect(() =>
-      multiUnitBookingSchema.parse({ ...baseMultiInput, booking_source: "Website" })
-    ).toThrow();
   });
 
   const baseEditInput = {

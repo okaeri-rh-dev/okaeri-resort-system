@@ -37,7 +37,7 @@ test("staff book 2 cabins as Direct through all four steps and land in the sheet
   await expect(summary.getByText("Cabin 1")).toBeVisible();
   await expect(summary.getByText("Cabin 2")).toBeVisible();
 
-  await page.getByRole("button", { name: "Next" }).click();
+  await page.getByRole("button", { name: "Next", exact: true }).click();
   await expect(page).toHaveURL(/step=guest/);
 
   await page.goBack();
@@ -51,16 +51,16 @@ test("staff book 2 cabins as Direct through all four steps and land in the sheet
   await warning.getByRole("button", { name: "Keep editing" }).click();
   await expect(page).toHaveURL(/\/admin\/bookings\/new\?step=stay/);
 
-  await page.getByRole("button", { name: "Next" }).click();
+  await page.getByRole("button", { name: "Next", exact: true }).click();
   await expect(page).toHaveURL(/step=guest/);
   await page.getByLabel("Guest", { exact: true }).fill(guestName);
   await page.getByRole("button", { name: /New guest/ }).click();
   await page.getByLabel("Phone").fill("09171234567");
-  await page.getByRole("button", { name: "Next" }).click();
+  await page.getByRole("button", { name: "Next", exact: true }).click();
   await expect(page).toHaveURL(/step=payment/);
 
   await page.getByRole("radio", { name: "Cash", exact: true }).click();
-  await page.getByRole("button", { name: "Next" }).click();
+  await page.getByRole("button", { name: "Next", exact: true }).click();
   await expect(page).toHaveURL(/step=review/);
   await expect(page.getByRole("main").getByText(guestName)).toBeVisible();
   // The quoted total is what the server stores.

@@ -30,7 +30,6 @@ React hooks shared across components. Entity CRUD (bookings, guests, payments, e
 | `useContactChannels.ts`         | `useContactChannels`, `useActiveContactChannels`, create/update/set-active/reorder mutations |
 | `useBlocks.ts`                  | `useBlocks` (current and upcoming, past on request), create/update/delete block mutations    |
 | `useDebouncedValue.ts`          | `useDebouncedValue`, `SEARCH_DEBOUNCE_MS`: delay list search queries until typing pauses     |
-| `useIdempotencyKey.ts`          | `useIdempotencyKey`: persisted key for retry-safe mutations                                   |
 | `useCalendarBookings.ts`        | `useCalendarBookings` plus `getBookingStatusPriority`, `formatCurrency` for the calendar view |
 
 Width hooks are retired: window queries live in `AppShell`, and panes adapt with `@container` or `DataTable` (DESIGN.md, Layout).
