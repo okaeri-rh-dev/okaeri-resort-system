@@ -1,5 +1,5 @@
-import type { BookingsSearch } from "@/lib/bookings";
-import type { Booking, BookingStatus } from "@/types";
+import type { BookingsSearch, StatusChange } from "@/lib/bookings";
+import type { Booking } from "@/types";
 
 export interface BookingsTableProps {
   className?: string;
@@ -13,7 +13,7 @@ export interface BookingCardProps {
   booking: Booking;
   onRecordPayment: () => void;
   onCancel: () => void;
-  updateBookingStatus: MutationLike<{ bookingId: string; status: BookingStatus }>;
+  updateBookingStatus: MutationLike<StatusChange>;
 }
 
 export interface BookingFiltersProps {

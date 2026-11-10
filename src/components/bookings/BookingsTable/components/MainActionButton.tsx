@@ -14,7 +14,7 @@ import {
   Button,
 } from "@/components/patterns";
 import { useUserRole } from "@/hooks";
-import { mainActionFor, manilaDayOf, type MainAction } from "@/lib/bookings";
+import { mainActionFor, manilaDayOf, type MainAction, type UndoAction } from "@/lib/bookings";
 import { outstandingBalance } from "@/lib/dashboard";
 import { formatCurrency } from "@/lib/formatters";
 import type { Booking, BookingStatus } from "@/types";
@@ -25,6 +25,15 @@ const NEXT_STATUS: Record<Exclude<MainAction, "Verify payment">, BookingStatus> 
   Confirm: "Confirmed",
   "Check in": "CheckedIn",
   "Check out": "CheckedOut",
+};
+
+// A check-out that leaves a balance offers no Undo
+const undoOffer = (action: MainAction, booking: Booking): { undo?: UndoAction } => {
+  if (action === "Check in") return { undo: "Undo check-in" };
+  if (action === "Check out" && outstandingBalance(booking) === 0) {
+    return { undo: "Undo check-out" };
+  }
+  return {};
 };
 
 interface MainActionButtonProps {
@@ -62,7 +71,11 @@ export const MainActionButton = ({
       });
       return;
     }
-    updateBookingStatus.mutate({ bookingId: booking.booking_id, status: NEXT_STATUS[action] });
+    updateBookingStatus.mutate({
+      bookingId: booking.booking_id,
+      status: NEXT_STATUS[action],
+      ...undoOffer(action, booking),
+    });
   };
 
   return (

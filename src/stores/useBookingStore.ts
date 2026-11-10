@@ -14,9 +14,11 @@ import { afterWrite } from "@/lib/after-write";
 import {
   cancelBooking,
   setBookingStatus,
+  UNDO_STATUS,
   UPDATE_BOOKING_WRITES,
   updateBooking,
   type BookingChanges,
+  type StatusChange,
 } from "@/lib/bookings";
 import { BOOKING_CREATE_WRITES, requestBooking } from "@/lib/bookings/request";
 import { adaptBookingFromDB } from "@/lib/database-adapters";
@@ -25,7 +27,7 @@ import { formatCurrency } from "@/lib/formatters";
 import { recordProofPayment } from "@/lib/payments";
 import { bookingKeys } from "@/lib/query-keys";
 import { db, handleSupabaseError, supabase } from "@/lib/supabase";
-import type { Booking, BookingStatus, TableState } from "@/types";
+import type { Booking, TableState } from "@/types";
 
 // import { useWorkflowStore } from "./useWorkflowStore"; // Phase 3-4
 
@@ -307,8 +309,8 @@ export const useUpdateBookingStatus = () => {
   const queryClient = useQueryClient();
   const updateOptimistic = useBookingStore((state) => state.updateOptimisticBooking);
 
-  return useMutation({
-    mutationFn: ({ bookingId, status }: { bookingId: string; status: BookingStatus }) =>
+  const mutation = useMutation({
+    mutationFn: ({ bookingId, status }: StatusChange) =>
       setBookingStatus(supabase, bookingId, status),
     onMutate: async ({ bookingId, status }) => {
       await queryClient.cancelQueries({ queryKey: bookingKeys.all });
@@ -328,9 +330,24 @@ export const useUpdateBookingStatus = () => {
       }
       toast.error("Failed to change the booking status", { description: error.message });
     },
+    onSuccess: (booking, { bookingId, undo }) => {
+      if (!undo) return;
+      toast.success(`${booking.booking_reference} is ${UNDONE_LABEL[undo]}`, {
+        duration: 10_000,
+        action: {
+          label: "Undo",
+          onClick: () => {
+            mutation.mutate({ bookingId, status: UNDO_STATUS[undo] });
+          },
+        },
+      });
+    },
     onSettled: () => afterWrite("bookings"),
   });
+  return mutation;
 };
+
+const UNDONE_LABEL = { "Undo check-in": "checked in", "Undo check-out": "checked out" } as const;
 
 // Update payment status with optimistic update
 
