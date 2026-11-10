@@ -240,6 +240,19 @@ describe("BookingCard check in and check out", () => {
     expect(screen.queryByRole("button", { name: "Check in" })).not.toBeInTheDocument();
   });
 
+  it.each([
+    ["Confirmed", "2025-09-24T06:00:00Z", "2025-09-26T04:00:00Z", "Not checked in"],
+    ["CheckedIn", "2025-09-22T06:00:00Z", "2025-09-24T04:00:00Z", "Not checked out"],
+  ] as const)("labels a %s booking past its day", (status, check_in, check_out, reason) => {
+    renderCard({ booking: { booking_status: status, check_in, check_out } });
+    expect(screen.getByText(reason)).toBeInTheDocument();
+  });
+
+  it("shows no reason label on the check-in day", () => {
+    renderCard({ booking: { ...checkInDay, booking_status: "Confirmed" } });
+    expect(screen.queryByText(/^Not checked/)).not.toBeInTheDocument();
+  });
+
   it("does not show staff Confirm on a Pending booking", () => {
     renderCard({ booking: { booking_status: "Pending" }, role: staffRole });
     expect(screen.queryByRole("button", { name: /^confirm$/i })).not.toBeInTheDocument();

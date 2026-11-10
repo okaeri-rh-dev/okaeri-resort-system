@@ -28,6 +28,7 @@ import type { BookingCardProps } from "../types";
 import { BookingOverflowMenu } from "./BookingOverflowMenu";
 import { CabinChip } from "./CabinChip";
 import { MainActionButton } from "./MainActionButton";
+import { NeedsActionLabel } from "./NeedsActionLabel";
 import { SourceBadge } from "./SourceBadge";
 
 // react-pdf is heavy, so it loads only when a proof opens
@@ -79,10 +80,14 @@ function BookingSheetBody({
     <div className="space-y-6">
       <div className="space-y-1 pr-10">
         <SheetTitle className="font-display text-xl break-words">{booking.guest_name}</SheetTitle>
-        <SheetDescription className="flex flex-wrap items-center gap-2 tabular-nums">
-          {booking.booking_reference}
-          <StatusBadge {...statusBadgeProps(booking.booking_status, "Pending")} />
-          <SourceBadge source={booking.booking_source} />
+        {/* A div, since the badges are divs and a p cannot hold them */}
+        <SheetDescription asChild className="flex flex-wrap items-center gap-2 tabular-nums">
+          <div>
+            {booking.booking_reference}
+            <StatusBadge {...statusBadgeProps(booking.booking_status, "Pending")} />
+            <SourceBadge source={booking.booking_source} />
+            <NeedsActionLabel booking={booking} />
+          </div>
         </SheetDescription>
       </div>
 

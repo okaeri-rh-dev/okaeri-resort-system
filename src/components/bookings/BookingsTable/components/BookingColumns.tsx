@@ -12,6 +12,7 @@ import { formatStayRange, getNights } from "../utils/stay";
 import { BalanceLabel } from "./BalanceLabel";
 import { BookingActionsCell } from "./BookingActionsCell";
 import { CabinChip } from "./CabinChip";
+import { NeedsActionLabel } from "./NeedsActionLabel";
 import { SourceBadge } from "./SourceBadge";
 
 const columnHelper = createColumnHelper<Booking>();
@@ -103,8 +104,11 @@ export const useBookingColumns = ({
 
       columnHelper.accessor("booking_status", {
         header: "Status",
-        cell: ({ getValue }) => (
-          <StatusBadge size="compact" {...statusBadgeProps(getValue(), "Pending")} />
+        cell: ({ getValue, row }) => (
+          <div className="space-y-0.5">
+            <StatusBadge size="compact" {...statusBadgeProps(getValue(), "Pending")} />
+            <NeedsActionLabel booking={row.original} />
+          </div>
         ),
         size: 100,
       }),

@@ -13,6 +13,7 @@ import { BalanceLabel } from "./BalanceLabel";
 import { BookingOverflowMenu } from "./BookingOverflowMenu";
 import { CabinChip } from "./CabinChip";
 import { MainActionButton } from "./MainActionButton";
+import { NeedsActionLabel } from "./NeedsActionLabel";
 import { SourceBadge } from "./SourceBadge";
 
 const PAYMENT_DOT: Record<string, { color: string; label: string }> = {
@@ -80,6 +81,7 @@ export const BookingCard: React.FC<BookingCardProps> = ({
             <div className="text-muted-foreground text-xs tabular-nums">
               {booking.booking_reference}
             </div>
+            <NeedsActionLabel booking={booking} />
           </div>
           <div className="flex items-center gap-1">
             <StatusBadge {...statusBadgeProps(booking.booking_status, "Pending")} />
