@@ -1,10 +1,10 @@
-import { queryOptions, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { queryOptions, useMutation, useQuery } from "@tanstack/react-query";
 import { create } from "zustand";
 import { devtools, persist } from "zustand/middleware";
 
 import { SEARCH_DEBOUNCE_MS, useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { afterWrite } from "@/lib/after-write";
-import { accountKeys, transferKeys } from "@/lib/query-keys";
+import { transferKeys } from "@/lib/query-keys";
 import { ilikeAnyFilter } from "@/lib/search-filter";
 import { handleSupabaseError, supabase } from "@/lib/supabase";
 import type { AccountTransfer } from "@/types";
@@ -37,12 +37,6 @@ interface TransferStore {
   setSearchQuery: (query: string) => void;
   setSortBy: (sortBy: "date" | "amount" | "from" | "to") => void;
   setSortOrder: (order: "asc" | "desc") => void;
-
-  // Optimistic updates
-  optimisticTransfers: Map<string, AccountTransfer>;
-  addOptimisticTransfer: (transfer: AccountTransfer) => void;
-  removeOptimisticTransfer: (transferId: string) => void;
-  clearOptimisticTransfers: () => void;
 }
 
 export const useTransferStore = create<TransferStore>()(
@@ -55,7 +49,6 @@ export const useTransferStore = create<TransferStore>()(
         searchQuery: "",
         sortBy: "date",
         sortOrder: "desc",
-        optimisticTransfers: new Map(),
 
         // Actions
         setSelectedTransfer: (transfer) => set({ selectedTransfer: transfer }),
@@ -69,22 +62,6 @@ export const useTransferStore = create<TransferStore>()(
         setSortBy: (sortBy) => set({ sortBy }),
 
         setSortOrder: (order) => set({ sortOrder: order }),
-
-        addOptimisticTransfer: (transfer) =>
-          set((state) => {
-            const newMap = new Map(state.optimisticTransfers);
-            newMap.set(transfer.transfer_id, transfer);
-            return { optimisticTransfers: newMap };
-          }),
-
-        removeOptimisticTransfer: (transferId) =>
-          set((state) => {
-            const newMap = new Map(state.optimisticTransfers);
-            newMap.delete(transferId);
-            return { optimisticTransfers: newMap };
-          }),
-
-        clearOptimisticTransfers: () => set({ optimisticTransfers: new Map() }),
       }),
       {
         name: "transfer-store",
@@ -189,9 +166,6 @@ export const useTransfers = () => {
 
 // Create transfer
 export const useCreateTransfer = () => {
-  const queryClient = useQueryClient();
-  const addOptimistic = useTransferStore((state) => state.addOptimisticTransfer);
-
   return useMutation({
     mutationFn: async (
       data: Omit<AccountTransfer, "transfer_id" | "transfer_reference" | "created_at">
@@ -225,37 +199,12 @@ export const useCreateTransfer = () => {
       if (error) throw new Error(handleSupabaseError(error));
       return newTransfer as AccountTransfer;
     },
-    onMutate: async (data) => {
-      await queryClient.cancelQueries({ queryKey: transferKeys.all });
-      await queryClient.cancelQueries({ queryKey: accountKeys.balances() });
-
-      const optimisticTransfer: AccountTransfer = {
-        ...data,
-        transfer_id: `temp-${Date.now()}`,
-        transfer_reference: `TRF-PENDING`,
-        created_at: new Date().toISOString(),
-      };
-
-      addOptimistic(optimisticTransfer);
-
-      return { optimisticTransfer };
-    },
-    onError: (_, __, context) => {
-      if (context?.optimisticTransfer) {
-        useTransferStore
-          .getState()
-          .removeOptimisticTransfer(context.optimisticTransfer.transfer_id);
-      }
-    },
     onSettled: () => afterWrite("account_transfers"),
   });
 };
 
 // Delete transfer (for corrections)
 export const useDeleteTransfer = () => {
-  const queryClient = useQueryClient();
-  const removeOptimistic = useTransferStore((state) => state.removeOptimisticTransfer);
-
   return useMutation({
     mutationFn: async (transferId: string) => {
       const { error } = await supabase
@@ -264,12 +213,6 @@ export const useDeleteTransfer = () => {
         .eq("transfer_id", transferId);
 
       if (error) throw new Error(handleSupabaseError(error));
-    },
-    onMutate: async (transferId) => {
-      await queryClient.cancelQueries({ queryKey: transferKeys.all });
-      await queryClient.cancelQueries({ queryKey: accountKeys.balances() });
-      removeOptimistic(transferId);
-      return { transferId };
     },
     onSettled: () => afterWrite("account_transfers"),
   });

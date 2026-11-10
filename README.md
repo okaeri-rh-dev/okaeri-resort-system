@@ -310,11 +310,12 @@ The application uses a hybrid state management approach:
 Example store usage:
 
 ```typescript
-// Using a Zustand store
-import { useBookingStore } from '@/stores/useBookingStore'
+// UI state from a Zustand store, server data from a TanStack Query hook
+import { useAllBookings, useBookingStore } from '@/stores/useBookingStore'
 
 const Component = () => {
-  const { bookings, fetchBookings } = useBookingStore()
+  const tableState = useBookingStore((state) => state.tableState)
+  const { data: bookings } = useAllBookings()
   // Component logic
 }
 ```

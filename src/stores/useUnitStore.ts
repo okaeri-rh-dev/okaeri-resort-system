@@ -24,12 +24,6 @@ interface UnitStore {
   setFilters: (filters: UnitFilters) => void;
   resetFilters: () => void;
   setViewMode: (mode: "grid" | "list") => void;
-
-  // Optimistic updates
-  optimisticUnits: Map<string, Unit>;
-  addOptimisticUnit: (unit: Unit) => void;
-  removeOptimisticUnit: (unitId: string) => void;
-  clearOptimisticUnits: () => void;
 }
 
 export const useUnitStore = create<UnitStore>()(
@@ -40,7 +34,6 @@ export const useUnitStore = create<UnitStore>()(
         selectedUnit: null,
         filters: {},
         viewMode: "grid",
-        optimisticUnits: new Map(),
 
         // Actions
         setSelectedUnit: (unit) => set({ selectedUnit: unit }),
@@ -50,22 +43,6 @@ export const useUnitStore = create<UnitStore>()(
         resetFilters: () => set({ filters: {} }),
 
         setViewMode: (mode) => set({ viewMode: mode }),
-
-        addOptimisticUnit: (unit) =>
-          set((state) => {
-            const newMap = new Map(state.optimisticUnits);
-            newMap.set(unit.unit_id, unit);
-            return { optimisticUnits: newMap };
-          }),
-
-        removeOptimisticUnit: (unitId) =>
-          set((state) => {
-            const newMap = new Map(state.optimisticUnits);
-            newMap.delete(unitId);
-            return { optimisticUnits: newMap };
-          }),
-
-        clearOptimisticUnits: () => set({ optimisticUnits: new Map() }),
       }),
       {
         name: "unit-storage",
@@ -98,7 +75,7 @@ export const useUnitStore = create<UnitStore>()(
 // TANSTACK QUERY HOOKS
 // ============================================
 
-// One unit with amenities typed; the detail and edit routes, useUnit and useEntityEdit share this cache entry
+// One unit with amenities typed; the detail and edit routes share this cache entry
 export const unitDetailQuery = (unitId: string) =>
   queryOptions({
     queryKey: unitKeys.detail(unitId),
@@ -150,12 +127,7 @@ const unitListQuery = (filters: UnitStore["filters"]) =>
 
       if (error) throw new Error(handleSupabaseError(error));
 
-      // Merge with optimistic updates
-      const { optimisticUnits } = useUnitStore.getState();
-      const mergedData =
-        (data as Unit[])?.map((unit) => optimisticUnits.get(unit.unit_id) ?? unit) || [];
-
-      return mergedData;
+      return (data as Unit[]) || [];
     },
     staleTime: 30000, // Consider data fresh for 30 seconds
     refetchInterval: 60000, // Refetch every minute
@@ -174,43 +146,11 @@ export const useUnits = () => {
 
 // Create unit mutation
 export const useCreateUnit = () => {
-  const queryClient = useQueryClient();
-  const addOptimistic = useUnitStore((state) => state.addOptimisticUnit);
-  const removeOptimistic = useUnitStore((state) => state.removeOptimisticUnit);
-
   return useMutation({
     mutationFn: async (unitData: Omit<Unit, "unit_id" | "created_at" | "updated_at">) => {
       const { data, error } = await db.units.create(unitData);
       if (error) throw new Error(handleSupabaseError(error));
       return data;
-    },
-    onMutate: async (newUnit) => {
-      // Cancel outgoing refetches
-      await queryClient.cancelQueries({ queryKey: unitKeys.all });
-
-      // Create optimistic unit
-      const optimisticUnit: Unit = {
-        ...newUnit,
-        unit_id: `temp-${Date.now()}`,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      };
-
-      addOptimistic(optimisticUnit);
-
-      return { optimisticUnit };
-    },
-    onError: (_err, _newUnit, context) => {
-      // Remove optimistic unit on error
-      if (context?.optimisticUnit) {
-        removeOptimistic(context.optimisticUnit.unit_id);
-      }
-    },
-    onSuccess: (_data, _variables, context) => {
-      // Remove optimistic unit after success
-      if (context?.optimisticUnit) {
-        removeOptimistic(context.optimisticUnit.unit_id);
-      }
     },
     onSettled: () => afterWrite("units"),
   });
@@ -219,8 +159,6 @@ export const useCreateUnit = () => {
 // Update unit mutation
 export const useUpdateUnit = () => {
   const queryClient = useQueryClient();
-  const addOptimistic = useUnitStore((state) => state.addOptimisticUnit);
-  const removeOptimistic = useUnitStore((state) => state.removeOptimisticUnit);
 
   return useMutation({
     mutationFn: async ({
@@ -247,24 +185,15 @@ export const useUpdateUnit = () => {
           updated_at: new Date().toISOString(),
         };
 
-        addOptimistic(optimisticUnit);
-
-        // Update cache
         queryClient.setQueryData(unitKeys.detail(unitId), optimisticUnit);
 
-        return { previousUnit, optimisticUnit };
+        return { previousUnit };
       }
     },
     onError: (_, variables, context) => {
       // Revert optimistic update on error
       if (context?.previousUnit) {
-        removeOptimistic(variables.unitId);
         queryClient.setQueryData(unitKeys.detail(variables.unitId), context.previousUnit);
-      }
-    },
-    onSuccess: (_data2, _variables2, context) => {
-      if (context?.optimisticUnit) {
-        removeOptimistic(context.optimisticUnit.unit_id);
       }
     },
     onSettled: () => afterWrite("units"),

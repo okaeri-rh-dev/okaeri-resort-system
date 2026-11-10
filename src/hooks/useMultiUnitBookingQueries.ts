@@ -2,10 +2,8 @@
  * TanStack Query Hooks for Multi-Unit Booking Operations (Phase 3)
  *
  * Provides React Query hooks for:
- * - Fetching multi-unit bookings
  * - Checking availability
- * - Creating/updating bookings with optimistic updates
- * - Adding/removing units from bookings
+ * - Creating bookings
  *
  * @module useMultiUnitBookingQueries
  */
@@ -17,8 +15,7 @@ import type { UnitAvailability } from "@/lib/bookings";
 import { BOOKING_CREATE_WRITES, requestBooking } from "@/lib/bookings/request";
 import { availabilityKeys } from "@/lib/query-keys";
 import { supabase } from "@/lib/supabase";
-import { useMultiUnitBookingStore } from "@/stores/useMultiUnitBookingStore";
-import type { AdminMultiUnitBookingCreate, MultiUnitBooking } from "@/types";
+import type { AdminMultiUnitBookingCreate } from "@/types";
 
 export class OfflineBookingError extends Error {
   constructor() {
@@ -88,39 +85,14 @@ export const useMultiUnitAvailability = (
 // ============================================
 
 /**
- * Create multi-unit booking with optimistic updates
+ * Create a multi-unit booking. Fails at once when the browser is offline instead of pausing.
  */
-export const useCreateMultiUnitBooking = () => {
-  const { addOptimisticBooking, removeOptimisticBooking, isOnline } = useMultiUnitBookingStore();
-
-  return useMutation({
+export const useCreateMultiUnitBooking = () =>
+  useMutation({
+    networkMode: "always",
     mutationFn: async (bookingData: AdminMultiUnitBookingCreate) => {
-      if (!isOnline) throw new OfflineBookingError();
+      if (!navigator.onLine) throw new OfflineBookingError();
       return requestBooking(bookingData);
-    },
-    onMutate: (newBooking) => {
-      const optimisticBooking: MultiUnitBooking = {
-        booking_id: `temp-${Date.now()}`,
-        booking_reference: `BK-${Date.now()}`,
-        ...newBooking,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      } as unknown as MultiUnitBooking;
-
-      addOptimisticBooking(optimisticBooking);
-
-      return { optimisticBooking };
-    },
-    onError: (_err, _variables, context) => {
-      if (context?.optimisticBooking) {
-        removeOptimisticBooking(context.optimisticBooking.booking_id);
-      }
-    },
-    onSuccess: (_data, _variables, context) => {
-      if (context?.optimisticBooking) {
-        removeOptimisticBooking(context.optimisticBooking.booking_id);
-      }
     },
     onSettled: () => afterWrite(...BOOKING_CREATE_WRITES),
   });
-};

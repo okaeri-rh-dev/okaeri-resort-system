@@ -1,10 +1,4 @@
-import {
-  queryOptions,
-  useMutation,
-  useQuery,
-  useQueryClient,
-  type QueryClient,
-} from "@tanstack/react-query";
+import { queryOptions, useMutation, useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { create } from "zustand";
 import { devtools, persist } from "zustand/middleware";
@@ -30,21 +24,6 @@ import type { Booking, TableState } from "@/types";
 // import { useWorkflowStore } from "./useWorkflowStore"; // Phase 3-4
 
 // ============================================
-// TYPES & INTERFACES
-// ============================================
-interface OptimisticEntry {
-  booking: Booking;
-  timestamp: number;
-}
-
-// ============================================
-// CONSTANTS
-// ============================================
-const OPTIMISTIC_TTL = 5 * 60 * 1000; // 5 minutes
-const MAX_OPTIMISTIC_ENTRIES = 100;
-const CLEANUP_INTERVAL = 60 * 1000; // 1 minute
-
-// ============================================
 // ZUSTAND STORE
 // ============================================
 interface BookingStore {
@@ -54,19 +33,6 @@ interface BookingStore {
   // Actions
   setSelectedBooking: (booking: Booking | null) => void;
 
-  // Optimistic updates with TTL
-  optimisticBookings: Map<string, OptimisticEntry>;
-  addOptimisticBooking: (booking: Booking) => void;
-  updateOptimisticBooking: (bookingId: string, updates: Partial<Booking>) => void;
-  removeOptimisticBooking: (bookingId: string) => void;
-  clearOptimisticBookings: () => void;
-
-  // Memory management
-  cleanupInterval: NodeJS.Timeout | null;
-  startCleanupTimer: () => void;
-  stopCleanupTimer: () => void;
-  cleanupExpiredEntries: () => void;
-
   // Table state (for TanStack Table)
   tableState: Partial<TableState>;
   setTableState: (state: Partial<TableState>) => void;
@@ -75,102 +41,15 @@ interface BookingStore {
 export const useBookingStore = create<BookingStore>()(
   devtools(
     persist(
-      (set, get) => ({
+      (set) => ({
         // Initial state
         selectedBooking: null,
-        optimisticBookings: new Map(),
-        cleanupInterval: null,
         tableState: {
           pagination: { pageIndex: 0, pageSize: 10 },
         },
 
         // Actions
         setSelectedBooking: (booking) => set({ selectedBooking: booking }),
-
-        addOptimisticBooking: (booking) =>
-          set((state) => {
-            const newMap = new Map(state.optimisticBookings);
-
-            // Add with timestamp
-            newMap.set(booking.booking_id, {
-              booking,
-              timestamp: Date.now(),
-            });
-
-            // Enforce size limit - remove oldest if exceeded
-            if (newMap.size > MAX_OPTIMISTIC_ENTRIES) {
-              const sortedEntries = Array.from(newMap.entries()).sort(
-                (a, b) => a[1].timestamp - b[1].timestamp
-              );
-
-              // Remove oldest entries
-              const entriesToRemove = sortedEntries.slice(0, newMap.size - MAX_OPTIMISTIC_ENTRIES);
-              entriesToRemove.forEach(([id]) => newMap.delete(id));
-            }
-
-            return { optimisticBookings: newMap };
-          }),
-
-        updateOptimisticBooking: (bookingId, updates) =>
-          set((state) => {
-            const newMap = new Map(state.optimisticBookings);
-            const existing = newMap.get(bookingId);
-            if (existing) {
-              newMap.set(bookingId, {
-                booking: { ...existing.booking, ...updates },
-                timestamp: Date.now(), // Update timestamp on modification
-              });
-            }
-            return { optimisticBookings: newMap };
-          }),
-
-        removeOptimisticBooking: (bookingId) =>
-          set((state) => {
-            const newMap = new Map(state.optimisticBookings);
-            newMap.delete(bookingId);
-            return { optimisticBookings: newMap };
-          }),
-
-        clearOptimisticBookings: () => set({ optimisticBookings: new Map() }),
-
-        // Memory management methods
-        startCleanupTimer: () => {
-          const interval = setInterval(() => {
-            const state = get();
-            state.cleanupExpiredEntries();
-          }, CLEANUP_INTERVAL);
-
-          set({ cleanupInterval: interval });
-        },
-
-        stopCleanupTimer: () => {
-          const state = get();
-          if (state.cleanupInterval) {
-            clearInterval(state.cleanupInterval);
-            set({ cleanupInterval: null });
-          }
-        },
-
-        cleanupExpiredEntries: () => {
-          set((state) => {
-            const now = Date.now();
-            const newMap = new Map<string, OptimisticEntry>();
-
-            // Keep only entries within TTL
-            state.optimisticBookings.forEach((entry, id) => {
-              if (now - entry.timestamp < OPTIMISTIC_TTL) {
-                newMap.set(id, entry);
-              }
-            });
-
-            // Only update if entries were removed
-            if (newMap.size !== state.optimisticBookings.size) {
-              return { optimisticBookings: newMap };
-            }
-
-            return state;
-          });
-        },
 
         setTableState: (state) =>
           set((prevState) => ({
@@ -207,7 +86,7 @@ export const useBookingStore = create<BookingStore>()(
 // TANSTACK QUERY HOOKS
 // ============================================
 
-// One booking with units and guest; the detail and edit routes, useBooking and useEntityEdit share this cache entry
+// One booking with units and guest; the detail and edit routes share this cache entry
 export const bookingDetailQuery = (bookingId: string) =>
   queryOptions({
     queryKey: bookingKeys.detail(bookingId),
@@ -218,12 +97,6 @@ export const bookingDetailQuery = (bookingId: string) =>
     },
     staleTime: 30000,
   });
-
-// The cached detail row in the app shape the list and the optimistic map use, for rollback
-const cachedBooking = (queryClient: QueryClient, bookingId: string): Booking | undefined => {
-  const row = queryClient.getQueryData(bookingDetailQuery(bookingId).queryKey);
-  return row ? adaptBookingFromDB(row) : undefined;
-};
 
 // Every booking; the bookings list selects from it in the browser (src/lib/bookings/list.ts)
 const bookingListQuery = () =>
@@ -249,17 +122,8 @@ const bookingListQuery = () =>
 
       if (error) throw new Error(handleSupabaseError(error));
 
-      // Convert database types to application types and merge with optimistic updates
-      const { optimisticBookings } = useBookingStore.getState();
-      const mergedData =
-        data?.map((dbBooking) => {
-          const optimisticEntry = optimisticBookings.get(dbBooking.booking_id);
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const booking = adaptBookingFromDB(dbBooking as any); // Type cast needed for DB -> App conversion
-          return optimisticEntry ? { ...booking, ...optimisticEntry.booking } : booking;
-        }) || [];
-
-      return mergedData;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      return data?.map((dbBooking) => adaptBookingFromDB(dbBooking as any)) || []; // Type cast needed for DB -> App conversion
     },
     staleTime: 5 * 60_000,
     // New online bookings show without a reload
@@ -269,32 +133,11 @@ const bookingListQuery = () =>
 
 export const useAllBookings = () => useQuery(bookingListQuery());
 
-// Fetch single booking
-
-// Update booking status with optimistic update
 export const useUpdateBookingStatus = () => {
-  const queryClient = useQueryClient();
-  const updateOptimistic = useBookingStore((state) => state.updateOptimisticBooking);
-
   const mutation = useMutation({
     mutationFn: ({ bookingId, status }: StatusChange) =>
       setBookingStatus(supabase, bookingId, status),
-    onMutate: async ({ bookingId, status }) => {
-      await queryClient.cancelQueries({ queryKey: bookingKeys.all });
-
-      const previousBooking = cachedBooking(queryClient, bookingId);
-
-      updateOptimistic(bookingId, {
-        booking_status: status,
-        updated_at: new Date().toISOString(),
-      });
-
-      return { previousBooking };
-    },
-    onError: (error, { bookingId }, context) => {
-      if (context?.previousBooking) {
-        updateOptimistic(bookingId, context.previousBooking);
-      }
+    onError: (error) => {
       toast.error("Failed to change the booking status", { description: error.message });
     },
     onSuccess: (booking, { bookingId, undo }) => {
@@ -315,8 +158,6 @@ export const useUpdateBookingStatus = () => {
 };
 
 const UNDONE_LABEL = { "Undo check-in": "checked in", "Undo check-out": "checked out" } as const;
-
-// Update payment status with optimistic update
 
 // Proof that the guest paid the rest: records the outstanding balance as a payment
 export const useUploadPaymentProof = () =>

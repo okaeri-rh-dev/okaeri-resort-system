@@ -209,18 +209,6 @@ export const db = {
     /** Records the online downpayment (unless one exists), assigns the cabins and confirms, all or nothing. */
     verifyAndConfirm: (bookingId: string, unitIds: string[]) =>
       supabase.rpc("verify_and_confirm_booking", { p_booking_id: bookingId, p_unit_ids: unitIds }),
-    update: (id: string, data: Database["public"]["Tables"]["bookings"]["Update"]) =>
-      supabase.from("bookings").update(data).eq("booking_id", id).select().single(),
-
-    // Check availability via junction table (legacy method - use checkAvailabilityFast for better performance)
-    checkAvailability: (unitId: string, checkIn: string, checkOut: string) =>
-      supabase
-        .from("booking_unit_availability")
-        .select("booking_id")
-        .eq("unit_id", unitId)
-        .not("booking_status", "eq", "Cancelled")
-        .or(`check_in.lte.${checkOut},check_out.gte.${checkIn}`),
-
     // Enhanced availability methods using optimized functions
     // ❌ TEMPORARILY DISABLED: checkAvailabilityFast requires check_unit_availability_fast() RPC
     // Use checkMultiUnitAvailability() with single unit array instead

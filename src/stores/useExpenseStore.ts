@@ -1,10 +1,4 @@
-import {
-  keepPreviousData,
-  queryOptions,
-  useMutation,
-  useQuery,
-  useQueryClient,
-} from "@tanstack/react-query";
+import { keepPreviousData, queryOptions, useMutation, useQuery } from "@tanstack/react-query";
 import { create } from "zustand";
 import { devtools, persist } from "zustand/middleware";
 
@@ -45,13 +39,6 @@ interface ExpenseStore {
   setSearchQuery: (query: string) => void;
   setSortBy: (sortBy: "date" | "amount" | "category" | "description") => void;
   setSortOrder: (order: "asc" | "desc") => void;
-
-  // Optimistic updates
-  optimisticExpenses: Map<string, Expense>;
-  addOptimisticExpense: (expense: Expense) => void;
-  updateOptimisticExpense: (expenseId: string, updates: Partial<Expense>) => void;
-  removeOptimisticExpense: (expenseId: string) => void;
-  clearOptimisticExpenses: () => void;
 }
 
 export const useExpenseStore = create<ExpenseStore>()(
@@ -64,7 +51,6 @@ export const useExpenseStore = create<ExpenseStore>()(
         searchQuery: "",
         sortBy: "date",
         sortOrder: "desc",
-        optimisticExpenses: new Map(),
 
         // Actions
         setSelectedExpense: (expense) => set({ selectedExpense: expense }),
@@ -78,32 +64,6 @@ export const useExpenseStore = create<ExpenseStore>()(
         setSortBy: (sortBy) => set({ sortBy }),
 
         setSortOrder: (order) => set({ sortOrder: order }),
-
-        addOptimisticExpense: (expense) =>
-          set((state) => {
-            const newMap = new Map(state.optimisticExpenses);
-            newMap.set(expense.expense_id, expense);
-            return { optimisticExpenses: newMap };
-          }),
-
-        updateOptimisticExpense: (expenseId, updates) =>
-          set((state) => {
-            const newMap = new Map(state.optimisticExpenses);
-            const existing = newMap.get(expenseId);
-            if (existing) {
-              newMap.set(expenseId, { ...existing, ...updates });
-            }
-            return { optimisticExpenses: newMap };
-          }),
-
-        removeOptimisticExpense: (expenseId) =>
-          set((state) => {
-            const newMap = new Map(state.optimisticExpenses);
-            newMap.delete(expenseId);
-            return { optimisticExpenses: newMap };
-          }),
-
-        clearOptimisticExpenses: () => set({ optimisticExpenses: new Map() }),
       }),
       {
         name: "expense-store",
@@ -273,9 +233,6 @@ export const useExpenseStats = (dateRange?: { from: Date; to: Date }) => {
 
 // Create expense
 export const useCreateExpense = () => {
-  const queryClient = useQueryClient();
-  const addOptimistic = useExpenseStore((state) => state.addOptimisticExpense);
-
   return useMutation({
     mutationFn: async ({
       data,
@@ -309,34 +266,12 @@ export const useCreateExpense = () => {
       // Map expense_date back to date for consistency
       return { ...newExpense, date: newExpense.expense_date };
     },
-    onMutate: async ({ data }) => {
-      await queryClient.cancelQueries({ queryKey: expenseKeys.all });
-
-      const optimisticExpense: Expense = {
-        ...data,
-        expense_id: `temp-${Date.now()}`,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      };
-
-      addOptimistic(optimisticExpense);
-
-      return { optimisticExpense };
-    },
-    onError: (_, __, context) => {
-      if (context?.optimisticExpense) {
-        useExpenseStore.getState().removeOptimisticExpense(context.optimisticExpense.expense_id);
-      }
-    },
     onSettled: () => afterWrite("expenses"),
   });
 };
 
 // Update expense
 export const useUpdateExpense = () => {
-  const queryClient = useQueryClient();
-  const updateOptimistic = useExpenseStore((state) => state.updateOptimisticExpense);
-
   return useMutation({
     mutationFn: async ({
       expenseId,
@@ -379,39 +314,17 @@ export const useUpdateExpense = () => {
       // Map expense_date back to date for consistency
       return { ...data, date: data.expense_date };
     },
-    onMutate: async ({ expenseId, updates }) => {
-      await queryClient.cancelQueries({ queryKey: expenseKeys.all });
-
-      const previousExpense = queryClient.getQueryData<Expense>(expenseKeys.detail(expenseId));
-
-      updateOptimistic(expenseId, updates);
-
-      return { previousExpense };
-    },
-    onError: (_, { expenseId }, context) => {
-      if (context?.previousExpense) {
-        updateOptimistic(expenseId, context.previousExpense);
-      }
-    },
     onSettled: () => afterWrite("expenses"),
   });
 };
 
 // Delete expense
 export const useDeleteExpense = () => {
-  const queryClient = useQueryClient();
-  const removeOptimistic = useExpenseStore((state) => state.removeOptimisticExpense);
-
   return useMutation({
     mutationFn: async (expenseId: string) => {
       const { error } = await supabase.from("expenses").delete().eq("expense_id", expenseId);
 
       if (error) throw new Error(handleSupabaseError(error));
-    },
-    onMutate: async (expenseId) => {
-      await queryClient.cancelQueries({ queryKey: expenseKeys.all });
-      removeOptimistic(expenseId);
-      return { expenseId };
     },
     onSettled: () => afterWrite("expenses"),
   });

@@ -9,7 +9,6 @@ import { queryClient } from "@/lib/query-client";
 import { QueryProvider } from "@/providers/QueryProvider";
 import type { RouterContext } from "@/routes/__root";
 import { routeTree } from "@/routeTree.gen";
-import { useBookingStore } from "@/stores/useBookingStore";
 import { initializeTheme } from "@/stores/useUIStore";
 
 import "@/styles/calendar.css";
@@ -70,10 +69,6 @@ function App() {
 
     void checkAuth();
 
-    // Initialize optimistic bookings cleanup timer
-    const { startCleanupTimer, stopCleanupTimer } = useBookingStore.getState();
-    startCleanupTimer();
-
     // Token refreshes are skipped so they do not clear the role cache
     const {
       data: { subscription },
@@ -93,8 +88,6 @@ function App() {
 
     return () => {
       subscription.unsubscribe();
-      // Cleanup the optimistic bookings timer
-      stopCleanupTimer();
     };
   }, []);
 

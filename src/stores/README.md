@@ -15,7 +15,7 @@ Most files cover one entity and hold two layers:
 ## Files outside the entity pattern
 
 - `useUIStore.ts`: theme, toasts, modals and confirm dialogs.
-- `useMultiUnitBookingStore.ts`: the guest booking form state across its steps. It persists the `draftBooking`.
+- `useMultiUnitBookingStore.ts`: the staff multi-unit booking form draft (selected units, guest assignments, pricing). It persists the `draftBooking`.
 - `useAuditStore.ts`: audit log filters, quick filter presets and table state. It has no query hooks.
 - `useDocumentStore.ts`: document drafts, letterhead and numbering. It persists `letterhead` and `documentCounter`.
 - `useInstallPromptStore.ts`: the PWA install prompt (`useCanShowInstallBanner`).

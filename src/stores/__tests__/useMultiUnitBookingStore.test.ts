@@ -5,10 +5,6 @@
  * - Initial state and store creation
  * - Unit management (add/remove/update/select/reorder/assign)
  * - Pricing calculations
- * - Availability checking
- * - Optimistic updates and TTL cleanup
- * - Network status handling
- * - Conflict resolution
  * - Edge cases and boundary conditions
  *
  * Target: ≥95% code coverage
@@ -46,10 +42,6 @@ describe("useMultiUnitBookingStore", () => {
       expect(result.current.selectedUnits).toEqual([]);
       expect(result.current.draftBooking).toBeNull();
       expect(result.current.selectedBooking).toBeNull();
-      expect(result.current.availabilityCache).toEqual(new Map());
-      expect(result.current.optimisticQueue).toEqual(new Map());
-      expect(result.current.isOnline).toBe(true);
-      expect(result.current.conflictResolutionStrategy).toBe("last-write-wins");
     });
 
     it("should persist and load draft booking state", () => {
@@ -63,12 +55,10 @@ describe("useMultiUnitBookingStore", () => {
       // Set draft booking
       act(() => {
         result.current.setDraftBooking(mockDraft);
-        result.current.setConflictResolutionStrategy("server-wins");
       });
 
       // Verify state is set
       expect(result.current.draftBooking).toEqual(mockDraft);
-      expect(result.current.conflictResolutionStrategy).toBe("server-wins");
 
       // Unmount to trigger persistence
       unmount();
@@ -77,7 +67,6 @@ describe("useMultiUnitBookingStore", () => {
       const { result: newResult } = renderHook(() => useMultiUnitBookingStore());
 
       expect(newResult.current.draftBooking).toEqual(mockDraft);
-      expect(newResult.current.conflictResolutionStrategy).toBe("server-wins");
     });
   });
 
@@ -459,367 +448,6 @@ describe("useMultiUnitBookingStore", () => {
   });
 
   // ============================================
-  // AVAILABILITY CHECKING TESTS
-  // ============================================
-
-  describe("Availability Checking", () => {
-    it("should check unit availability", async () => {
-      const { result } = renderHook(() => useMultiUnitBookingStore());
-
-      await act(async () => {
-        await result.current.checkUnitAvailability(
-          "unit-1",
-          "2025-10-01",
-          "2025-10-05",
-          async () => true
-        );
-      });
-
-      // Cache key format: unitId-checkIn-checkOut
-      const cacheKey = "unit-1-2025-10-01-2025-10-05";
-      const cache = result.current.availabilityCache.get(cacheKey);
-
-      expect(cache?.is_available).toBe(true);
-      expect(cache?.checking).toBe(false);
-    });
-
-    it("should cache availability results", async () => {
-      const { result } = renderHook(() => useMultiUnitBookingStore());
-      const checkFn = vi.fn(async () => true);
-
-      await act(async () => {
-        await result.current.checkUnitAvailability("unit-1", "2025-10-01", "2025-10-05", checkFn);
-      });
-
-      await act(async () => {
-        await result.current.checkUnitAvailability("unit-1", "2025-10-01", "2025-10-05", checkFn);
-      });
-
-      // Should only call once due to caching
-      expect(checkFn).toHaveBeenCalledTimes(1);
-    });
-
-    it("should check multiple units availability", async () => {
-      const { result } = renderHook(() => useMultiUnitBookingStore());
-
-      await act(async () => {
-        await result.current.checkMultiUnitAvailability(
-          ["unit-1", "unit-2"],
-          "2025-10-01",
-          "2025-10-05",
-          async () => [
-            { unit_id: "unit-1", is_available: true },
-            { unit_id: "unit-2", is_available: false },
-          ]
-        );
-      });
-
-      // Cache key format: unitId-checkIn-checkOut
-      const cacheKey1 = "unit-1-2025-10-01-2025-10-05";
-      const cacheKey2 = "unit-2-2025-10-01-2025-10-05";
-
-      expect(result.current.availabilityCache.get(cacheKey1)?.is_available).toBe(true);
-      expect(result.current.availabilityCache.get(cacheKey2)?.is_available).toBe(false);
-    });
-
-    it("should clear availability cache", async () => {
-      const { result } = renderHook(() => useMultiUnitBookingStore());
-
-      // First, populate the cache by checking availability
-      await act(async () => {
-        await result.current.checkUnitAvailability(
-          "unit-1",
-          "2025-10-01",
-          "2025-10-05",
-          async () => true
-        );
-      });
-
-      const cacheKey = "unit-1-2025-10-01-2025-10-05";
-
-      // Verify cache was populated
-      expect(result.current.availabilityCache.has(cacheKey)).toBe(true);
-
-      // Clear the cache for this unit
-      act(() => {
-        result.current.clearAvailabilityCache("unit-1");
-      });
-
-      // Verify cache was cleared
-      expect(result.current.availabilityCache.has(cacheKey)).toBe(false);
-    });
-  });
-
-  // ============================================
-  // OPTIMISTIC UPDATES TESTS
-  // ============================================
-
-  describe("Optimistic Updates", () => {
-    it("should add optimistic booking", () => {
-      const { result } = renderHook(() => useMultiUnitBookingStore());
-
-      const optimisticBooking = {
-        booking_id: "temp-123",
-        total_amount: 5000,
-      } as MultiUnitBooking;
-
-      act(() => {
-        result.current.addOptimisticBooking(optimisticBooking);
-      });
-
-      const entry = result.current.optimisticQueue.get("temp-123");
-      expect(entry).toBeDefined();
-      expect(entry?.booking).toEqual(optimisticBooking);
-      expect(entry?.status).toBe("pending");
-    });
-
-    it("should update optimistic booking", () => {
-      const { result } = renderHook(() => useMultiUnitBookingStore());
-
-      act(() => {
-        result.current.addOptimisticBooking({
-          booking_id: "temp-123",
-          total_amount: 5000,
-        } as MultiUnitBooking);
-
-        result.current.updateOptimisticBooking("temp-123", {
-          total_amount: 6000,
-        });
-      });
-
-      const entry = result.current.optimisticQueue.get("temp-123");
-      expect(entry?.booking.total_amount).toBe(6000);
-    });
-
-    it("should remove optimistic booking", () => {
-      const { result } = renderHook(() => useMultiUnitBookingStore());
-
-      act(() => {
-        result.current.addOptimisticBooking({
-          booking_id: "temp-123",
-          total_amount: 5000,
-        } as MultiUnitBooking);
-
-        result.current.removeOptimisticBooking("temp-123");
-      });
-
-      expect(result.current.optimisticQueue.has("temp-123")).toBe(false);
-    });
-
-    it("should clear expired optimistic entries (TTL)", () => {
-      // Ensure real timers before using fake timers
-      vi.useRealTimers();
-      vi.useFakeTimers();
-
-      const { result } = renderHook(() => useMultiUnitBookingStore());
-
-      act(() => {
-        result.current.addOptimisticBooking({
-          booking_id: "temp-123",
-          total_amount: 5000,
-        } as MultiUnitBooking);
-      });
-
-      // Verify entry exists
-      expect(result.current.optimisticQueue.has("temp-123")).toBe(true);
-
-      // Fast-forward past TTL (5 minutes + 1 second)
-      act(() => {
-        vi.advanceTimersByTime(5 * 60 * 1000 + 1000);
-      });
-
-      // Trigger cleanup
-      act(() => {
-        result.current.clearExpiredOptimistic();
-      });
-
-      expect(result.current.optimisticQueue.has("temp-123")).toBe(false);
-
-      vi.useRealTimers();
-    });
-
-    it("should enforce MAX_OPTIMISTIC_ENTRIES limit", () => {
-      const { result } = renderHook(() => useMultiUnitBookingStore());
-
-      act(() => {
-        // Add 100 entries (the max)
-        for (let i = 0; i < 100; i++) {
-          result.current.addOptimisticBooking({
-            booking_id: `temp-${i}`,
-            total_amount: 1000,
-          } as MultiUnitBooking);
-        }
-
-        // Add 101st entry - should remove oldest
-        result.current.addOptimisticBooking({
-          booking_id: "temp-100",
-          total_amount: 1000,
-        } as MultiUnitBooking);
-      });
-
-      expect(result.current.optimisticQueue.size).toBe(100);
-      expect(result.current.optimisticQueue.has("temp-0")).toBe(false);
-      expect(result.current.optimisticQueue.has("temp-100")).toBe(true);
-    });
-
-    it("should selectively clear expired optimistic entries", () => {
-      // Ensure real timers before using fake timers
-      vi.useRealTimers();
-      vi.useFakeTimers();
-
-      const { result } = renderHook(() => useMultiUnitBookingStore());
-
-      // Set initial time
-      const startTime = new Date("2025-10-01T10:00:00Z").getTime();
-      vi.setSystemTime(startTime);
-
-      // Add old optimistic entry
-      act(() => {
-        result.current.addOptimisticBooking({
-          booking_id: "old-booking",
-          total_amount: 5000,
-          created_at: new Date().toISOString(),
-        } as MultiUnitBooking);
-      });
-
-      // Advance time by 6 minutes (past the 5-minute TTL)
-      vi.setSystemTime(startTime + 6 * 60 * 1000);
-
-      // Add recent entry (within TTL)
-      act(() => {
-        result.current.addOptimisticBooking({
-          booking_id: "new-booking",
-          total_amount: 6000,
-          created_at: new Date().toISOString(),
-        } as MultiUnitBooking);
-      });
-
-      // Verify both exist before cleanup
-      expect(result.current.optimisticQueue.has("old-booking")).toBe(true);
-      expect(result.current.optimisticQueue.has("new-booking")).toBe(true);
-      expect(result.current.optimisticQueue.size).toBe(2);
-
-      // Clear expired entries
-      act(() => {
-        result.current.clearExpiredOptimistic();
-      });
-
-      // Old entry should be removed, recent should remain
-      expect(result.current.optimisticQueue.has("old-booking")).toBe(false);
-      expect(result.current.optimisticQueue.has("new-booking")).toBe(true);
-      expect(result.current.optimisticQueue.size).toBe(1);
-
-      vi.useRealTimers();
-    });
-
-    it("should sync from realtime correctly", () => {
-      const { result } = renderHook(() => useMultiUnitBookingStore());
-
-      const serverBooking = {
-        booking_id: "server-123",
-        total_amount: 5000,
-      } as MultiUnitBooking;
-
-      act(() => {
-        result.current.syncFromRealtime(serverBooking);
-      });
-
-      expect(result.current.selectedBooking).toEqual(serverBooking);
-    });
-
-    it("should resolve conflicts using last-write-wins strategy", () => {
-      const { result } = renderHook(() => useMultiUnitBookingStore());
-
-      const localBooking = {
-        booking_id: "booking-1",
-        total_amount: 5000,
-        updated_at: "2025-10-01T10:00:00Z",
-      } as MultiUnitBooking;
-
-      const serverBooking = {
-        booking_id: "booking-1",
-        total_amount: 6000,
-        updated_at: "2025-10-01T11:00:00Z",
-      } as MultiUnitBooking;
-
-      act(() => {
-        result.current.setConflictResolutionStrategy("last-write-wins");
-        result.current.setDraftBooking(localBooking);
-        result.current.syncFromRealtime(serverBooking);
-      });
-
-      // Server version is newer, should win
-      expect(result.current.selectedBooking?.total_amount).toBe(6000);
-    });
-
-    it("should resolve conflicts using server-wins strategy", () => {
-      const { result } = renderHook(() => useMultiUnitBookingStore());
-
-      const localBooking = {
-        booking_id: "booking-1",
-        total_amount: 5000,
-      } as MultiUnitBooking;
-
-      const serverBooking = {
-        booking_id: "booking-1",
-        total_amount: 6000,
-      } as MultiUnitBooking;
-
-      act(() => {
-        result.current.setConflictResolutionStrategy("server-wins");
-        result.current.setDraftBooking(localBooking);
-        result.current.syncFromRealtime(serverBooking);
-      });
-
-      // Server always wins
-      expect(result.current.selectedBooking?.total_amount).toBe(6000);
-    });
-  });
-
-  // ============================================
-  // NETWORK STATUS TESTS
-  // ============================================
-
-  describe("Network Status", () => {
-    it("should update online status", () => {
-      const { result } = renderHook(() => useMultiUnitBookingStore());
-
-      act(() => {
-        result.current.setOnlineStatus(false);
-      });
-
-      expect(result.current.isOnline).toBe(false);
-
-      act(() => {
-        result.current.setOnlineStatus(true);
-      });
-
-      expect(result.current.isOnline).toBe(true);
-    });
-
-    it("should handle window online event", () => {
-      const { result } = renderHook(() => useMultiUnitBookingStore());
-
-      act(() => {
-        result.current.setOnlineStatus(false);
-        window.dispatchEvent(new Event("online"));
-      });
-
-      expect(result.current.isOnline).toBe(true);
-    });
-
-    it("should handle window offline event", () => {
-      const { result } = renderHook(() => useMultiUnitBookingStore());
-
-      act(() => {
-        window.dispatchEvent(new Event("offline"));
-      });
-
-      expect(result.current.isOnline).toBe(false);
-    });
-  });
-
-  // ============================================
   // EDGE CASES & BOUNDARY CONDITIONS
   // ============================================
 
@@ -900,17 +528,6 @@ describe("useMultiUnitBookingStore", () => {
       expect(result.current.selectedUnits).toHaveLength(0);
     });
 
-    it("should handle clearing optimistic entry that doesn't exist", () => {
-      const { result } = renderHook(() => useMultiUnitBookingStore());
-
-      act(() => {
-        result.current.clearOptimisticEntry("non-existent-id");
-      });
-
-      // Should not throw error
-      expect(result.current.optimisticQueue.size).toBe(0);
-    });
-
     it("should reset store to initial state", () => {
       const { result } = renderHook(() => useMultiUnitBookingStore());
 
@@ -989,27 +606,6 @@ describe("useMultiUnitBookingStore", () => {
       // Should aggregate pricing from all units
       const total = result.current.getTotalAmount();
       expect(total).toBeGreaterThan(0);
-    });
-
-    it("should handle concurrent optimistic updates", () => {
-      const { result } = renderHook(() => useMultiUnitBookingStore());
-
-      act(() => {
-        result.current.addOptimisticBooking({
-          booking_id: "temp-1",
-          total_amount: 5000,
-        } as MultiUnitBooking);
-
-        result.current.addOptimisticBooking({
-          booking_id: "temp-2",
-          total_amount: 6000,
-        } as MultiUnitBooking);
-
-        result.current.updateOptimisticBooking("temp-1", { total_amount: 5500 });
-      });
-
-      expect(result.current.optimisticQueue.size).toBe(2);
-      expect(result.current.optimisticQueue.get("temp-1")?.booking.total_amount).toBe(5500);
     });
   });
 });

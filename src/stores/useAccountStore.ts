@@ -1,4 +1,4 @@
-import { queryOptions, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { queryOptions, useMutation, useQuery } from "@tanstack/react-query";
 import { create } from "zustand";
 import { devtools, persist } from "zustand/middleware";
 
@@ -31,13 +31,6 @@ interface AccountStore {
   setSearchQuery: (query: string) => void;
   setSortBy: (sortBy: "name" | "balance" | "type" | "created") => void;
   setSortOrder: (order: "asc" | "desc") => void;
-
-  // Optimistic updates
-  optimisticAccounts: Map<string, Account>;
-  addOptimisticAccount: (account: Account) => void;
-  updateOptimisticAccount: (accountId: string, updates: Partial<Account>) => void;
-  removeOptimisticAccount: (accountId: string) => void;
-  clearOptimisticAccounts: () => void;
 }
 
 export const useAccountStore = create<AccountStore>()(
@@ -50,7 +43,6 @@ export const useAccountStore = create<AccountStore>()(
         searchQuery: "",
         sortBy: "name",
         sortOrder: "asc",
-        optimisticAccounts: new Map(),
 
         // Actions
         setSelectedAccount: (account) => set({ selectedAccount: account }),
@@ -64,32 +56,6 @@ export const useAccountStore = create<AccountStore>()(
         setSortBy: (sortBy) => set({ sortBy }),
 
         setSortOrder: (order) => set({ sortOrder: order }),
-
-        addOptimisticAccount: (account) =>
-          set((state) => {
-            const newMap = new Map(state.optimisticAccounts);
-            newMap.set(account.account_id, account);
-            return { optimisticAccounts: newMap };
-          }),
-
-        updateOptimisticAccount: (accountId, updates) =>
-          set((state) => {
-            const newMap = new Map(state.optimisticAccounts);
-            const existing = newMap.get(accountId);
-            if (existing) {
-              newMap.set(accountId, { ...existing, ...updates });
-            }
-            return { optimisticAccounts: newMap };
-          }),
-
-        removeOptimisticAccount: (accountId) =>
-          set((state) => {
-            const newMap = new Map(state.optimisticAccounts);
-            newMap.delete(accountId);
-            return { optimisticAccounts: newMap };
-          }),
-
-        clearOptimisticAccounts: () => set({ optimisticAccounts: new Map() }),
       }),
       {
         name: "account-store",
@@ -125,22 +91,6 @@ const activeAccountsQuery = () =>
 
 // Fetch active accounts only (for selectors)
 export const useActiveAccounts = () => useQuery(activeAccountsQuery());
-
-const accountDetailQuery = (accountId: string) =>
-  queryOptions({
-    queryKey: accountKeys.detail(accountId),
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("accounts")
-        .select("*")
-        .eq("account_id", accountId)
-        .single();
-
-      if (error) throw new Error(handleSupabaseError(error));
-      return data as Account;
-    },
-    staleTime: 60000,
-  });
 
 // Fetch single account
 
@@ -180,9 +130,6 @@ export const useActiveAccountBalances = (asOfDate?: Date) =>
 
 // Create account
 export const useCreateAccount = () => {
-  const queryClient = useQueryClient();
-  const addOptimistic = useAccountStore((state) => state.addOptimisticAccount);
-
   return useMutation({
     mutationFn: async (data: Omit<Account, "account_id" | "created_at" | "updated_at">) => {
       const { data: newAccount, error } = await supabase
@@ -202,34 +149,12 @@ export const useCreateAccount = () => {
       if (error) throw new Error(handleSupabaseError(error));
       return newAccount as Account;
     },
-    onMutate: async (data) => {
-      await queryClient.cancelQueries({ queryKey: accountKeys.all });
-
-      const optimisticAccount: Account = {
-        ...data,
-        account_id: `temp-${Date.now()}`,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      };
-
-      addOptimistic(optimisticAccount);
-
-      return { optimisticAccount };
-    },
-    onError: (_, __, context) => {
-      if (context?.optimisticAccount) {
-        useAccountStore.getState().removeOptimisticAccount(context.optimisticAccount.account_id);
-      }
-    },
     onSettled: () => afterWrite("accounts"),
   });
 };
 
 // Update account
 export const useUpdateAccount = () => {
-  const queryClient = useQueryClient();
-  const updateOptimistic = useAccountStore((state) => state.updateOptimisticAccount);
-
   return useMutation({
     mutationFn: async ({
       accountId,
@@ -248,29 +173,12 @@ export const useUpdateAccount = () => {
       if (error) throw new Error(handleSupabaseError(error));
       return data as Account;
     },
-    onMutate: async ({ accountId, updates }) => {
-      await queryClient.cancelQueries({ queryKey: accountKeys.all });
-
-      const previousAccount = queryClient.getQueryData(accountDetailQuery(accountId).queryKey);
-
-      updateOptimistic(accountId, updates);
-
-      return { previousAccount };
-    },
-    onError: (_, { accountId }, context) => {
-      if (context?.previousAccount) {
-        updateOptimistic(accountId, context.previousAccount);
-      }
-    },
     onSettled: () => afterWrite("accounts"),
   });
 };
 
 // Delete account (soft delete - set is_active to false)
 export const useDeleteAccount = () => {
-  const queryClient = useQueryClient();
-  const removeOptimistic = useAccountStore((state) => state.removeOptimisticAccount);
-
   return useMutation({
     mutationFn: async (accountId: string) => {
       // Soft delete by setting is_active to false
@@ -280,11 +188,6 @@ export const useDeleteAccount = () => {
         .eq("account_id", accountId);
 
       if (error) throw new Error(handleSupabaseError(error));
-    },
-    onMutate: async (accountId) => {
-      await queryClient.cancelQueries({ queryKey: accountKeys.all });
-      removeOptimistic(accountId);
-      return { accountId };
     },
     onSettled: () => afterWrite("accounts"),
   });

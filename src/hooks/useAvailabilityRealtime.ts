@@ -22,7 +22,7 @@ import {
  * Subscribe to real-time availability changes
  *
  * Monitors availability blocks (blackout periods).
- * Automatically clears availability cache and shows toast notifications.
+ * Shows a toast when units are selected; afterWrite refreshes the availability queries.
  *
  * Use this in multi-unit booking forms to alert users of availability changes.
  *
@@ -58,14 +58,10 @@ export function useAvailabilityRealtime(
   checkOut?: string,
   options?: Omit<RealtimeSubscriptionOptions, "enabled" | "onChange">
 ) {
-  const { selectedUnits, clearAvailabilityCache } = useMultiUnitBookingStore();
+  const { selectedUnits } = useMultiUnitBookingStore();
 
   // useEffectEvent to access latest values without causing re-subscriptions
   const handleAvailabilityChange = useEffectEvent(() => {
-    // Clear cache to force re-check
-    clearAvailabilityCache?.();
-
-    // Check if any selected units are affected
     if (selectedUnits.length > 0) {
       toast.warning("Availability updated", {
         description: "Unit availability has changed. Please verify your selection.",

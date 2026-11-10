@@ -1,4 +1,4 @@
-import { queryOptions, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { queryOptions, useMutation, useQuery } from "@tanstack/react-query";
 import { create } from "zustand";
 import { devtools, persist } from "zustand/middleware";
 
@@ -27,13 +27,6 @@ interface GuestStore {
   setSearchQuery: (query: string) => void;
   setSortBy: (sortBy: "name" | "bookings" | "spent" | "created") => void;
   setSortOrder: (order: "asc" | "desc") => void;
-
-  // Optimistic updates
-  optimisticGuests: Map<string, Guest>;
-  addOptimisticGuest: (guest: Guest) => void;
-  updateOptimisticGuest: (guestId: string, updates: Partial<Guest>) => void;
-  removeOptimisticGuest: (guestId: string) => void;
-  clearOptimisticGuests: () => void;
 }
 
 export const useGuestStore = create<GuestStore>()(
@@ -45,7 +38,6 @@ export const useGuestStore = create<GuestStore>()(
         searchQuery: "",
         sortBy: "name",
         sortOrder: "asc",
-        optimisticGuests: new Map(),
 
         // Actions
         setSelectedGuest: (guest) => set({ selectedGuest: guest }),
@@ -55,32 +47,6 @@ export const useGuestStore = create<GuestStore>()(
         setSortBy: (sortBy) => set({ sortBy }),
 
         setSortOrder: (order) => set({ sortOrder: order }),
-
-        addOptimisticGuest: (guest) =>
-          set((state) => {
-            const newMap = new Map(state.optimisticGuests);
-            newMap.set(guest.guest_id, guest);
-            return { optimisticGuests: newMap };
-          }),
-
-        updateOptimisticGuest: (guestId, updates) =>
-          set((state) => {
-            const newMap = new Map(state.optimisticGuests);
-            const existing = newMap.get(guestId);
-            if (existing) {
-              newMap.set(guestId, { ...existing, ...updates });
-            }
-            return { optimisticGuests: newMap };
-          }),
-
-        removeOptimisticGuest: (guestId) =>
-          set((state) => {
-            const newMap = new Map(state.optimisticGuests);
-            newMap.delete(guestId);
-            return { optimisticGuests: newMap };
-          }),
-
-        clearOptimisticGuests: () => set({ optimisticGuests: new Map() }),
       }),
       {
         name: "guest-storage",
@@ -157,12 +123,7 @@ const guestListQuery = ({
 
       if (error) throw new Error(handleSupabaseError(error));
 
-      // Merge with optimistic updates
-      const { optimisticGuests } = useGuestStore.getState();
-      const mergedData =
-        (data as Guest[])?.map((guest) => optimisticGuests.get(guest.guest_id) ?? guest) || [];
-
-      return mergedData;
+      return (data as Guest[]) || [];
     },
     staleTime: 30000,
     refetchInterval: 120000, // Refresh every 2 minutes
@@ -239,9 +200,6 @@ export const useGuestBookings = (guestId: string | undefined) => {
 
 // Update guest mutation
 export const useUpdateGuest = () => {
-  const queryClient = useQueryClient();
-  const updateOptimistic = useGuestStore((state) => state.updateOptimisticGuest);
-
   return useMutation({
     mutationFn: async ({
       guestId,
@@ -253,23 +211,6 @@ export const useUpdateGuest = () => {
       const { data, error } = await db.guests.update(guestId, updates);
       if (error) throw new Error(handleSupabaseError(error));
       return data;
-    },
-    onMutate: async ({ guestId, updates }) => {
-      await queryClient.cancelQueries({ queryKey: guestKeys.all });
-
-      const previousGuest = queryClient.getQueryData<Guest>(guestKeys.detail(guestId));
-
-      updateOptimistic(guestId, {
-        ...updates,
-        updated_at: new Date().toISOString(),
-      });
-
-      return { previousGuest };
-    },
-    onError: (_, { guestId }, context) => {
-      if (context?.previousGuest) {
-        updateOptimistic(guestId, context.previousGuest);
-      }
     },
     onSettled: () => afterWrite("guests"),
   });
@@ -319,16 +260,8 @@ export const useAnonymizeGuest = () =>
 
 // Delete guest mutation: delete_guest refuses Confirmed/CheckedIn or current/future bookings (409)
 export const useDeleteGuest = () => {
-  const queryClient = useQueryClient();
-  const removeOptimistic = useGuestStore((state) => state.removeOptimisticGuest);
-
   return useMutation({
     mutationFn: (guestId: string) => callGuestRetention(`/api/admin/guests/${guestId}`, "DELETE"),
-    onMutate: async (guestId) => {
-      await queryClient.cancelQueries({ queryKey: guestKeys.all });
-      removeOptimistic(guestId);
-      return { guestId };
-    },
     onSettled: () => afterWrite(...GUEST_RETENTION_WRITES),
   });
 };
