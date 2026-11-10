@@ -277,20 +277,6 @@ export interface UnitFilters {
 }
 
 // ============================================
-// TABLE COLUMN TYPES (For TanStack Table)
-// ============================================
-export interface TableState {
-  sorting: unknown[];
-  columnFilters: unknown[];
-  columnVisibility: Record<string, boolean>;
-  rowSelection: Record<string, boolean>;
-  pagination: {
-    pageIndex: number;
-    pageSize: number;
-  };
-}
-
-// ============================================
 // MULTI-UNIT BOOKING TYPES (Phase 3)
 // ============================================
 export * from "./multi-unit-booking";

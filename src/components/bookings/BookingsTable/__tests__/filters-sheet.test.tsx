@@ -23,8 +23,8 @@ vi.mock("@tanstack/react-router", async () => ({
   useSearch: () => router.search,
 }));
 
-vi.mock("@/stores/useBookingStore", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("@/stores/useBookingStore")>()),
+vi.mock("@/hooks/useBookings", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/hooks/useBookings")>()),
   ...(await import("@/test/booking-store-stub")).bookingStoreHookStubs([
     {
       booking_id: "booking-1",

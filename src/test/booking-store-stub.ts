@@ -2,9 +2,9 @@ import { vi } from "vitest";
 
 import type { Booking } from "@/types";
 
-// Replaces the booking store's query and mutation hooks, keeping the real zustand store:
-// vi.mock("@/stores/useBookingStore", async (importOriginal) => ({
-//   ...(await importOriginal<typeof import("@/stores/useBookingStore")>()),
+// Replaces the booking query and mutation hooks, keeping the rest of the module real:
+// vi.mock("@/hooks/useBookings", async (importOriginal) => ({
+//   ...(await importOriginal<typeof import("@/hooks/useBookings")>()),
 //   ...(await import("@/test/booking-store-stub")).bookingStoreHookStubs([]),
 // }))
 export function bookingStoreHookStubs(bookings: Booking[]) {

@@ -18,11 +18,11 @@ import {
   SheetTitle,
   StatusBadge,
 } from "@/components/patterns";
+import { useAllBookings } from "@/hooks/useBookings";
 import { paymentProofKind, usePaymentProofUrl } from "@/hooks/usePaymentProofUrl";
 import { outstandingBalance } from "@/lib/dashboard";
 import { formatCurrency } from "@/lib/formatters";
 import { statusBadgeProps } from "@/lib/status-tone";
-import { useAllBookings } from "@/stores/useBookingStore";
 import type { Booking } from "@/types";
 
 import type { BookingCardProps } from "../types";

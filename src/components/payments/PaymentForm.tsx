@@ -18,8 +18,8 @@ import {
   SelectItem,
   Textarea,
 } from "@/components/patterns";
+import { useAllBookings } from "@/hooks/useBookings";
 import { formatCurrency } from "@/lib/formatters";
-import { useAllBookings } from "@/stores/useBookingStore";
 import { useCreatePayment, useUpdatePayment } from "@/stores/usePaymentStore";
 import type { Payment } from "@/types";
 

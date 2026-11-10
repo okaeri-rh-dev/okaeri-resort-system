@@ -1,7 +1,5 @@
 import { queryOptions, useMutation, useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { create } from "zustand";
-import { devtools, persist } from "zustand/middleware";
 
 import { afterWrite } from "@/lib/after-write";
 import {
@@ -19,72 +17,6 @@ import { formatCurrency } from "@/lib/formatters";
 import { recordProofPayment } from "@/lib/payments";
 import { bookingKeys } from "@/lib/query-keys";
 import { db, handleSupabaseError, supabase } from "@/lib/supabase";
-import type { Booking, TableState } from "@/types";
-
-// import { useWorkflowStore } from "./useWorkflowStore"; // Phase 3-4
-
-// ============================================
-// ZUSTAND STORE
-// ============================================
-interface BookingStore {
-  // Local state
-  selectedBooking: Booking | null;
-
-  // Actions
-  setSelectedBooking: (booking: Booking | null) => void;
-
-  // Table state (for TanStack Table)
-  tableState: Partial<TableState>;
-  setTableState: (state: Partial<TableState>) => void;
-}
-
-export const useBookingStore = create<BookingStore>()(
-  devtools(
-    persist(
-      (set) => ({
-        // Initial state
-        selectedBooking: null,
-        tableState: {
-          pagination: { pageIndex: 0, pageSize: 10 },
-        },
-
-        // Actions
-        setSelectedBooking: (booking) => set({ selectedBooking: booking }),
-
-        setTableState: (state) =>
-          set((prevState) => ({
-            tableState: { ...prevState.tableState, ...state },
-          })),
-      }),
-      {
-        name: "booking-storage",
-        storage: {
-          getItem: (name) => {
-            const value = sessionStorage.getItem(name);
-            return value ? JSON.parse(value) : null;
-          },
-          setItem: (name, value) => {
-            sessionStorage.setItem(name, JSON.stringify(value));
-          },
-          removeItem: (name) => {
-            sessionStorage.removeItem(name);
-          },
-        },
-        partialize: (state) =>
-          ({
-            tableState: state.tableState,
-          }) as BookingStore,
-      }
-    ),
-    {
-      name: "BookingStore",
-    }
-  )
-);
-
-// ============================================
-// TANSTACK QUERY HOOKS
-// ============================================
 
 // One booking with units and guest; the detail and edit routes share this cache entry
 export const bookingDetailQuery = (bookingId: string) =>
