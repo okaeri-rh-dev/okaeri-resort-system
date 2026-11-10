@@ -1,5 +1,5 @@
 import type { StaffBookingSource } from "@/lib/bookings";
-import type { Unit } from "@/types";
+import type { PaymentMethod, Unit } from "@/types";
 
 export const NEW_BOOKING_STEPS = ["stay", "guest", "payment", "review"] as const;
 export type Step = (typeof NEW_BOOKING_STEPS)[number];
@@ -14,9 +14,7 @@ export const METHODS = [
   { value: "GCash", label: "GCash" },
   { value: "BankTransfer", label: "Bank transfer" },
   { value: "Cash", label: "Cash" },
-  { value: "CreditCard", label: "Card" },
-] as const;
-type PaymentMethod = (typeof METHODS)[number]["value"];
+] as const satisfies readonly { value: PaymentMethod; label: string }[];
 
 export interface Draft {
   source: StaffBookingSource;
@@ -28,7 +26,7 @@ export interface Draft {
   phone: string;
   email: string;
   isNewGuest: boolean;
-  method?: PaymentMethod;
+  method?: (typeof METHODS)[number]["value"];
   payout: string;
   confirmationCode: string;
   notes: string;
