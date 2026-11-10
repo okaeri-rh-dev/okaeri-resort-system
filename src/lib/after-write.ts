@@ -27,7 +27,7 @@ export type TableName = keyof Database["public"]["Tables"];
 
 type KeyRoot = readonly unknown[];
 
-const AVAILABILITY = [availabilityKeys.availableUnits.all, availabilityKeys.multiUnit.all];
+const AVAILABILITY = [availabilityKeys.multiUnit.all];
 const CABIN_STATES = unitKeys.allStates();
 
 // A fetch reads a table if it selects it, embeds it, or calls an RPC or API route that reads it

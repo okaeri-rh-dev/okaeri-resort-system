@@ -367,7 +367,7 @@ test.describe("Admin Bookings Management", () => {
   });
 });
 
-test.describe("Bookings Queue (Payment Verification)", () => {
+test.describe("Needs action (replaces the Booking Queue)", () => {
   test.beforeEach(async ({ page }) => {
     if (!process.env.TEST_ADMIN_EMAIL || !process.env.TEST_ADMIN_PASSWORD) {
       test.skip();
@@ -375,76 +375,35 @@ test.describe("Bookings Queue (Payment Verification)", () => {
     await loginAsAdmin(page);
   });
 
-  test("bookings queue page loads", async ({ page }) => {
-    await page.goto(ROUTES.admin.bookingsQueue);
+  for (const oldUrl of ["/admin/bookings/queue", "/pending-bookings"]) {
+    test(`${oldUrl} lands on the Needs action view`, async ({ page }) => {
+      await page.goto(oldUrl);
 
-    // Page should load (may show empty state)
-    await expect(
-      page
-        .getByRole("main")
-        .getByText(/queue|pending|payment/i)
-        .first()
-    ).toBeVisible();
+      await expect(page).toHaveURL(/\/admin\/bookings\?view=needs-action$/);
+      await expect(page.getByRole("tab", { name: /Needs action/ })).toHaveAttribute(
+        "aria-selected",
+        "true"
+      );
+    });
+  }
+
+  test("an online booking waiting for cabins offers Verify payment", async ({ page }) => {
+    await page.goto(`/admin/bookings?view=needs-action&q=${E2E_REF.QUEUE}`);
+
+    await page.getByRole("button", { name: "Verify payment" }).click();
+    const dialog = page.getByRole("dialog", { name: "Verify payment" });
+    await expect(dialog.getByRole("heading", { name: "Payment proof" })).toBeVisible();
+    await expect(dialog.getByRole("button", { name: "Verify and confirm" })).toBeDisabled();
   });
 
-  test("queue shows pending bookings awaiting verification", async ({ page }) => {
-    await page.goto(ROUTES.admin.bookingsQueue);
-    await page.waitForLoadState("networkidle");
+  test("a paid online booking skips the proof and only confirms cabins", async ({ page }) => {
+    await page.goto(`/admin/bookings?view=needs-action&q=${E2E_REF.QUEUE_PAID}`);
 
-    // Should show list of pending bookings, queue content, or empty message
-    // Check multiple patterns for flexibility
-    const hasPendingText = await page
-      .getByText(/pending/i)
-      .first()
-      .isVisible()
-      .catch(() => false);
-    const hasQueueContent = await page
-      .getByText(/queue|verification|review/i)
-      .first()
-      .isVisible()
-      .catch(() => false);
-    const hasEmptyState = await page
-      .getByText(/no.*pending|empty|no bookings|no results/i)
-      .first()
-      .isVisible()
-      .catch(() => false);
-    const hasTableOrCards = await page
-      .locator('table, [class*="card"]')
-      .first()
-      .isVisible()
-      .catch(() => false);
-    const hasHeading = await page
-      .getByRole("heading", { level: 1 })
-      .isVisible()
-      .catch(() => false);
-
-    // At least one of these should be visible (page loaded successfully)
-    expect(
-      hasPendingText || hasQueueContent || hasEmptyState || hasTableOrCards || hasHeading
-    ).toBeTruthy();
-  });
-});
-
-test.describe("Unit Assignment", () => {
-  test.beforeEach(async ({ page }) => {
-    if (!process.env.TEST_ADMIN_EMAIL || !process.env.TEST_ADMIN_PASSWORD) {
-      test.skip();
-    }
-    await loginAsAdmin(page);
-  });
-
-  test("unit assignment page requires verified payment", async ({ page }) => {
-    // Try to access unit assignment for a hypothetical booking
-    await page.goto("/admin/bookings/test-id/assign-units");
-
-    // Should either show unit assignment form or redirect/error
-    // depending on booking status
-    await expect(
-      page
-        .getByRole("main")
-        .getByText(/assign|units|cabin|error|not found/i)
-        .first()
-    ).toBeVisible();
+    await page.getByRole("button", { name: "Verify payment" }).click();
+    const dialog = page.getByRole("dialog", { name: "Confirm booking" });
+    await expect(dialog.getByRole("heading", { name: "Choose 2 cabins" })).toBeVisible();
+    await expect(dialog.getByRole("heading", { name: "Payment proof" })).toHaveCount(0);
+    await expect(dialog.getByRole("button", { name: "Confirm" })).toBeDisabled();
   });
 });
 

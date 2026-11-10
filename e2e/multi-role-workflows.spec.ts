@@ -1,15 +1,12 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 
 import { E2E_REF } from "../scripts/e2e/fixtures";
 import { loginAsAdmin, loginAsOwner, loginAsStaff } from "./fixtures/auth";
 import { ROUTES, TIMEOUTS, VIEWPORTS } from "./fixtures/test-data";
-import { AdminQueuePage } from "./pages/AdminQueuePage";
 import { BookingDetailPage } from "./pages/BookingDetailPage";
 import { BookingsTablePage } from "./pages/BookingsTablePage";
 import { DashboardPage } from "./pages/DashboardPage";
-import { PaymentVerificationPage } from "./pages/PaymentVerificationPage";
 import { PricingConfigPage } from "./pages/PricingConfigPage";
-import { UnitAssignmentPage } from "./pages/UnitAssignmentPage";
 
 /**
  * Multi-Role Workflow E2E Tests
@@ -29,6 +26,11 @@ import { UnitAssignmentPage } from "./pages/UnitAssignmentPage";
  * Manage Roles         |   ✗   |   ✓   |   ✗
  * View Audit Logs      |   ✗   |   ✓   |   ✓
  */
+async function openNeedsAction(page: Page, reference: string) {
+  await page.goto(`/admin/bookings?view=needs-action&q=${reference}`);
+  await expect(page.getByText(reference).first()).toBeVisible();
+}
+
 test.describe("Multi-Role Workflows", () => {
   test.describe("Staff Role Permissions", () => {
     test.beforeEach(async ({ page }) => {
@@ -41,13 +43,6 @@ test.describe("Multi-Role Workflows", () => {
 
       // Should be able to see the bookings table
       await bookingsTable.expectTableVisible();
-    });
-
-    test("staff can access booking queue", async ({ page }) => {
-      const queuePage = new AdminQueuePage(page);
-      await queuePage.goto();
-
-      await expect(queuePage.queueContainer.or(queuePage.emptyState).first()).toBeVisible();
     });
 
     test("staff can view booking details", async ({ page }) => {
@@ -72,43 +67,10 @@ test.describe("Multi-Role Workflows", () => {
       await detailPage.expectPageLoaded();
     });
 
-    test("staff cannot verify payments (read-only)", async ({ page }) => {
-      const queuePage = new AdminQueuePage(page);
-      await queuePage.goto();
+    test("staff see an online booking in Needs action but cannot verify it", async ({ page }) => {
+      await openNeedsAction(page, E2E_REF.QUEUE);
 
-      if (await queuePage.emptyState.isVisible()) {
-        test.skip();
-        return;
-      }
-
-      const reviewLinks = await queuePage.reviewPaymentLinks.all();
-      if (reviewLinks.length === 0) return;
-
-      // The verify-payment route is manager+, so staff land on the dashboard
-      await reviewLinks[0].click();
-      await expect(page).toHaveURL(/\/admin\/dashboard/);
-    });
-
-    test("staff cannot assign units", async ({ page }) => {
-      const queuePage = new AdminQueuePage(page);
-      await queuePage.goto();
-
-      if (await queuePage.emptyState.isVisible()) {
-        test.skip();
-        return;
-      }
-
-      const assignLinks = await queuePage.assignUnitsLinks.all();
-
-      if (assignLinks.length > 0) {
-        await assignLinks[0].click();
-
-        if (page.url().includes("assign-units")) {
-          const assignPage = new UnitAssignmentPage(page);
-          // Confirm button should not be visible for staff
-          await assignPage.expectConfirmButtonHidden();
-        }
-      }
+      await expect(page.getByRole("button", { name: "Verify payment" })).toHaveCount(0);
     });
 
     test("staff redirected from role management", async ({ page }) => {
@@ -163,46 +125,20 @@ test.describe("Multi-Role Workflows", () => {
       await bookingsTable.expectTableVisible();
     });
 
-    test("admin can access booking queue", async ({ page }) => {
-      const queuePage = new AdminQueuePage(page);
-      await queuePage.goto();
-
-      await queuePage.expectQueueVisible();
-    });
-
     test("admin can verify payments", async ({ page }) => {
-      const queuePage = new AdminQueuePage(page);
-      await queuePage.goto();
+      await openNeedsAction(page, E2E_REF.QUEUE);
+      await page.getByRole("button", { name: "Verify payment" }).click();
 
-      if (await queuePage.emptyState.isVisible()) {
-        test.skip();
-        return;
-      }
-
-      const reviewLinks = await queuePage.reviewPaymentLinks.all();
-      if (reviewLinks.length === 0) {
-        test.skip();
-        return;
-      }
-
-      await reviewLinks[0].click();
-
-      const verifyPage = new PaymentVerificationPage(page);
-      await verifyPage.expectPageLoaded();
-
-      // Admin should see verify button
-      await verifyPage.expectVerifyButtonVisible();
+      const dialog = page.getByRole("dialog", { name: "Verify payment" });
+      await expect(dialog.getByRole("button", { name: "Verify and confirm" })).toBeVisible();
     });
 
     test("admin can assign units", async ({ page }) => {
-      const queuePage = new AdminQueuePage(page);
-      await queuePage.goto();
+      await openNeedsAction(page, E2E_REF.QUEUE_PAID);
+      await page.getByRole("button", { name: "Verify payment" }).click();
 
-      await queuePage.openAssignCabins(E2E_REF.QUEUE_PAID);
-
-      const assignPage = new UnitAssignmentPage(page);
-      await assignPage.expectPageLoaded();
-      await assignPage.expectUnitsGridVisible();
+      const dialog = page.getByRole("dialog", { name: "Confirm booking" });
+      await expect(dialog.getByRole("checkbox").first()).toBeVisible();
     });
 
     test("admin can modify pricing configuration", async ({ page }) => {
@@ -289,26 +225,11 @@ test.describe("Multi-Role Workflows", () => {
     });
 
     test("owner can verify payments", async ({ page }) => {
-      const queuePage = new AdminQueuePage(page);
-      await queuePage.goto();
+      await openNeedsAction(page, E2E_REF.QUEUE);
+      await page.getByRole("button", { name: "Verify payment" }).click();
 
-      if (await queuePage.emptyState.isVisible()) {
-        test.skip();
-        return;
-      }
-
-      const reviewLinks = await queuePage.reviewPaymentLinks.all();
-      if (reviewLinks.length === 0) {
-        test.skip();
-        return;
-      }
-
-      await reviewLinks[0].click();
-
-      const verifyPage = new PaymentVerificationPage(page);
-      await verifyPage.expectPageLoaded();
-      // Owner should be able to verify
-      await verifyPage.expectVerifyButtonVisible();
+      const dialog = page.getByRole("dialog", { name: "Verify payment" });
+      await expect(dialog.getByRole("button", { name: "Verify and confirm" })).toBeVisible();
     });
 
     test("owner can view audit logs", async ({ page }) => {

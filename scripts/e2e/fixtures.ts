@@ -36,10 +36,9 @@ export interface E2EBookingFixture {
   check_out: string;
   total_amount: number;
   num_guests: number;
-  // Multi-cabin guest booking with no cabins assigned yet; shows in the booking queue
+  // Multi-cabin guest booking with no cabins assigned yet; offers Verify payment
   awaiting_unit_assignment?: boolean;
-  // Keeps an awaiting booking out of the booking queue (not a guest booking), so specs that act
-  // on the first queued booking never pick it
+  // Makes an awaiting booking staff-made (not a guest booking), so it offers no Verify payment
   hidden_from_queue?: boolean;
   // Object key in the payment-proofs bucket; seed uploads a placeholder image
   payment_proof_url?: string;

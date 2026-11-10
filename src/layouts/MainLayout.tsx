@@ -10,7 +10,6 @@ import {
   Download,
   FileText,
   Home,
-  ListChecks,
   LogOut,
   Receipt,
   ReceiptText,
@@ -55,13 +54,6 @@ const navGroups: ShellGroup[] = [
 const destinations: AdminDestination[] = [
   { label: "Dashboard", icon: Home, to: "/admin/dashboard", pinned: true },
   { label: "Bookings", icon: Calendar, to: "/admin/bookings", group: "bookings", pinned: true },
-  {
-    label: "Booking Queue",
-    icon: ListChecks,
-    to: "/admin/bookings/queue",
-    group: "bookings",
-    pinned: true,
-  },
   {
     label: "Payments",
     icon: Receipt,

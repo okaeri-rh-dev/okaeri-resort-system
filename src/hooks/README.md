@@ -13,7 +13,7 @@ React hooks shared across components. Entity CRUD (bookings, guests, payments, e
 | File                            | Exports                                                                                       |
 | ------------------------------- | --------------------------------------------------------------------------------------------- |
 | `entity/useEntityEdit.ts`       | `useEntityEdit`: optimistic edit flow for the entity detail pages                             |
-| `useAuthToken.ts`               | `useAuthToken`, `getAccessToken`: bearer token for `/api` calls                               |
+| `useAuthToken.ts`               | `getAccessToken`: bearer token for `/api` calls                               |
 | `useUserRole.ts`                | `useUserRole`: current user's role and permission flags for UI gating                         |
 | `useRoleManagement.ts`          | `useAllRoles`, `useRoleStats`, `useRoleHistory`, grant/update/deactivate mutations            |
 | `usePendingUsers.ts`            | `usePendingUsers`: users with no role assigned (admin API)                                         |

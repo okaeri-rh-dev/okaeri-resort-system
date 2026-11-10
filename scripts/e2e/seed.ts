@@ -65,6 +65,7 @@ async function seed(): Promise<void> {
     ...(awaiting_unit_assignment && {
       is_guest_booking: !hidden_from_queue,
       unit_assignment_status: "pending",
+      requested_unit_count: 2,
     }),
   }));
 

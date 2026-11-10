@@ -1,6 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 
-import { E2E_ASSIGN_PAID_BOOKING_ID, E2E_REF, E2E_UNIT_ID } from "../scripts/e2e/fixtures";
+import { E2E_REF, E2E_UNIT_ID } from "../scripts/e2e/fixtures";
 import { loginAsOwner } from "./fixtures/auth";
 import { COMPACT, EXPANDED, expectReadable, useDarkTheme } from "./fixtures/contrast";
 import { TEST_GUEST } from "./fixtures/test-data";
@@ -52,18 +52,18 @@ test.describe("Dark mode surfaces", () => {
     await expectReadable(page);
   });
 
-  test("assign cabins reads in dark", async ({ page }) => {
+  test("the verify payment cabin picker reads in dark", async ({ page }) => {
     await page.setViewportSize(EXPANDED);
     await loginAsOwner(page);
-    await page.goto(`/admin/bookings/${E2E_ASSIGN_PAID_BOOKING_ID}/assign-units`);
-    await expect(page.getByText(E2E_REF.ASSIGN_PAID)).toBeVisible();
+    await page.goto(`/admin/bookings?view=needs-action&q=${E2E_REF.QUEUE_PAID}`);
+    await page.getByRole("button", { name: "Verify payment" }).click();
 
-    const firstCabin = page.getByRole("button", { name: /^Cabin .*, not selected$/ }).first();
+    const dialog = page.getByRole("dialog", { name: "Confirm booking" });
+    const firstCabin = dialog.getByRole("checkbox").first();
     await expect(firstCabin).toBeVisible();
     await expectReadable(page);
 
-    await firstCabin.click();
-    await expect(page.getByText("1/2 selected")).toBeVisible();
+    await firstCabin.check();
     await expectReadable(page);
   });
 

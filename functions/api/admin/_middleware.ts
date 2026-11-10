@@ -9,8 +9,7 @@
  * 2. Supabase Auth user verification
  * 3. Authorization: requires an active public.app_roles role of staff or above
  *    (staff/manager/owner/admin). Client-mutable user_metadata is never trusted.
- *    Handlers enforce stricter levels where needed (verify-payment = manager+,
- *    pending-users = owner/admin).
+ *    Handlers enforce stricter levels where needed (pending-users = owner/admin).
  *
  * Returns:
  * - 401 Unauthorized: Missing or invalid JWT token
@@ -35,8 +34,8 @@ interface Env {
 }
 
 // Baseline for the entire /api/admin/* area: an approved staff member or above.
-// Individual handlers enforce stricter levels where required (verify-payment =
-// manager+, pending-users = owner/admin). Authorization is sourced from
+// Individual handlers enforce stricter levels where required (pending-users =
+// owner/admin). Authorization is sourced from
 // public.app_roles via lookupUserRole — NEVER from client-mutable JWT claims.
 const ADMIN_AREA_ROLES = STAFF_OR_ABOVE;
 

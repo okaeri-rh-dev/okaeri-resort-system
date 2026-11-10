@@ -9,7 +9,6 @@ import { toast } from "sonner";
 import { create } from "zustand";
 import { devtools, persist } from "zustand/middleware";
 
-import { getAccessToken } from "@/hooks/useAuthToken";
 import { afterWrite } from "@/lib/after-write";
 import {
   cancelBooking,
@@ -220,32 +219,6 @@ export const bookingDetailQuery = (bookingId: string) =>
     staleTime: 30000,
   });
 
-// The admin API's booking view (assign-units, verify-payment); each page declares the fields it reads
-export const adminBookingDetailQuery = <TBooking>(bookingId: string) =>
-  queryOptions({
-    queryKey: bookingKeys.adminDetail(bookingId),
-    queryFn: async (): Promise<TBooking> => {
-      const accessToken = await getAccessToken();
-      const response = await fetch(`/api/admin/bookings/${bookingId}`, {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          "Content-Type": "application/json",
-        },
-      });
-
-      if (!response.ok) {
-        const errorData = (await response
-          .json()
-          .catch(() => ({ error: "Failed to fetch booking" }))) as { error?: string };
-        throw new Error(errorData.error || "Failed to fetch booking details");
-      }
-
-      return response.json();
-    },
-    staleTime: 30000,
-    retry: 1,
-  });
-
 // The cached detail row in the app shape the list and the optimistic map use, for rollback
 const cachedBooking = (queryClient: QueryClient, bookingId: string): Booking | undefined => {
   const row = queryClient.getQueryData(bookingDetailQuery(bookingId).queryKey);
@@ -288,8 +261,10 @@ const bookingListQuery = () =>
 
       return mergedData;
     },
-    staleTime: 300000, // 5 minutes - increased from 30s
-    // Removed refetchInterval - manual refresh preferred for dashboard
+    staleTime: 5 * 60_000,
+    // New online bookings show without a reload
+    refetchInterval: 30 * 60_000,
+    refetchOnWindowFocus: true,
   });
 
 export const useAllBookings = () => useQuery(bookingListQuery());
