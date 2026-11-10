@@ -15,7 +15,7 @@ import {
   type ActionMenuAction,
 } from "@/components/patterns";
 import { useUserRole } from "@/hooks";
-import { manilaDayOf, overflowActionsFor, type OverflowAction } from "@/lib/bookings";
+import { manilaDayOf, overflowActionsFor, UNDO_STATUS, type OverflowAction } from "@/lib/bookings";
 import type { Booking } from "@/types";
 
 import type { BookingCardProps } from "../types";
@@ -45,8 +45,10 @@ export const BookingOverflowMenu = ({
   const run: Record<OverflowAction, () => void> = {
     "Record payment": onRecordPayment,
     Edit: () => void navigate({ to: "/admin/bookings/$bookingId/edit", params: { bookingId } }),
-    "Undo check-in": () => updateBookingStatus.mutate({ bookingId, status: "Confirmed" }),
-    "Undo check-out": () => updateBookingStatus.mutate({ bookingId, status: "CheckedIn" }),
+    "Undo check-in": () =>
+      updateBookingStatus.mutate({ bookingId, status: UNDO_STATUS["Undo check-in"] }),
+    "Undo check-out": () =>
+      updateBookingStatus.mutate({ bookingId, status: UNDO_STATUS["Undo check-out"] }),
     Cancel: () => setShowCancelDialog(true),
   };
   const actions: ActionMenuAction[] = items.map((label) => ({
