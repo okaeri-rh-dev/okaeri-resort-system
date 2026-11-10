@@ -3,7 +3,7 @@ import { useId } from "react";
 import { Plus, UserRound } from "lucide-react";
 
 import { Button, Input, Label } from "@/components/patterns";
-import { useGuestPick } from "@/stores/useGuestStore";
+import { useGuestPick } from "@/hooks/useGuests";
 
 import type { Draft, Update } from "./draft";
 

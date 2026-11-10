@@ -15,7 +15,7 @@ import {
   FormField,
   Input,
 } from "@/components/patterns";
-import { useUpdateGuest } from "@/stores/useGuestStore";
+import { useUpdateGuest } from "@/hooks/useGuests";
 import type { Guest } from "@/types";
 
 // Validation schema

@@ -13,8 +13,8 @@ import {
 } from "@/components/entity-detail";
 import { DetailField, DetailPageLayout, DetailSection, StatusBadge } from "@/components/patterns";
 import { useUserRole } from "@/hooks";
+import { useAnonymizeGuest } from "@/hooks/useGuests";
 import { statusBadgeProps } from "@/lib/status-tone";
-import { useAnonymizeGuest } from "@/stores/useGuestStore";
 import type { Booking, Guest } from "@/types";
 
 import { AnonymizeGuestDialog } from "./AnonymizeGuestDialog";

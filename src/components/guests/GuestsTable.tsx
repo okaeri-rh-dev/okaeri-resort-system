@@ -55,19 +55,14 @@ import {
   TableSkeleton,
 } from "@/components/patterns";
 import { useUserRole } from "@/hooks";
+import { useDeleteGuest, useExportGuests, useGuestBookings, useGuests } from "@/hooks/useGuests";
 import { formatCurrency, formatPhoneNumber, formatTableDate } from "@/lib/formatters";
 import { logger } from "@/lib/logger";
 import { statusBadgeProps } from "@/lib/status-tone";
 import { cn } from "@/lib/utils";
+import { useGuestStore } from "@/stores/useGuestStore";
 import type { Guest } from "@/types";
 
-import {
-  useDeleteGuest,
-  useExportGuests,
-  useGuestBookings,
-  useGuests,
-  useGuestStore,
-} from "../../stores/useGuestStore";
 import { GuestEditDialog } from "./GuestEditDialog";
 
 const columnHelper = createColumnHelper<Guest>();
