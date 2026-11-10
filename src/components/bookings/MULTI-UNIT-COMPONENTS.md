@@ -391,17 +391,6 @@ it('should have no accessibility violations', async () => {
 
 ---
 
-## Integration Guide
-
-See `MULTI-UNIT-INTEGRATION.md` for:
-
-- Integration with BookingForm
-- Phase 5 implementation plan
-- Migration strategies
-- E2E testing patterns
-
----
-
 ## Dependencies
 
 ### Required Stores
