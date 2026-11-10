@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { PAYMENT_STATUSES, type Booking } from "@/types";
+import type { AppRoleName } from "@/types/app-role";
 
 import { BOOKING_SOURCES } from "./source";
 import { isManilaDay, manilaDayOf, type ManilaDay } from "./stay";
@@ -91,6 +92,29 @@ export const needsActionReason = (
 /** The glossary's Needs-action booking. A balance alone never counts. */
 export const isNeedsAction = (booking: Booking, today: ManilaDay) =>
   booking.booking_status === "Pending" || needsActionReason(booking, today) !== undefined;
+
+export type MainAction = "Verify payment" | "Confirm" | "Check in" | "Check out";
+
+/** The one action a booking leads with; the database enforces the same rules (docs/adr/0007). */
+export const mainActionFor = (
+  booking: Booking,
+  role: AppRoleName | null | undefined,
+  today: ManilaDay
+): MainAction | undefined => {
+  if (!role) return undefined;
+  const isManager = role !== "staff";
+  switch (booking.booking_status) {
+    case "Pending":
+      if (!isManager) return undefined;
+      return booking.booking_source === "Website" ? "Verify payment" : "Confirm";
+    case "Confirmed":
+      return manilaDayOf(booking.check_in) <= today ? "Check in" : undefined;
+    case "CheckedIn":
+      return "Check out";
+    default:
+      return undefined;
+  }
+};
 
 const inView = (booking: Booking, view: BookingView | undefined, today: ManilaDay) => {
   switch (view) {

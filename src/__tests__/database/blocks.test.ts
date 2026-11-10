@@ -467,7 +467,7 @@ describe("blocks", () => {
         `SET session_replication_role = replica; INSERT INTO public.availability_blackouts (unit_id, start_date, end_date, reason) VALUES ('${unitId}', '2030-09-02', '2030-09-02', '${REASON_PREFIX} legacy');`
       );
 
-      const { error } = await roles.byRole.staff
+      const { error } = await roles.byRole.manager
         .from("bookings")
         .update({ booking_status: "Cancelled" })
         .eq("booking_id", bookingId!);

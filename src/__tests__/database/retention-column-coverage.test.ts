@@ -56,6 +56,8 @@ const COLUMNS: Record<string, { clear: string[]; keep: string[] }> = {
       "is_guest_booking",
       "is_multi_unit",
       "is_walk_in",
+      "status_changed_by",
+      "status_changed_at",
       "requested_unit_count",
       "unit_assignment_status",
       "unit_count",
