@@ -1,38 +1,55 @@
 import { expect, test } from "@playwright/test";
 
 import { loginAsStaff } from "./fixtures/auth";
-import { BookingsTablePage } from "./pages/BookingsTablePage";
 
-/** Staff enter an Airbnb booking with its payout and find it by source (ADR 0006). */
-test("staff create an Airbnb booking and find it with Source = Airbnb", async ({ page }) => {
+/** Staff enter an Airbnb booking with its payout: Confirmed and fully paid (ADR 0006). */
+test("staff create a 2-cabin Airbnb booking with its payout through the new flow", async ({
+  page,
+}) => {
   // Guest names allow letters only, so the unique suffix spells the timestamp's digits.
   const guestName = `Airbnb Guest ${String(Date.now()).replace(/\d/g, (d) => "abcdefghij"[+d])}`;
   await loginAsStaff(page);
-  const bookings = new BookingsTablePage(page);
-  await bookings.goto();
+  await page.goto("/admin/bookings/new?step=stay");
 
-  // Airbnb moves into the new booking flow in #340; until then it uses the old form.
-  await bookings.pageMenuButton.click();
-  await page.getByRole("menuitem", { name: "Old single-cabin form" }).click();
-  const dialog = page.getByRole("dialog");
-  await expect(dialog.getByText("Checking availability…")).toBeHidden();
-  await dialog.getByLabel("Select Unit").click();
-  await page.locator('[role="option"]:not([data-disabled])').first().click();
-  await dialog.getByRole("button", { name: "Next" }).click();
+  await page.getByRole("button", { name: "Stay dates" }).click();
+  const monthsAhead = 6 + Math.floor(Math.random() * 12);
+  for (let i = 0; i < monthsAhead; i++) {
+    await page.getByRole("button", { name: /next month/i }).click();
+  }
+  const calendar = page.getByRole("grid").first();
+  await calendar.getByRole("button", { name: / 20th, / }).click();
+  await calendar.getByRole("button", { name: / 22nd, / }).click();
+  await page.getByRole("button", { name: "Add Cabin 1" }).click();
+  await page.getByRole("button", { name: "Add Cabin 2" }).click();
 
-  await dialog.getByLabel("Booking source").click();
-  await page.getByRole("option", { name: "Airbnb" }).click();
-  await dialog.getByLabel("Full Name").fill(guestName);
-  await dialog.getByRole("button", { name: "Next" }).click();
+  // Picking a payment method first proves a source change resets the Payment step.
+  await page.getByRole("button", { name: "Next", exact: true }).click();
+  await page.getByLabel("Guest", { exact: true }).fill(guestName);
+  await page.getByRole("button", { name: /New guest/ }).click();
+  await page.getByLabel("Phone").fill("09171234567");
+  await page.getByRole("button", { name: "Next", exact: true }).click();
+  await page.getByRole("radio", { name: "Cash", exact: true }).click();
+  await page.getByRole("button", { name: "Stay", exact: true }).click();
 
-  await expect(dialog.getByLabel("Payment Method")).toBeHidden();
-  await dialog.getByLabel("Payout").fill("4321.50");
-  await dialog.getByRole("button", { name: "Next" }).click();
-  await dialog.getByRole("button", { name: "Confirm Booking" }).click();
-  await expect(page.getByText(/Booking .+ created/)).toBeVisible();
+  await page.getByRole("radio", { name: /Airbnb/ }).click();
+  await page.getByRole("button", { name: "Next", exact: true }).click();
+  // Phone is optional for an Airbnb guest.
+  await page.getByLabel("Phone (optional)").fill("");
+  await page.getByRole("button", { name: "Next", exact: true }).click();
+  await expect(page).toHaveURL(/step=payment/);
 
-  await bookings.pickFilter("Airbnb");
-  await bookings.search(guestName);
+  await expect(page.getByRole("radio", { name: "Cash", exact: true })).toBeHidden();
+  await expect(page.getByText(/after Airbnb's fee\. Not the price the guest paid/)).toBeVisible();
+  await expect(page.getByText(/split across cabins in proportion/)).toBeVisible();
+  await page.getByLabel("Payout").fill("4321.50");
+  await page.getByLabel(/Airbnb confirmation code/).fill(`HM${Date.now()}`);
+  await page.getByRole("button", { name: "Next", exact: true }).click();
+  await expect(page).toHaveURL(/step=review/);
+  await page.getByRole("button", { name: "Save booking" }).click();
 
-  await expect(page.getByText(guestName).first()).toBeVisible();
+  await expect(page).toHaveURL(/\/admin\/bookings\?booking=[0-9a-f-]{36}/);
+  const sheet = page.getByRole("dialog");
+  await expect(sheet.getByRole("heading", { name: guestName })).toBeVisible();
+  await expect(sheet.getByText("Confirmed").first()).toBeVisible();
+  await expect(sheet.getByText("₱4,321.50").first()).toBeVisible();
 });
