@@ -206,6 +206,9 @@ export const db = {
         .eq("unit_id", unitId),
 
     byGuest: (guestId: string) => supabase.from("bookings").select("*").eq("guest_id", guestId),
+    /** Records the online downpayment (unless one exists), assigns the cabins and confirms, all or nothing. */
+    verifyAndConfirm: (bookingId: string, unitIds: string[]) =>
+      supabase.rpc("verify_and_confirm_booking", { p_booking_id: bookingId, p_unit_ids: unitIds }),
     update: (id: string, data: Database["public"]["Tables"]["bookings"]["Update"]) =>
       supabase.from("bookings").update(data).eq("booking_id", id).select().single(),
 

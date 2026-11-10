@@ -106,6 +106,7 @@ export interface Booking {
   is_guest_booking?: boolean | null;
   unit_assignment_status?: string | null;
   unit_count?: number | null;
+  requested_unit_count?: number | null;
   pricing_metadata?: {
     hasSeasonalRates?: boolean;
     seasonNames?: string[];

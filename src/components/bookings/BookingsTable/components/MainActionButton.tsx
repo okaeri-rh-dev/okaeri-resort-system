@@ -1,7 +1,5 @@
 import { useState, type ReactNode } from "react";
 
-import { useNavigate } from "@tanstack/react-router";
-
 import {
   AlertDialog,
   AlertDialogAction,
@@ -20,6 +18,7 @@ import { formatCurrency } from "@/lib/formatters";
 import type { Booking, BookingStatus } from "@/types";
 
 import type { BookingCardProps } from "../types";
+import { VerifyPaymentDialog } from "./VerifyPaymentDialog";
 
 const NEXT_STATUS: Record<Exclude<MainAction, "Verify payment">, BookingStatus> = {
   Confirm: "Confirmed",
@@ -43,9 +42,9 @@ export const MainActionButton = ({
   className,
   fallback = null,
 }: MainActionButtonProps) => {
-  const navigate = useNavigate();
   const { role } = useUserRole();
   const [askFirst, setAskFirst] = useState(false);
+  const [verifyOpen, setVerifyOpen] = useState(false);
   const action = mainActionFor(booking, role, manilaDayOf(new Date()));
   if (!action) return fallback;
 
@@ -56,10 +55,7 @@ export const MainActionButton = ({
 
   const move = () => {
     if (action === "Verify payment") {
-      navigate({
-        to: "/admin/verify-payment/$bookingId",
-        params: { bookingId: booking.booking_id },
-      });
+      setVerifyOpen(true);
       return;
     }
     updateBookingStatus.mutate({ bookingId: booking.booking_id, status: NEXT_STATUS[action] });
@@ -107,6 +103,10 @@ export const MainActionButton = ({
           )}
         </AlertDialogContent>
       </AlertDialog>
+
+      {action === "Verify payment" && (
+        <VerifyPaymentDialog booking={booking} open={verifyOpen} onOpenChange={setVerifyOpen} />
+      )}
     </>
   );
 };
