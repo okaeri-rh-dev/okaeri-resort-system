@@ -8,7 +8,7 @@ React hooks shared across components. Entity client state (filters, drafts) live
 - Components do not import the `supabase` client (lint warning, CI fails on warnings): query through a hook, a store or the `db` helpers in `src/lib/supabase.ts`. Session and sign-in calls use `supabaseAuth`.
 - Table writes need no audit call; the audit trigger records them (see `src/components/audit/CLAUDE.md`).
 - After a write, a mutation calls `afterWrite(...tables)` from `src/lib/after-write.ts` with the tables the write touched, instead of invalidating keys by hand. It also refreshes queries on tables that database triggers write.
-- Optimistic list updates go through `patchCachedLists(queryClient, listRoot, patchRow)` from `src/lib/optimistic-list-patch.ts`: `onMutate` returns its restore function as context, `onError` calls it, and `afterWrite` on settle refetches. It patches every cached list under the root (any search or sort) and does not filter or re-sort rows; the refetch fixes order and membership. Detail keys are left to `afterWrite`. `useUpdateGuest` uses it; deletes that the server can refuse (guest delete returns 409) stay pessimistic and show a pending state.
+- Optimistic list updates go through `patchCachedLists(queryClient, listRoot, patchRow)` from `src/lib/optimistic-list-patch.ts`: `onMutate` returns its restore function as context, `onError` calls it, and `afterWrite` on settle refetches. It patches every cached list under the root (any search or sort) and does not filter or re-sort rows; the refetch fixes order and membership. Detail keys are left to `afterWrite`. `useUpdateGuest` and `useUpdateUnit` (both its list and unfiltered roots; it also patches its own detail key) use it; deletes that the server can refuse (guest delete returns 409) stay pessimistic and show a pending state.
 
 ## Files
 
@@ -31,7 +31,7 @@ React hooks shared across components. Entity client state (filters, drafts) live
 | `useAvailabilityTimeline.ts`    | `useAvailabilityTimeline`, `blocksInNightsQuery`: stays and blocks for the availability timeline |
 | `useContactChannels.ts`         | `useContactChannels`, `useActiveContactChannels`, create/update/set-active/reorder mutations |
 | `useBookings.ts`                | `bookingDetailQuery`, `useAllBookings`, status (optimistic)/payment-proof/cancel/update booking mutations |
-| `useUnits.ts`                   | `useUnits`, `useAllUnits`, `useCabinStatesTonight`, `unitDetailQuery`, `allUnitsQuery`, create/update/delete unit mutations |
+| `useUnits.ts`                   | `useUnits`, `useAllUnits`, `useCabinStatesTonight`, `unitDetailQuery`, `allUnitsQuery`, create/update (optimistic)/delete unit mutations |
 | `useBlocks.ts`                  | `useBlocks` (current and upcoming, past on request), create/update/delete block mutations    |
 | `useDebouncedValue.ts`          | `useDebouncedValue`, `SEARCH_DEBOUNCE_MS`: delay list search queries until typing pauses     |
 | `useCalendarBookings.ts`        | `useCalendarBookings` plus `getBookingStatusPriority`, `formatCurrency` for the calendar view |

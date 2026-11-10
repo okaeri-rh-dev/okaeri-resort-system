@@ -3,6 +3,7 @@ import { queryOptions, useMutation, useQuery, useQueryClient } from "@tanstack/r
 import { afterWrite } from "@/lib/after-write";
 import type { ManilaDay } from "@/lib/bookings/stay";
 import { throwDetailLoadError } from "@/lib/detail-load-error";
+import { patchCachedLists } from "@/lib/optimistic-list-patch";
 import { unitKeys } from "@/lib/query-keys";
 import { db, handleSupabaseError, supabase } from "@/lib/supabase";
 import { toManilaDateString } from "@/lib/timezone";
@@ -104,26 +105,30 @@ export const useUpdateUnit = () => {
     onMutate: async ({ unitId, updates }) => {
       await queryClient.cancelQueries({ queryKey: unitKeys.all });
 
-      // Get current unit data
       const previousUnit = queryClient.getQueryData<Unit>(unitKeys.detail(unitId));
-
       if (previousUnit) {
-        const optimisticUnit: Unit = {
+        queryClient.setQueryData(unitKeys.detail(unitId), {
           ...previousUnit,
           ...updates,
           updated_at: new Date().toISOString(),
-        };
-
-        queryClient.setQueryData(unitKeys.detail(unitId), optimisticUnit);
-
-        return { previousUnit };
+        });
       }
+
+      const patchUnit = (unit: Unit) => (unit.unit_id === unitId ? { ...unit, ...updates } : unit);
+      const restoreLists = await patchCachedLists(queryClient, unitKeys.lists(), patchUnit);
+      const restoreUnfiltered = await patchCachedLists(
+        queryClient,
+        unitKeys.unfiltered(),
+        patchUnit
+      );
+      return { previousUnit, restoreLists, restoreUnfiltered };
     },
     onError: (_, variables, context) => {
-      // Revert optimistic update on error
       if (context?.previousUnit) {
         queryClient.setQueryData(unitKeys.detail(variables.unitId), context.previousUnit);
       }
+      context?.restoreLists();
+      context?.restoreUnfiltered();
     },
     onSettled: () => afterWrite("units"),
   });
