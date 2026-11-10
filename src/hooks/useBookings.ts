@@ -1,4 +1,4 @@
-import { queryOptions, useMutation, useQuery } from "@tanstack/react-query";
+import { queryOptions, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 import { afterWrite } from "@/lib/after-write";
@@ -14,9 +14,11 @@ import {
 import { adaptBookingFromDB } from "@/lib/database-adapters";
 import { throwDetailLoadError } from "@/lib/detail-load-error";
 import { formatCurrency } from "@/lib/formatters";
+import { patchCachedLists } from "@/lib/optimistic-list-patch";
 import { recordProofPayment } from "@/lib/payments";
 import { bookingKeys } from "@/lib/query-keys";
 import { db, handleSupabaseError, supabase } from "@/lib/supabase";
+import type { Booking } from "@/types";
 
 // One booking with units and guest; the detail and edit routes share this cache entry
 export const bookingDetailQuery = (bookingId: string) =>
@@ -66,10 +68,16 @@ const bookingListQuery = () =>
 export const useAllBookings = () => useQuery(bookingListQuery());
 
 export const useUpdateBookingStatus = () => {
+  const queryClient = useQueryClient();
   const mutation = useMutation({
     mutationFn: ({ bookingId, status }: StatusChange) =>
       setBookingStatus(supabase, bookingId, status),
-    onError: (error) => {
+    onMutate: ({ bookingId, status }) =>
+      patchCachedLists<Booking>(queryClient, bookingKeys.lists(), (booking) =>
+        booking.booking_id === bookingId ? { ...booking, booking_status: status } : booking
+      ),
+    onError: (error, _variables, restore) => {
+      restore?.();
       toast.error("Failed to change the booking status", { description: error.message });
     },
     onSuccess: (booking, { bookingId, undo }) => {
