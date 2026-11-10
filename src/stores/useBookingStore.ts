@@ -18,7 +18,6 @@ import {
   updateBooking,
   type BookingChanges,
 } from "@/lib/bookings";
-import { BOOKING_CREATE_WRITES, requestBooking } from "@/lib/bookings/request";
 import { adaptBookingFromDB } from "@/lib/database-adapters";
 import { throwDetailLoadError } from "@/lib/detail-load-error";
 import { formatCurrency } from "@/lib/formatters";
@@ -294,13 +293,6 @@ const bookingListQuery = () =>
 export const useAllBookings = () => useQuery(bookingListQuery());
 
 // Fetch single booking
-
-// Creates through the Worker route (src/lib/bookings/request.ts)
-export const useCreateBooking = () =>
-  useMutation({
-    mutationFn: requestBooking,
-    onSettled: () => afterWrite(...BOOKING_CREATE_WRITES),
-  });
 
 // Update booking status with optimistic update
 export const useUpdateBookingStatus = () => {

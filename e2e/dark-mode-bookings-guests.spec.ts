@@ -69,24 +69,11 @@ test.describe("Dark mode bookings and guests", () => {
     await expectReadable(page);
   });
 
-  test("single cabin booking dialog reads in dark", async ({ page }) => {
-    await loginInDark(page, COMPACT);
-    await page.goto("/admin/bookings");
-    await page.getByRole("button", { name: "More booking actions" }).click();
-    await page.getByRole("menuitem", { name: "Old single-cabin form" }).click();
-    const dialog = page.getByRole("dialog");
-    await expect(dialog.getByText("Create New Booking")).toBeVisible();
-    await expectReadable(page, "[role=dialog]");
-  });
-
-  test("multi-cabin booking reads in dark", async ({ page }) => {
+  test("new booking flow reads in dark", async ({ page }) => {
     await loginInDark(page, EXPANDED);
-    await page.goto("/admin/bookings/new-multi");
-    await page
-      .getByRole("button", { name: /^Add .* to booking$/ })
-      .first()
-      .click();
-    await expect(page.getByRole("region", { name: "Pricing summary" })).toBeVisible();
+    await page.goto("/admin/bookings/new?step=stay");
+    await page.getByRole("radio", { name: /Airbnb/ }).click();
+    await expect(page.getByRole("complementary", { name: "Price summary" })).toBeVisible();
     await expectReadable(page);
   });
 });
