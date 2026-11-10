@@ -25,7 +25,7 @@ BEGIN
                 END IF;
             WHEN v_move = 'Confirmed → CheckedIn' THEN
                 IF (now() AT TIME ZONE 'Asia/Manila')::date
-                   < (NEW.check_in AT TIME ZONE 'Asia/Manila')::date THEN
+                   < (OLD.check_in AT TIME ZONE 'Asia/Manila')::date THEN
                     RAISE EXCEPTION 'A booking can be checked in only from its check-in day'
                         USING ERRCODE = '42501';
                 END IF;

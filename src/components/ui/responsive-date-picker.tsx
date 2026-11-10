@@ -34,10 +34,11 @@ export interface ResponsiveDatePickerProps {
   "aria-label"?: string;
   /** Open in a bottom sheet instead of a popover. The DatePicker pattern sets it on compact windows. */
   sheet?: boolean;
+  buttonDisabled?: boolean;
 }
 
 /**
- * ResponsiveDatePicker - A date picker that opens in a bottom sheet (`sheet`) or a popover
+ * ResponsiveDatePicker -A date picker that opens in a bottom sheet (`sheet`) or a popover
  *
  * @example
  * ```tsx
@@ -61,6 +62,7 @@ export function ResponsiveDatePicker({
   buttonVariant = "outline",
   "aria-label": ariaLabel,
   sheet = false,
+  buttonDisabled = false,
 }: ResponsiveDatePickerProps) {
   const [open, setOpen] = React.useState(false);
 
@@ -81,6 +83,7 @@ export function ResponsiveDatePicker({
         buttonClassName
       )}
       aria-label={ariaLabel}
+      disabled={buttonDisabled}
     >
       {value ? format(value, formatStr) : <span>{placeholder}</span>}
       <CalendarDays className="medium:size-4 ml-auto size-5 opacity-50" aria-hidden="true" />

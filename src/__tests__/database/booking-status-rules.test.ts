@@ -126,4 +126,50 @@ describe("booking status rules", () => {
       before - 60_000
     );
   });
+
+  it("judges the check-in day by the stored day, not one moved in the same update", async () => {
+    if (!shouldRun) return;
+    const booking = await bookingIn("Confirmed", 1);
+
+    const { error } = await roleClients.byRole.manager
+      .from("bookings")
+      .update({ check_in: new Date().toISOString(), booking_status: "CheckedIn" })
+      .eq("booking_id", booking.booking_id);
+
+    expect(error?.code).toBe("42501");
+  });
+
+  const shiftCheckIn = (role: AppRoleName, bookingId: string, checkIn: string, hours: number) =>
+    roleClients.byRole[role]
+      .from("bookings")
+      .update({ check_in: new Date(Date.parse(checkIn) + hours * 60 * 60 * 1000).toISOString() })
+      .eq("booking_id", bookingId);
+
+  it("refuses staff a new check-in day on a Confirmed booking", async () => {
+    if (!shouldRun) return;
+    const booking = await createTestBooking({ booking_status: "Confirmed" });
+
+    const { error } = await shiftCheckIn("staff", booking.booking_id, booking.check_in, -24);
+
+    expect(error?.code).toBe("42501");
+  });
+
+  it.each([
+    ["manager", "Confirmed", -24],
+    ["staff", "Pending", -24],
+    ["staff", "Confirmed", 1],
+  ] as const)(
+    "lets %s move the check-in of a %s booking by %i hours",
+    async (role, status, hours) => {
+      if (!shouldRun) return;
+      const booking = await createTestBooking({
+        booking_status: status,
+        check_in: new Date("2030-03-10T06:00:00Z"),
+      });
+
+      const { error } = await shiftCheckIn(role, booking.booking_id, booking.check_in, hours);
+
+      expect(error).toBeNull();
+    }
+  );
 });
