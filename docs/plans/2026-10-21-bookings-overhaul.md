@@ -67,6 +67,10 @@ Fewest taps and least confusion wins; parts may be mixed.
 - Deferred to separate tickets (bugs, not design): Status filter offers `NoShow` but `src/types/booking-status.ts` has no NoShow; CSV export ignores active filters (`useBookingsTable.ts:80-82`); route search params `status/search/page` are declared but unused (`src/routes/admin/bookings.tsx:27-31`). Revisit: file with `/to-tickets` or before the spec.
 - Virtualization: no virtualization library in `package.json` yet. Choosing one (e.g. `@tanstack/react-virtual`, same family as TanStack Table) is a prototype-session decision. Revisit: during V1/V2 build.
 - Booking source (Website / Walk-in / Direct / Airbnb) ships before this overhaul (grilled 2026-11-04, ADR 0006). The overhaul uses it: Source filter replaces the Walk-in filter, one source badge (none for Direct), and the fixture includes Airbnb bookings. Revisit: when the fixture task starts.
+- PR 399 review (2026-11-10): only a manager changes the dates of a Confirmed booking, so staff cannot move the check-in day and check in early (ADR 0007). Revisit: if staff need early check-ins without a manager.
+- PR 399 review: the new booking flow offers no Card method, because no card channel exists. The edit forms still offer "Card". Revisit: when a card channel exists.
+- PR 399 review: "Check out anyway" gives no Undo (#334 wins over #335; #335 text fixed). Revisit: never.
+- PR 399 review: the row and card click guards stay separate, because they are 2 lines and DataTable is domain-free. Revisit: if a third copy appears.
 
 ## Resume state
 
