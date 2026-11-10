@@ -1,4 +1,4 @@
-import { Fragment, useLayoutEffect, useRef, useState, type ReactNode } from "react";
+import { Fragment, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 
 import { flexRender, type Column, type Row, type RowData, type Table } from "@tanstack/react-table";
 import { useVirtualizer } from "@tanstack/react-virtual";
@@ -171,6 +171,17 @@ export function DataTable<TData>({
   // Filtered here, not through TanStack's `columnVisibility`, which is the caller's state.
   const isShown = (column: Column<TData>) =>
     !(hideLowPriority && column.columnDef.meta?.priority === "low");
+
+  // The table can grow with no render of its own (a late web font, say), so measure again then
+  const [, remeasure] = useState(0);
+  const showsTable = !isCards && width !== null;
+  useEffect(() => {
+    const tableElement = tableRef.current;
+    if (!hasLowPriority || !showsTable || !tableElement) return;
+    const observer = new ResizeObserver(() => remeasure((count) => count + 1));
+    observer.observe(tableElement);
+    return () => observer.disconnect();
+  }, [hasLowPriority, showsTable]);
 
   useLayoutEffect(() => {
     // The `overflow-auto` div that the `Table` primitive wraps around `<table>`.
