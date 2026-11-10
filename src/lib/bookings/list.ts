@@ -94,6 +94,9 @@ export const needsActionReason = (
 export const isNeedsAction = (booking: Booking, today: ManilaDay) =>
   booking.booking_status === "Pending" || needsActionReason(booking, today) !== undefined;
 
+// Managers, owners and admins; staff are the only role below them
+const isManagerRole = (role: AppRoleName) => role !== "staff";
+
 export type MainAction = "Verify payment" | "Confirm" | "Check in" | "Check out";
 
 /** The one action a booking leads with; the database enforces the same rules (docs/adr/0007). */
@@ -103,10 +106,9 @@ export const mainActionFor = (
   today: ManilaDay
 ): MainAction | undefined => {
   if (!role) return undefined;
-  const isManager = role !== "staff";
   switch (booking.booking_status) {
     case "Pending":
-      if (!isManager) return undefined;
+      if (!isManagerRole(role)) return undefined;
       return booking.booking_source === "Website" ? "Verify payment" : "Confirm";
     case "Confirmed":
       return manilaDayOf(booking.check_in) <= today ? "Check in" : undefined;
@@ -148,7 +150,7 @@ export const undoActionFor = (
         ? "Undo check-out"
         : undefined;
   if (!action || !role) return undefined;
-  if (role !== "staff") return action;
+  if (isManagerRole(role)) return action;
   const changedAt = Date.parse(booking.status_changed_at ?? "");
   const isOwnRecentChange =
     !!actorId && booking.status_changed_by === actorId && now.getTime() - changedAt < SELF_UNDO_MS;
@@ -161,20 +163,18 @@ export type OverflowAction = "Record payment" | "Edit" | UndoAction | "Cancel";
 export const overflowActionsFor = (
   booking: Booking,
   role: AppRoleName | null | undefined,
-  _today: ManilaDay,
-  actor: string | null | undefined,
+  actorId: string | null | undefined,
   now: Date
 ): OverflowAction[] => {
   if (!role) return [];
-  const isManager = role !== "staff";
   const status = booking.booking_status;
-  const undo = undoActionFor(booking, role, actor, now);
+  const undo = undoActionFor(booking, role, actorId, now);
 
   const items: OverflowAction[] = [];
   if (status !== "Cancelled" && outstandingBalance(booking) > 0) items.push("Record payment");
   if (status === "Pending" || status === "Confirmed" || status === "CheckedIn") items.push("Edit");
   if (undo) items.push(undo);
-  if (isManager && (status === "Pending" || status === "Confirmed")) items.push("Cancel");
+  if (isManagerRole(role) && (status === "Pending" || status === "Confirmed")) items.push("Cancel");
   return items;
 };
 

@@ -15,7 +15,7 @@ import {
   type ActionMenuAction,
 } from "@/components/patterns";
 import { useUserRole } from "@/hooks";
-import { manilaDayOf, overflowActionsFor, UNDO_STATUS, type OverflowAction } from "@/lib/bookings";
+import { overflowActionsFor, UNDO_STATUS, type OverflowAction } from "@/lib/bookings";
 import type { Booking } from "@/types";
 
 import type { BookingCardProps } from "../types";
@@ -37,8 +37,7 @@ export const BookingOverflowMenu = ({
   const { role, userId } = useUserRole();
   const [showCancelDialog, setShowCancelDialog] = useState(false);
 
-  const now = new Date();
-  const items = overflowActionsFor(booking, role, manilaDayOf(now), userId, now);
+  const items = overflowActionsFor(booking, role, userId, new Date());
   if (items.length === 0) return null;
 
   const bookingId = booking.booking_id;

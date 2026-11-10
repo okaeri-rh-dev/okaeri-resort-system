@@ -57,6 +57,11 @@ export const bookingKeys = {
   detail: (bookingId: string) => [...bookingKeys.details(), bookingId] as const,
 };
 
+export const paymentProofKeys = {
+  all: ["payment-proof-url"] as const,
+  url: (path: string | null | undefined) => [...paymentProofKeys.all, path] as const,
+};
+
 export const accountKeys = {
   all: ["accounts"] as const,
   lists: () => [...accountKeys.all, "list"] as const,

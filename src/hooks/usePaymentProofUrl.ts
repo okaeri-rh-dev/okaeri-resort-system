@@ -1,5 +1,6 @@
 import { queryOptions, useQuery } from "@tanstack/react-query";
 
+import { paymentProofKeys } from "@/lib/query-keys";
 import { generateSignedUrl } from "@/lib/storage-utils";
 
 // Signed URLs live 5 minutes (storage-utils); fetch a fresh one a minute before that
@@ -9,7 +10,7 @@ const RENEW_EVERY_MS = 4 * 60 * 1000;
 export const usePaymentProofUrl = (path: string | null | undefined) =>
   useQuery(
     queryOptions({
-      queryKey: ["payment-proof-url", path],
+      queryKey: paymentProofKeys.url(path),
       queryFn: async () => {
         const { url, error } = await generateSignedUrl(path as string);
         if (error) throw new Error(error);

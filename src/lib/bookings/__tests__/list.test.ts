@@ -329,15 +329,8 @@ describe("overflowActionsFor", () => {
     status: BookingStatus,
     role: "staff" | "manager" | "owner" | "admin" | undefined,
     fields: Partial<Booking> = due,
-    actor?: string
-  ) =>
-    overflowActionsFor(
-      booking(status, "2026-10-15", "2026-10-17", fields),
-      role,
-      TODAY,
-      actor,
-      NOW
-    );
+    actorId?: string
+  ) => overflowActionsFor(booking(status, "2026-10-15", "2026-10-17", fields), role, actorId, NOW);
 
   it.each([
     ["Pending", "manager", due, ["Record payment", "Edit", "Cancel"]],
