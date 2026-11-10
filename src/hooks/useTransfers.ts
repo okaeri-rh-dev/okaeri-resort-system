@@ -94,10 +94,6 @@ const transferListQuery = ({
 // Fetch all transfers with account relations
 export const useTransfers = () => useQuery(transferListQuery());
 
-// Fetch single transfer
-
-// Fetch transfers for a specific account (both incoming and outgoing)
-
 // Create transfer
 export const useCreateTransfer = () => {
   return useMutation({

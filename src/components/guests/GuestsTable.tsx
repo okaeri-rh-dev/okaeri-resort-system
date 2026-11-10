@@ -23,6 +23,7 @@ import {
   Download,
   Edit,
   Eye,
+  Loader2,
   Mail,
   Phone,
 } from "lucide-react";
@@ -650,7 +651,10 @@ const GuestsTableComponent: React.FC<GuestsTableProps> = ({
               disabled={deleteGuest.isPending}
               className={buttonVariants({ variant: "destructive" })}
             >
-              {deleteGuest.isPending ? "Deleting..." : "Delete"}
+              {deleteGuest.isPending && (
+                <Loader2 className="size-4 animate-spin" aria-hidden="true" />
+              )}
+              Delete
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -2,6 +2,7 @@ import { queryOptions, useMutation, useQuery } from "@tanstack/react-query";
 
 import { SEARCH_DEBOUNCE_MS, useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { afterWrite } from "@/lib/after-write";
+import { downloadCSV, toQuotedCSV } from "@/lib/csv";
 import { throwDetailLoadError } from "@/lib/detail-load-error";
 import {
   appendVerificationNote,
@@ -197,10 +198,6 @@ export const useExportPayments = () => {
   });
 };
 
-// ============================================
-// UTILITY FUNCTIONS
-// ============================================
-
 function convertToCSV(data: unknown[]): string {
   if (data.length === 0) return "";
 
@@ -232,20 +229,5 @@ function convertToCSV(data: unknown[]): string {
     ];
   });
 
-  return [
-    headers.join(","),
-    ...rows.map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(",")),
-  ].join("\n");
-}
-
-function downloadCSV(csv: string, filename: string) {
-  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-  const link = document.createElement("a");
-  const url = URL.createObjectURL(blob);
-  link.setAttribute("href", url);
-  link.setAttribute("download", filename);
-  link.style.visibility = "hidden";
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
+  return toQuotedCSV(headers, rows);
 }

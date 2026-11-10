@@ -311,11 +311,12 @@ Example store usage:
 
 ```typescript
 // UI state from a Zustand store, server data from a TanStack Query hook
-import { useAllBookings, useBookingStore } from '@/stores/useBookingStore'
+import { useGuests } from '@/hooks/useGuests'
+import { useGuestStore } from '@/stores/useGuestStore'
 
 const Component = () => {
-  const tableState = useBookingStore((state) => state.tableState)
-  const { data: bookings } = useAllBookings()
+  const searchQuery = useGuestStore((state) => state.searchQuery)
+  const { data: guests } = useGuests()
   // Component logic
 }
 ```

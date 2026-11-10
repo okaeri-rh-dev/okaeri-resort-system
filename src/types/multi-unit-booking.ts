@@ -1,8 +1,7 @@
 /**
  * Type definitions for Multi-Unit Booking System (Phase 3)
  *
- * Supports booking multiple units in a single transaction with unified payment,
- * optimistic updates and conflict resolution.
+ * Supports booking multiple units in a single transaction with unified payment.
  *
  * @module MultiUnitBookingTypes
  */

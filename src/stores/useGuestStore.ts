@@ -1,20 +1,13 @@
 import { create } from "zustand";
 import { devtools, persist } from "zustand/middleware";
 
-import type { Guest } from "@/types";
-
-// ============================================
-// ZUSTAND STORE
-// ============================================
 export interface GuestStore {
   // Local state
-  selectedGuest: Guest | null;
   searchQuery: string;
   sortBy: "name" | "bookings" | "spent" | "created";
   sortOrder: "asc" | "desc";
 
   // Actions
-  setSelectedGuest: (guest: Guest | null) => void;
   setSearchQuery: (query: string) => void;
   setSortBy: (sortBy: "name" | "bookings" | "spent" | "created") => void;
   setSortOrder: (order: "asc" | "desc") => void;
@@ -25,14 +18,11 @@ export const useGuestStore = create<GuestStore>()(
     persist(
       (set) => ({
         // Initial state
-        selectedGuest: null,
         searchQuery: "",
         sortBy: "name",
         sortOrder: "asc",
 
         // Actions
-        setSelectedGuest: (guest) => set({ selectedGuest: guest }),
-
         setSearchQuery: (query) => set({ searchQuery: query }),
 
         setSortBy: (sortBy) => set({ sortBy }),

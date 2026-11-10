@@ -72,8 +72,6 @@ export const useAllUnits = () => useQuery(allUnitsQuery());
 
 export const useUnits = () => useQuery(unitListQuery({}));
 
-// Fetch single unit
-
 // Create unit mutation
 export const useCreateUnit = () => {
   return useMutation({
@@ -144,8 +142,6 @@ export const useDeleteUnit = () => {
     onSettled: () => afterWrite("units"),
   });
 };
-
-// Check availability
 
 // Each cabin's state on one night, keyed by unit id
 const cabinStatesQuery = (date: ManilaDay) =>

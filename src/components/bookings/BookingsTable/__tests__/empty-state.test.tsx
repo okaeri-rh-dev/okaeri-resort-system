@@ -26,7 +26,7 @@ vi.mock("@tanstack/react-router", async () => ({
 
 vi.mock("@/hooks/useBookings", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/hooks/useBookings")>()),
-  ...(await import("@/test/booking-store-stub")).bookingStoreHookStubs([]),
+  ...(await import("@/test/booking-hook-stubs")).bookingHookStubs([]),
   useAllBookings: () => ({ data: loaded.bookings, isLoading: false, error: null }),
 }));
 

@@ -91,10 +91,6 @@ export const useGuestPick = (query: string) => {
   );
 };
 
-// Fetch single guest with booking history
-
-// Get guest by email
-
 // Get guest booking history
 const guestBookingsQuery = (guestId: string) =>
   queryOptions({
@@ -128,8 +124,6 @@ export const useGuestBookings = (guestId: string | undefined) => {
     enabled: !!guestId,
   });
 };
-
-// Create guest mutation
 
 // Update guest mutation
 export const useUpdateGuest = () => {

@@ -27,8 +27,6 @@ const activeAccountsQuery = () =>
 // Fetch active accounts only (for selectors)
 export const useActiveAccounts = () => useQuery(activeAccountsQuery());
 
-// Fetch single account
-
 const ACCOUNT_TYPES: readonly AccountType[] = ["Bank", "E-Wallet", "Cash"];
 
 const isAccountType = (value: string): value is AccountType =>
