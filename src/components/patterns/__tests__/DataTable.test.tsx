@@ -311,3 +311,68 @@ function ExpandableStaysTable() {
     />
   );
 }
+
+describe("DataTable virtualized", () => {
+  const manyStays: StayRow[] = Array.from({ length: 200 }, (_, index) => ({
+    guest: `Guest ${index + 1}`,
+    balance: 1000,
+  }));
+
+  function LongStaysTable() {
+    const table = useReactTable({ data: manyStays, columns, getCoreRowModel: getCoreRowModel() });
+    return (
+      <main>
+        <DataTable
+          table={table}
+          label="Stays"
+          virtualize
+          renderCard={(row) => <StayCard row={row} />}
+        />
+      </main>
+    );
+  }
+
+  beforeEach(() => {
+    ResizeObserverStub.instances = [];
+    vi.stubGlobal("ResizeObserver", ResizeObserverStub);
+    // jsdom has no layout: a 400px tall <main> and 40px tall rows.
+    vi.spyOn(HTMLElement.prototype, "clientHeight", "get").mockReturnValue(400);
+    vi.spyOn(HTMLElement.prototype, "offsetHeight", "get").mockReturnValue(40);
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+  });
+
+  it("renders only the rows in view, and tells screen readers the position and total", () => {
+    render(<LongStaysTable />);
+    ResizeObserverStub.resizeAllTo(840);
+
+    const table = screen.getByRole("table", { name: "Stays" });
+    expect(table).toHaveAttribute("aria-rowcount", "201");
+    const rows = within(table).getAllByRole("row");
+    expect(rows.length).toBeLessThan(100);
+    expect(rows[0]).toHaveAttribute("aria-rowindex", "1");
+    expect(rows[1]).toHaveAttribute("aria-rowindex", "2");
+    expect(within(rows[1]).getByRole("cell", { name: "Guest 1" })).toBeVisible();
+    expect(screen.queryByText("Guest 200")).not.toBeInTheDocument();
+  });
+
+  it("gives each card its position in the whole list", () => {
+    render(<LongStaysTable />);
+    ResizeObserverStub.resizeAllTo(390);
+
+    const cards = within(screen.getByRole("list", { name: "Stays" })).getAllByRole("listitem");
+    expect(cards.length).toBeLessThan(100);
+    expect(cards[0]).toHaveAttribute("aria-setsize", "200");
+    expect(cards[0]).toHaveAttribute("aria-posinset", "1");
+    expect(cards[1]).toHaveAttribute("aria-posinset", "2");
+  });
+
+  it("has no axe violations as a table", async () => {
+    const { container } = render(<LongStaysTable />);
+    ResizeObserverStub.resizeAllTo(840);
+    expect(await axe(container)).toHaveNoViolations();
+  });
+});

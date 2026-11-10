@@ -4,10 +4,11 @@ import { Link } from "@tanstack/react-router";
 import { createColumnHelper } from "@tanstack/react-table";
 
 import { StatusBadge } from "@/components/patterns";
-import { formatCurrency, formatPhoneNumber, formatTableDate } from "@/lib/formatters";
+import { formatCurrency, formatPhoneNumber } from "@/lib/formatters";
 import { statusBadgeProps } from "@/lib/status-tone";
 import type { Booking, BookingStatus } from "@/types";
 
+import { formatStayRange, getNights } from "../utils/stay";
 import { BookingActionsCell } from "./BookingActionsCell";
 import { CabinChip } from "./CabinChip";
 import { SourceBadge } from "./SourceBadge";
@@ -37,13 +38,7 @@ export const useBookingColumns = ({
         header: "Guest",
         cell: ({ row }) => (
           <div className="space-y-1">
-            <Link
-              to="/admin/guests"
-              search={{ search: row.original.guest_name }}
-              className="text-primary font-medium hover:underline"
-            >
-              {row.original.guest_name}
-            </Link>
+            <div className="font-medium">{row.original.guest_name}</div>
             <div className="text-muted-foreground flex flex-wrap items-center gap-1.5 text-xs">
               <SourceBadge source={row.original.booking_source} />
               {(row.original.contact_number && formatPhoneNumber(row.original.contact_number)) ||
@@ -76,23 +71,21 @@ export const useBookingColumns = ({
       }),
 
       columnHelper.accessor("check_in", {
-        header: "Dates",
-        cell: ({ getValue, row }) => (
-          <div className="space-y-0.5">
-            <div className="text-sm font-medium">{formatTableDate(getValue())}</div>
-            <div className="text-muted-foreground text-xs">
-              {formatTableDate(row.original.check_out)}
+        header: "Stay",
+        cell: ({ row }) => {
+          const { check_in, check_out, num_guests } = row.original;
+          const nights = getNights(check_in, check_out);
+          return (
+            <div className="space-y-0.5 whitespace-nowrap">
+              <div className="text-sm font-medium">{formatStayRange(check_in, check_out)}</div>
+              <div className="text-muted-foreground text-xs">
+                {nights} {nights === 1 ? "night" : "nights"} · {num_guests}{" "}
+                {num_guests === 1 ? "guest" : "guests"}
+              </div>
             </div>
-          </div>
-        ),
-        size: 100,
-      }),
-
-      columnHelper.accessor("num_guests", {
-        header: "Guests",
-        cell: ({ getValue }) => getValue(),
-        meta: { align: "center" },
-        size: 80,
+          );
+        },
+        size: 120,
       }),
 
       columnHelper.accessor("total_amount", {
@@ -111,6 +104,7 @@ export const useBookingColumns = ({
       columnHelper.accessor("payment_status", {
         header: "Payment",
         cell: ({ getValue }) => <StatusBadge {...statusBadgeProps(getValue(), "Pending")} />,
+        meta: { priority: "low" },
         size: 100,
       }),
 
@@ -125,6 +119,7 @@ export const useBookingColumns = ({
             {row.getValue("booking_reference")}
           </Link>
         ),
+        meta: { priority: "low" },
         size: 120,
       }),
 

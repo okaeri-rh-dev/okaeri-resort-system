@@ -1,6 +1,7 @@
 import { Fragment, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 
 import { flexRender, type Column, type Row, type RowData, type Table } from "@tanstack/react-table";
+import { useVirtualizer } from "@tanstack/react-virtual";
 
 import {
   TableBody,
@@ -38,6 +39,9 @@ const pinnedCell = cn(
 
 /** Below this pane width the rows render as cards (the M3 compact class). */
 const CARD_LAYOUT_MAX_WIDTH = 600;
+const TABLE_ROW_HEIGHT = 40;
+const CARD_HEIGHT_ESTIMATE = 200;
+const CARD_GAP = 16;
 
 export interface DataTableProps<TData> {
   /** A TanStack table. Its row model (sorted, filtered, paginated) is what both forms render. */
@@ -52,6 +56,12 @@ export interface DataTableProps<TData> {
   renderExpandedRow?: (row: Row<TData>) => ReactNode;
   /** Rows are a previous result while new ones load (`isPlaceholderData`): dims them and sets `aria-busy`. */
   isStale?: boolean;
+  /**
+   * Renders only the rows in view of the page's `<main>` scroller, for long lists. The table
+   * header sticks to the top of `<main>`, so the table does not scroll sideways: give it
+   * `priority: "low"` columns to fit slim panes. `renderExpandedRow` is not supported.
+   */
+  virtualize?: boolean;
   /** Placement only. */
   className?: string;
 }
@@ -66,7 +76,8 @@ export interface DataTableProps<TData> {
  * column so it stays in view when a slim pane scrolls the table sideways. Set
  * `meta: { priority: "low" }` on columns that can go when the full table does not fit, so the
  * pinned column does not cover data. Render `TablePagination`
- * after it when the table paginates; it applies to both forms.
+ * after it when the table paginates; it applies to both forms. A long list sets `virtualize`
+ * instead of paginating.
  *
  * Keep the table's `data` and `columns` stable across renders (`useMemo`, `useCallback` for the
  * handlers they close over). A new `data` array each render, such as `rows?.filter(...) ?? []`,
@@ -90,11 +101,49 @@ export function DataTable<TData>({
   emptyState,
   renderExpandedRow,
   isStale = false,
+  virtualize = false,
   className,
 }: DataTableProps<TData>) {
   const containerRef = useRef<HTMLDivElement>(null);
   const width = useContainerWidth(containerRef);
   const rows = table.getRowModel().rows;
+  const isCards = width !== null && width < CARD_LAYOUT_MAX_WIDTH;
+
+  // The list's offset inside `<main>`: the page header and filters above it can change height.
+  const [scrollMargin, setScrollMargin] = useState(0);
+  useLayoutEffect(() => {
+    const list = containerRef.current;
+    const main = list?.closest("main");
+    if (!virtualize || !list || !main) return;
+    const offset =
+      list.getBoundingClientRect().top - main.getBoundingClientRect().top + main.scrollTop;
+    if (offset !== scrollMargin) setScrollMargin(offset);
+  });
+
+  const virtualizer = useVirtualizer({
+    enabled: virtualize && width !== null,
+    count: virtualize ? rows.length : 0,
+    getScrollElement: () => containerRef.current?.closest("main") ?? null,
+    // Keyed by form too, so a card height is never reused as a row height.
+    getItemKey: (index) => `${isCards ? "card" : "row"}:${rows[index]?.id ?? index}`,
+    estimateSize: () => (isCards ? CARD_HEIGHT_ESTIMATE : TABLE_ROW_HEIGHT),
+    gap: isCards ? CARD_GAP : 0,
+    // Rendering ahead keeps fast scrolls filled, and a short list renders whole.
+    overscan: 10,
+    scrollMargin,
+  });
+  const virtualItems = virtualizer.getVirtualItems();
+  const shownRows = virtualize
+    ? virtualItems.flatMap((item) => {
+        const row = rows[item.index];
+        return row ? [{ row, item }] : [];
+      })
+    : rows.map((row) => ({ row, item: undefined }));
+  const headerRowCount = table.getHeaderGroups().length;
+  const firstItem = virtualItems.at(0);
+  const lastItem = virtualItems.at(-1);
+  const topSpacer = firstItem ? firstItem.start - scrollMargin : 0;
+  const bottomSpacer = lastItem ? virtualizer.getTotalSize() - (lastItem.end - scrollMargin) : 0;
 
   const tableRef = useRef<HTMLTableElement>(null);
   // The pane width the full table needs, stored while every column shows so the decision does
@@ -127,10 +176,26 @@ export function DataTable<TData>({
   });
 
   let content: ReactNode = null;
-  if (width !== null && width < CARD_LAYOUT_MAX_WIDTH) {
+  if (isCards) {
     content =
       rows.length === 0 ? (
         emptyState
+      ) : virtualize ? (
+        <ul aria-label={label} className="relative" style={{ height: virtualizer.getTotalSize() }}>
+          {shownRows.map(({ row, item }) => (
+            <li
+              key={item?.key ?? row.id}
+              ref={virtualizer.measureElement}
+              data-index={item?.index}
+              aria-setsize={rows.length}
+              aria-posinset={(item?.index ?? 0) + 1}
+              className="absolute inset-x-0 top-0"
+              style={{ transform: `translateY(${(item?.start ?? 0) - scrollMargin}px)` }}
+            >
+              {renderCard(row)}
+            </li>
+          ))}
+        </ul>
       ) : (
         <ul aria-label={label} className="space-y-4">
           {rows.map((row) => (
@@ -140,11 +205,26 @@ export function DataTable<TData>({
       );
   } else if (width !== null) {
     content = (
-      <div className="border-border bg-card overflow-hidden rounded-md border">
-        <TablePrimitive ref={tableRef} aria-label={label} className="tabular-nums">
-          <TableHeader className="bg-muted">
-            {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id} className="hover:bg-transparent">
+      <div
+        className={cn(
+          "border-border bg-card rounded-md border",
+          // A scroll box would trap the sticky header; clip keeps the rounded corners without one.
+          virtualize ? "overflow-clip [&>div]:overflow-visible" : "overflow-hidden"
+        )}
+      >
+        <TablePrimitive
+          ref={tableRef}
+          aria-label={label}
+          aria-rowcount={virtualize ? headerRowCount + rows.length : undefined}
+          className="tabular-nums"
+        >
+          <TableHeader className={cn("bg-muted", virtualize && "sticky top-0 z-20")}>
+            {table.getHeaderGroups().map((headerGroup, headerIndex) => (
+              <TableRow
+                key={headerGroup.id}
+                aria-rowindex={virtualize ? headerIndex + 1 : undefined}
+                className="hover:bg-transparent"
+              >
                 {headerGroup.headers
                   .filter((header) => isShown(header.column))
                   .map((header) => (
@@ -169,11 +249,17 @@ export function DataTable<TData>({
             ))}
           </TableHeader>
           <TableBody>
-            {rows.map((row) => {
+            {topSpacer > 0 && <tr aria-hidden="true" style={{ height: topSpacer }} />}
+            {shownRows.map(({ row, item }) => {
               const cells = row.getVisibleCells().filter((cell) => isShown(cell.column));
               return (
-                <Fragment key={row.id}>
-                  <TableRow className="group h-10 duration-150">
+                <Fragment key={item?.key ?? row.id}>
+                  <TableRow
+                    ref={item ? virtualizer.measureElement : undefined}
+                    data-index={item?.index}
+                    aria-rowindex={item ? headerRowCount + item.index + 1 : undefined}
+                    className="group h-10 duration-150"
+                  >
                     {cells.map((cell) => (
                       <TableCell
                         key={cell.id}
@@ -187,7 +273,7 @@ export function DataTable<TData>({
                       </TableCell>
                     ))}
                   </TableRow>
-                  {renderExpandedRow && row.getIsExpanded() && (
+                  {!virtualize && renderExpandedRow && row.getIsExpanded() && (
                     <TableRow className="bg-muted/50 hover:bg-muted/50">
                       <TableCell colSpan={cells.length} className="p-0">
                         {renderExpandedRow(row)}
@@ -197,6 +283,7 @@ export function DataTable<TData>({
                 </Fragment>
               );
             })}
+            {bottomSpacer > 0 && <tr aria-hidden="true" style={{ height: bottomSpacer }} />}
           </TableBody>
         </TablePrimitive>
         {rows.length === 0 && emptyState ? <div className="p-8">{emptyState}</div> : null}

@@ -2,7 +2,6 @@ import { withErrorBoundary } from "@/components/ErrorBoundary";
 import {
   DataTable,
   TableEmptyState,
-  TablePagination,
   TableSkeleton,
   Tabs,
   TabsList,
@@ -28,7 +27,6 @@ const VIEW_LABELS: Record<BookingView | "all", string> = {
 function BookingsTableComponent({ className }: BookingsTableProps) {
   const {
     table,
-    bookings,
     needsActionCount,
     totalCount,
     filteredCount,
@@ -45,7 +43,7 @@ function BookingsTableComponent({ className }: BookingsTableProps) {
   } = useBookingsTable();
 
   if (isLoading) {
-    return <TableSkeleton rows={8} columns={9} toolbar pagination label="Loading bookings" />;
+    return <TableSkeleton rows={8} columns={8} toolbar label="Loading bookings" />;
   }
 
   if (error) {
@@ -87,6 +85,7 @@ function BookingsTableComponent({ className }: BookingsTableProps) {
       <DataTable
         table={table}
         label="Bookings"
+        virtualize
         isStale={isPlaceholderData}
         renderCard={(row) => (
           <BookingCard
@@ -119,8 +118,6 @@ function BookingsTableComponent({ className }: BookingsTableProps) {
           )
         }
       />
-
-      <TablePagination table={table} totalItems={bookings.length} />
     </div>
   );
 }

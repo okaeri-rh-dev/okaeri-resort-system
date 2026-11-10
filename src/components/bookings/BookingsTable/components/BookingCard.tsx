@@ -1,7 +1,6 @@
 import React, { useCallback, useState } from "react";
 
 import { useNavigate } from "@tanstack/react-router";
-import { format } from "date-fns";
 import { Check, Upload } from "lucide-react";
 
 import {
@@ -24,36 +23,11 @@ import { formatCurrency } from "@/lib/formatters";
 import { statusBadgeProps } from "@/lib/status-tone";
 import { cn } from "@/lib/utils";
 import type { BookingStatus } from "@/types";
-import { utcToResortTime } from "@/utils/date-helpers";
 
 import type { BookingCardProps } from "../types";
+import { formatStayRange, getNights } from "../utils/stay";
 import { CabinChip } from "./CabinChip";
 import { SourceBadge } from "./SourceBadge";
-
-const formatStayRange = (checkIn: string, checkOut: string): string => {
-  try {
-    const inDate = utcToResortTime(checkIn);
-    const outDate = utcToResortTime(checkOut);
-    const sameMonth =
-      inDate.getFullYear() === outDate.getFullYear() && inDate.getMonth() === outDate.getMonth();
-    return sameMonth
-      ? `${format(inDate, "MMM d")} → ${format(outDate, "d")}`
-      : `${format(inDate, "MMM d")} → ${format(outDate, "MMM d")}`;
-  } catch {
-    return "Invalid Date";
-  }
-};
-
-const getNights = (checkIn: string, checkOut: string): number => {
-  try {
-    const inDate = utcToResortTime(checkIn);
-    const outDate = utcToResortTime(checkOut);
-    const ms = outDate.getTime() - inDate.getTime();
-    return Math.max(1, Math.round(ms / 86_400_000));
-  } catch {
-    return 0;
-  }
-};
 
 const PAYMENT_DOT: Record<string, { color: string; label: string }> = {
   Completed: { color: "bg-success-foreground", label: "Paid" },
