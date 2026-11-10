@@ -181,7 +181,9 @@ test.describe("Long bookings list", () => {
     await expect(firstCard).toHaveAttribute("aria-posinset", "1");
 
     await scrollToLast(page);
-    const lastCard = bookingCards(page).getByRole("listitem").filter({ hasText: longRef(1) });
+    const lastCard = bookingCards(page)
+      .getByRole("listitem")
+      .filter({ hasText: longRef(1) });
     await expect(lastCard).toHaveAttribute("aria-posinset", String(LONG_LIST_SIZE));
   });
 
