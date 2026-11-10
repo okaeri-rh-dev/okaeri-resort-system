@@ -141,6 +141,7 @@ export function adaptBookingFromDB(dbBooking: DbBooking): Booking {
     is_guest_booking: dbBooking.is_guest_booking,
     unit_assignment_status: dbBooking.unit_assignment_status,
     unit_count: dbBooking.unit_count,
+    requested_unit_count: dbBooking.requested_unit_count,
     created_at: dbBooking.created_at,
     updated_at: dbBooking.updated_at,
     // Convert related entities (NEW: junction table pattern)
