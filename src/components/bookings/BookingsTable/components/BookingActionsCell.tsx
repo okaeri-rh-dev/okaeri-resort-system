@@ -17,6 +17,8 @@ import { useUserRole } from "@/hooks";
 import { canTransitionStatus } from "@/lib/bookings";
 import type { Booking, BookingStatus } from "@/types";
 
+import { MainActionButton } from "./MainActionButton";
+
 // Type for TanStack Query mutation objects (simplified from UseMutationResult)
 interface MutationObject<TVariables = unknown> {
   mutate: (variables: TVariables) => void;
@@ -95,14 +97,14 @@ export const BookingActionsCell: React.FC<BookingActionsCellProps> = ({
       : []),
   ];
 
-  // If no actions are available (shouldn't happen, but safety check)
-  if (allActions.length === 0) {
-    return null;
-  }
-
   return (
     <>
-      <ActionMenu actions={allActions} label={`Actions for ${booking.booking_reference}`} />
+      <div className="flex items-center justify-end gap-2">
+        <MainActionButton booking={booking} updateBookingStatus={updateBookingStatus} />
+        {allActions.length > 0 && (
+          <ActionMenu actions={allActions} label={`Actions for ${booking.booking_reference}`} />
+        )}
+      </div>
 
       <AlertDialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
         <AlertDialogContent>

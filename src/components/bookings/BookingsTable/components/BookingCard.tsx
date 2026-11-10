@@ -1,7 +1,7 @@
 import React, { useCallback, useState } from "react";
 
 import { useNavigate } from "@tanstack/react-router";
-import { Check, Upload } from "lucide-react";
+import { Upload } from "lucide-react";
 
 import {
   ActionMenu,
@@ -27,6 +27,7 @@ import type { BookingStatus } from "@/types";
 import type { BookingCardProps } from "../types";
 import { formatStayRange, getNights } from "../utils/stay";
 import { CabinChip } from "./CabinChip";
+import { MainActionButton } from "./MainActionButton";
 import { SourceBadge } from "./SourceBadge";
 
 const PAYMENT_DOT: Record<string, { color: string; label: string }> = {
@@ -90,9 +91,7 @@ export const BookingCard: React.FC<BookingCardProps> = ({
   const isCancelled = booking.booking_status === "Cancelled";
   const paymentIncomplete = booking.payment_status !== "Completed";
 
-  const showConfirmPrimary = canConfirmBookings && isPending;
-  const showPaymentPrimary = !showConfirmPrimary && !isCancelled && paymentIncomplete;
-  const showActionZone = showConfirmPrimary || showPaymentPrimary;
+  const showPaymentPrimary = !isCancelled && paymentIncomplete;
 
   const menuActions = [
     ...(canEditBookings ? [{ label: "Edit Booking", onClick: handleEdit }] : []),
@@ -179,22 +178,19 @@ export const BookingCard: React.FC<BookingCardProps> = ({
           </div>
         </div>
 
-        {/* Action zone: status-dependent primary button */}
-        {showActionZone && (
-          <div className="pt-1">
-            {showConfirmPrimary ? (
-              <Button onClick={handleConfirm} size="sm" className="w-full">
-                <Check className="mr-1.5 h-4 w-4" />
-                Confirm
-              </Button>
-            ) : (
+        <MainActionButton
+          booking={booking}
+          updateBookingStatus={updateBookingStatus}
+          className="w-full"
+          fallback={
+            showPaymentPrimary && (
               <Button onClick={onUploadPayment} variant="outline" size="sm" className="w-full">
                 <Upload className="mr-1.5 h-4 w-4" />
                 Upload Payment
               </Button>
-            )}
-          </div>
-        )}
+            )
+          }
+        />
       </ListCard>
 
       <AlertDialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>

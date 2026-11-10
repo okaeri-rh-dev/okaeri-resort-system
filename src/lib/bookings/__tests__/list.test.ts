@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   isNeedsAction,
+  mainActionFor,
   needsActionReason,
   parseBookingsSearch,
   selectBookings,
@@ -284,5 +285,36 @@ describe("selectBookings sort", () => {
 
   it("puts the latest check-in first in All, Past and Cancelled", () => {
     expect(order()).toEqual(ids([late, middle, early]));
+  });
+});
+
+describe("mainActionFor", () => {
+  const website = { booking_source: "Website" } as const;
+  const direct = { booking_source: "Direct" } as const;
+
+  it.each([
+    ["Pending", "2026-10-20", website, "manager", "Verify payment"],
+    ["Pending", "2026-10-20", website, "admin", "Verify payment"],
+    ["Pending", "2026-10-20", website, "staff", undefined],
+    ["Pending", "2026-10-20", direct, "owner", "Confirm"],
+    ["Pending", "2026-10-20", direct, "staff", undefined],
+    ["Confirmed", "2026-10-15", direct, "staff", "Check in"],
+    ["Confirmed", "2026-10-12", direct, "manager", "Check in"],
+    ["Confirmed", "2026-10-16", direct, "manager", undefined],
+    ["CheckedIn", "2026-10-13", direct, "staff", "Check out"],
+    ["CheckedOut", "2026-10-10", direct, "admin", undefined],
+    ["Cancelled", "2026-10-20", direct, "admin", undefined],
+    ["Confirmed", "2026-10-15", direct, undefined, undefined],
+  ] as const)("gives %s from %s (%o) for %s: %s", (status, checkIn, fields, role, action) => {
+    const stay = booking(status, checkIn, "2026-10-25", fields);
+    expect(mainActionFor(stay, role, TODAY)).toBe(action);
+  });
+
+  it("reads the check-in day in Manila, not UTC", () => {
+    // 00:30 on 16 October in Manila is still 15 October in UTC
+    const early = booking("Confirmed", "2026-10-16", "2026-10-18", {
+      check_in: "2026-10-15T16:30:00.000Z",
+    });
+    expect(mainActionFor(early, "staff", TODAY)).toBeUndefined();
   });
 });
