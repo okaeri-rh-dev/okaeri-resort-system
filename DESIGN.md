@@ -38,7 +38,7 @@ Rationale: [Component layer boundaries](https://github.com/okaeri-rh-dev/okaeri-
 Breakpoints use the window size class names (`medium:`, `expanded:`, `large:`, `xlarge:`), with compact as the unprefixed base ([ADR 0004](docs/adr/0004-m3-named-breakpoints.md)). Admin supports compact to xlarge. Guest and public pages support compact to expanded, then stay centred at their max width.
 
 - **Window queries live in shells.** Breakpoint prefixes set nav form, pane count and margins. Inside a pane, adapt with `@container`.
-- **`DataTable` owns table ↔ card.** It switches to cards when its pane is narrower than ~600px. Product code passes a card renderer and never branches on width. In table form, columns with `meta: { priority: "low" }` all hide together while the full table is wider than its pane, so a pinned column never covers data; product code only sets the flag. A long list sets `virtualize`: it renders only the rows near the view, with no pages, and its header sticks to the top of `<main>`. A virtualized table cannot scroll sideways, so it needs `priority: "low"` columns to fit slim panes.
+- **`DataTable` owns table ↔ card.** It switches to cards when its pane is narrower than ~600px. Product code passes a card renderer and never branches on width. In table form, columns with `meta: { priority: "low" }` all hide together while the full table is wider than its pane, so a pinned column never covers data; product code only sets the flag. A long list sets `virtualize`: it renders only the rows near the view, with no pages, and its header sticks to the top of `<main>`. A virtualized table cannot scroll sideways, so it is denser (cells 8px a side, `StatusBadge size="compact"`), needs `priority: "low"` columns to fit slim panes, and shows cards when even the slim table does not fit.
 
 Navigation per class:
 
@@ -122,14 +122,14 @@ Rationale: [Type scale and font loading](https://github.com/okaeri-rh-dev/okaeri
 
 **Density is chosen per pattern** on the default 4px spacing scale. One set of tokens, no density mode.
 
-| Spacing                                   | Admin                    | Guest                   |
-| ----------------------------------------- | ------------------------ | ----------------------- |
-| Inline gap (icon and label, button group) | 2                        | 2                       |
-| Form field stack                          | 4                        | 4                       |
-| Card padding                              | 4                        | 6                       |
-| Gap between cards                         | 4                        | 6                       |
-| Page section gap                          | 6                        | 12 (16 from `expanded`) |
-| `DataTable` row                           | 40px (`py-2`, `text-sm`) | —                       |
+| Spacing                                   | Admin                                                           | Guest                   |
+| ----------------------------------------- | --------------------------------------------------------------- | ----------------------- |
+| Inline gap (icon and label, button group) | 2                                                               | 2                       |
+| Form field stack                          | 4                                                               | 4                       |
+| Card padding                              | 4                                                               | 6                       |
+| Gap between cards                         | 4                                                               | 6                       |
+| Page section gap                          | 6                                                               | 12 (16 from `expanded`) |
+| `DataTable` row                           | 40px (`py-2`, `text-sm`); cells `px-4`, `px-2` when virtualized | —                       |
 
 **Targets.** Every interactive primitive is at least 24px, and 44px under `coarse:` on every surface (icon buttons via `min-w-11`, clickable table rows included). Control heights are shared across surfaces: `sm` 32px, `default` 36px, `lg` 44px, with inputs matching buttons at each size. Primary actions in the guest booking flow use `lg`.
 

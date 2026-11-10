@@ -210,16 +210,26 @@ const notedColumns: ColumnDef<NotedStayRow>[] = [
   { accessorKey: "note", header: "Note", meta: { priority: "low" } },
 ];
 
-function NotedStaysTable() {
+function NotedStaysTable({ virtualize = false }: { virtualize?: boolean }) {
   const rows = useMemo(() => stays.map((stay) => ({ ...stay, note: "Late arrival" })), []);
   const table = useReactTable({
     data: rows,
-    columns: notedColumns,
+    columns: virtualize ? virtualizedColumns : notedColumns,
     getCoreRowModel: getCoreRowModel(),
   });
 
-  return <DataTable table={table} label="Stays" renderCard={() => null} />;
+  return (
+    <main>
+      <DataTable table={table} label="Stays" virtualize={virtualize} renderCard={() => null} />
+    </main>
+  );
 }
+
+// One more column, so the slim table (900px) is wider than the 600px card threshold.
+const virtualizedColumns: ColumnDef<NotedStayRow>[] = [
+  { id: "nights", header: "Nights", cell: () => "2" },
+  ...notedColumns,
+];
 
 // jsdom has no layout, so each column takes this many pixels and the scroller overflows the pane.
 const FAKE_COLUMN_WIDTH = 300;
@@ -281,6 +291,22 @@ describe("DataTable low-priority columns", () => {
 
     resizePane(899);
     expect(screen.queryByRole("columnheader", { name: "Note" })).not.toBeInTheDocument();
+  });
+
+  it("virtualized: renders cards when even the slim table is wider than its pane", () => {
+    const { unmount } = render(<NotedStaysTable virtualize />);
+    resizePane(1000);
+    expect(screen.queryByRole("columnheader", { name: "Note" })).not.toBeInTheDocument();
+    expect(screen.getByRole("columnheader", { name: "Balance" })).toBeVisible();
+
+    resizePane(899);
+    expect(screen.queryByRole("table")).not.toBeInTheDocument();
+    expect(screen.getByRole("list", { name: "Stays" })).toBeInTheDocument();
+
+    resizePane(900);
+    expect(screen.getByRole("columnheader", { name: "Balance" })).toBeVisible();
+    // Before afterEach restores the mocks: the virtualizer's cleanup builds a ResizeObserver.
+    unmount();
   });
 
   it("still renders cards below 600px", () => {

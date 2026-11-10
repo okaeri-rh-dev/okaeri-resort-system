@@ -9,7 +9,7 @@ import { loginAsStaff } from "./fixtures/auth";
  */
 
 async function openBooking(page: Page, ref: string) {
-  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.setViewportSize({ width: 1280, height: 900 });
   await loginAsStaff(page);
   await page.goto(`/admin/bookings?q=${ref}`);
   const row = page.getByRole("row").filter({ hasText: ref });

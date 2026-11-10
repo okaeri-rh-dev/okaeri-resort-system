@@ -103,13 +103,17 @@ export const useBookingColumns = ({
 
       columnHelper.accessor("booking_status", {
         header: "Status",
-        cell: ({ getValue }) => <StatusBadge {...statusBadgeProps(getValue(), "Pending")} />,
+        cell: ({ getValue }) => (
+          <StatusBadge size="compact" {...statusBadgeProps(getValue(), "Pending")} />
+        ),
         size: 100,
       }),
 
       columnHelper.accessor("payment_status", {
         header: "Payment",
-        cell: ({ getValue }) => <StatusBadge {...statusBadgeProps(getValue(), "Pending")} />,
+        cell: ({ getValue }) => (
+          <StatusBadge size="compact" {...statusBadgeProps(getValue(), "Pending")} />
+        ),
         meta: { priority: "low" },
         size: 100,
       }),
@@ -121,7 +125,7 @@ export const useBookingColumns = ({
             from="/admin/bookings"
             to="."
             search={(prev) => ({ ...prev, booking: row.original.booking_id })}
-            className="text-primary text-sm font-medium whitespace-nowrap hover:underline"
+            className="text-primary text-xs font-medium whitespace-nowrap hover:underline"
           >
             {row.getValue("booking_reference")}
           </Link>

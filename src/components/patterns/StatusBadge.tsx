@@ -9,6 +9,8 @@ export interface StatusBadgeProps {
   tone: StatusTone;
   /** The status label. Required: status never relies on colour alone. */
   children: React.ReactNode;
+  /** `compact` trims the side padding, for a virtualized `DataTable` that must fit its pane. */
+  size?: "default" | "compact";
   /** Placement only (margin, flex position). */
   className?: string;
 }
@@ -25,7 +27,7 @@ export interface StatusBadgeProps {
  * <StatusBadge {...statusBadgeProps(booking.booking_status, "Pending")} />
  * ```
  */
-export function StatusBadge({ tone, children, className }: StatusBadgeProps) {
+export function StatusBadge({ tone, children, size = "default", className }: StatusBadgeProps) {
   return (
     <Badge
       variant="outline"
@@ -33,6 +35,7 @@ export function StatusBadge({ tone, children, className }: StatusBadgeProps) {
       className={cn(
         "border-transparent font-medium whitespace-nowrap",
         toneClasses[tone].fill,
+        size === "compact" && "px-1.5",
         className
       )}
     >

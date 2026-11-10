@@ -7,9 +7,9 @@ import { serviceClient } from "./fixtures/service-client";
 /**
  * DataTable table ↔ card switch on the admin bookings list.
  *
- * DataTable measures its own pane: cards below ~600px, a table from 600px. With the main action
- * column, every column fits from a 1440px window and the slim table from 960px. Needs the E2E
- * fixtures: run `npm run seed:e2e` first (or `npm run test:e2e:hooked`).
+ * DataTable measures its own pane: cards below ~600px, a table from 600px. Every column fits from
+ * a 1280px window with the sidebar open; slimmer windows drop the low-priority columns. Needs the
+ * E2E fixtures: run `npm run seed:e2e` first (or `npm run test:e2e:hooked`).
  */
 
 async function openBookings(page: Page) {
@@ -40,7 +40,7 @@ test.describe("DataTable switch on the bookings list", () => {
   });
 
   test("expanded window shows a table with 40px rows and right-aligned money", async ({ page }) => {
-    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.setViewportSize({ width: 1280, height: 900 });
     await openBookings(page);
 
     const table = page.getByRole("table", { name: "Bookings" });
@@ -58,7 +58,7 @@ test.describe("DataTable switch on the bookings list", () => {
   });
 
   test("a click anywhere on a table row opens that booking", async ({ page }) => {
-    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.setViewportSize({ width: 1280, height: 900 });
     await openBookings(page);
 
     const pendingRow = page
@@ -69,20 +69,9 @@ test.describe("DataTable switch on the bookings list", () => {
     await expect(page).toHaveURL(/[?&]booking=[0-9a-f-]{36}/);
   });
 
-  // The virtualized list has a sticky header, so it cannot scroll sideways: low-priority columns go.
-  test("a slim table pane drops low-priority columns and keeps the row menu in view", async ({
-    page,
-  }) => {
-    await page.setViewportSize({ width: 960, height: 900 });
-    await loginAsOwner(page);
-    await page.goto("/admin/bookings");
-
+  async function expectTableInsidePane(page: Page) {
     const table = page.getByRole("table", { name: "Bookings" });
-    const pane = table.locator("xpath=../..");
-    await expect(table.getByRole("columnheader", { name: "Reference" })).toBeVisible();
-    await expect(table.getByRole("columnheader", { name: "Payment" })).toHaveCount(0);
-    await expect(table.getByRole("columnheader", { name: "Amount" })).toHaveCount(0);
-    const paneBox = (await pane.boundingBox())!;
+    const paneBox = (await table.locator("xpath=../..").boundingBox())!;
     const tableBox = (await table.boundingBox())!;
     expect(tableBox.x + tableBox.width).toBeLessThanOrEqual(paneBox.x + paneBox.width);
 
@@ -90,7 +79,37 @@ test.describe("DataTable switch on the bookings list", () => {
     await expect(rowMenu).toBeInViewport({ ratio: 1 });
     const menuBox = (await rowMenu.boundingBox())!;
     expect(menuBox.x + menuBox.width).toBeLessThanOrEqual(paneBox.x + paneBox.width);
+  }
+
+  test("a 1280px window with the sidebar open shows every column", async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await openBookings(page);
+    // The full sidebar, not the 80px rail.
+    const sidebarBox = await page.getByRole("navigation", { name: "Main" }).boundingBox();
+    expect(sidebarBox?.width).toBeGreaterThan(200);
+
+    const table = page.getByRole("table", { name: "Bookings" });
+    for (const name of ["Guest", "Unit(s)", "Stay", "Amount", "Status", "Payment", "Reference"]) {
+      await expect(table.getByRole("columnheader", { name, exact: true })).toBeVisible();
+    }
+    await expectTableInsidePane(page);
   });
+
+  // The virtualized list has a sticky header, so it cannot scroll sideways: low-priority columns go.
+  for (const width of [960, 920]) {
+    test(`a slim table pane (${width}px window) drops low-priority columns and keeps the row menu in view`, async ({
+      page,
+    }) => {
+      await page.setViewportSize({ width, height: 900 });
+      await openBookings(page);
+
+      const table = page.getByRole("table", { name: "Bookings" });
+      await expect(table.getByRole("columnheader", { name: "Reference" })).toBeVisible();
+      await expect(table.getByRole("columnheader", { name: "Payment" })).toHaveCount(0);
+      await expect(table.getByRole("columnheader", { name: "Amount" })).toHaveCount(0);
+      await expectTableInsidePane(page);
+    });
+  }
 
   test("resizing the window across 600px swaps the form in place", async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 900 });

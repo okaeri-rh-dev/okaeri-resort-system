@@ -58,8 +58,10 @@ export interface DataTableProps<TData> {
   isStale?: boolean;
   /**
    * Renders only the rows in view of the page's `<main>` scroller, for long lists. The table
-   * header sticks to the top of `<main>`, so the table does not scroll sideways: give it
-   * `priority: "low"` columns to fit slim panes. `renderExpandedRow` is not supported.
+   * header sticks to the top of `<main>`, so the table does not scroll sideways: its cells are
+   * denser (8px a side), give it `priority: "low"` columns to fit slim panes, and it shows cards
+   * when even the slim table does not fit. Pass `size="compact"` to its `StatusBadge`s.
+   * `renderExpandedRow` is not supported.
    */
   virtualize?: boolean;
   /**
@@ -113,7 +115,26 @@ export function DataTable<TData>({
   const containerRef = useRef<HTMLDivElement>(null);
   const width = useContainerWidth(containerRef);
   const rows = table.getRowModel().rows;
-  const isCards = width !== null && width < CARD_LAYOUT_MAX_WIDTH;
+
+  const tableRef = useRef<HTMLTableElement>(null);
+  // The pane widths the full table and the slim one (low-priority columns hidden) need, stored
+  // while that form shows so the decision does not flicker at the edge. Ids, not array identity:
+  // some callers rebuild `columns` or `data` each render, which would loop.
+  // shortcut: a same-id refetch with narrower content keeps the columns hidden until the pane
+  // reaches the stored width; key on data identity once every caller memoizes `data`.
+  const [tableFit, setTableFit] = useState<{
+    columnAndRowIds: string;
+    fullWidth?: number;
+    slimWidth?: number;
+  } | null>(null);
+  const leafColumns = table.getAllLeafColumns();
+  const hasLowPriority = leafColumns.some((column) => column.columnDef.meta?.priority === "low");
+  const columnAndRowIds = [...leafColumns, ...rows].map(({ id }) => id).join(" ");
+  const fit = tableFit?.columnAndRowIds === columnAndRowIds ? tableFit : null;
+  const hideLowPriority = width !== null && hasLowPriority && width < (fit?.fullWidth ?? 0);
+  // A virtualized table cannot scroll sideways, so one that does not fit even slim is cut off.
+  const slimTableOverflows = virtualize && width !== null && width < (fit?.slimWidth ?? 0);
+  const isCards = width !== null && (width < CARD_LAYOUT_MAX_WIDTH || slimTableOverflows);
 
   // The list's offset inside `<main>`: the page header and filters above it can change height.
   const [scrollMargin, setScrollMargin] = useState(0);
@@ -151,23 +172,6 @@ export function DataTable<TData>({
   const topSpacer = firstItem ? firstItem.start - scrollMargin : 0;
   const bottomSpacer = lastItem ? virtualizer.getTotalSize() - (lastItem.end - scrollMargin) : 0;
 
-  const tableRef = useRef<HTMLTableElement>(null);
-  // The pane width the full table needs, stored while every column shows so the decision does
-  // not flicker at the edge. Ids, not array identity: some callers rebuild `columns` or `data`
-  // each render, which would loop.
-  // shortcut: a same-id refetch with narrower content keeps the columns hidden until the pane
-  // reaches the stored width; key on data identity once every caller memoizes `data`.
-  const [fullTableFit, setFullTableFit] = useState<{
-    columnAndRowIds: string;
-    paneWidth: number;
-  } | null>(null);
-  const leafColumns = table.getAllLeafColumns();
-  const hasLowPriority = leafColumns.some((column) => column.columnDef.meta?.priority === "low");
-  const columnAndRowIds = [...leafColumns, ...rows].map(({ id }) => id).join(" ");
-  const hideLowPriority =
-    width !== null &&
-    fullTableFit?.columnAndRowIds === columnAndRowIds &&
-    width < fullTableFit.paneWidth;
   // Filtered here, not through TanStack's `columnVisibility`, which is the caller's state.
   const isShown = (column: Column<TData>) =>
     !(hideLowPriority && column.columnDef.meta?.priority === "low");
@@ -175,21 +179,28 @@ export function DataTable<TData>({
   // The table can grow with no render of its own (a late web font, say), so measure again then
   const [, remeasure] = useState(0);
   const showsTable = !isCards && width !== null;
+  const measuresFit = hasLowPriority || virtualize;
   useEffect(() => {
     const tableElement = tableRef.current;
-    if (!hasLowPriority || !showsTable || !tableElement) return;
+    if (!measuresFit || !showsTable || !tableElement) return;
     const observer = new ResizeObserver(() => remeasure((count) => count + 1));
     observer.observe(tableElement);
     return () => observer.disconnect();
-  }, [hasLowPriority, showsTable]);
+  }, [measuresFit, showsTable]);
 
   useLayoutEffect(() => {
     // The `overflow-auto` div that the `Table` primitive wraps around `<table>`.
     const scroller = tableRef.current?.parentElement;
-    if (!hasLowPriority || hideLowPriority || !scroller || width === null) return;
+    if (!measuresFit || !scroller || width === null) return;
 
     const overflow = scroller.scrollWidth - scroller.clientWidth;
-    if (overflow > 0) setFullTableFit({ columnAndRowIds, paneWidth: width + overflow });
+    if (overflow <= 0) return;
+    const neededWidth = width + overflow;
+    const isSlim = hideLowPriority || !hasLowPriority;
+    const fullWidth = isSlim ? fit?.fullWidth : neededWidth;
+    const slimWidth = virtualize && isSlim ? neededWidth : fit?.slimWidth;
+    if (fit && fullWidth === fit.fullWidth && slimWidth === fit.slimWidth) return;
+    setTableFit({ columnAndRowIds, fullWidth, slimWidth });
   });
 
   let content: ReactNode = null;
@@ -254,6 +265,7 @@ export function DataTable<TData>({
                       }}
                       className={cn(
                         "h-10 text-xs tracking-wide uppercase",
+                        virtualize && "px-2",
                         header.column.columnDef.meta?.pinned && pinnedHead
                       )}
                     >
@@ -293,7 +305,8 @@ export function DataTable<TData>({
                         key={cell.id}
                         style={{ textAlign: cell.column.columnDef.meta?.align }}
                         className={cn(
-                          "text-foreground px-4 py-2 text-sm",
+                          "text-foreground py-2 text-sm",
+                          virtualize ? "px-2" : "px-4",
                           cell.column.columnDef.meta?.pinned && pinnedCell
                         )}
                       >
