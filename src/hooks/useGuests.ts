@@ -1,10 +1,11 @@
-import { queryOptions, useMutation, useQuery } from "@tanstack/react-query";
+import { queryOptions, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { getAccessToken } from "@/hooks/useAuthToken";
 import { SEARCH_DEBOUNCE_MS, useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { afterWrite, type TableName } from "@/lib/after-write";
 import { throwDetailLoadError } from "@/lib/detail-load-error";
 import { logger } from "@/lib/logger";
+import { patchCachedLists } from "@/lib/optimistic-list-patch";
 import { guestKeys } from "@/lib/query-keys";
 import { ilikeAnyFilter } from "@/lib/search-filter";
 import { db, handleSupabaseError, supabase } from "@/lib/supabase";
@@ -132,6 +133,7 @@ export const useGuestBookings = (guestId: string | undefined) => {
 
 // Update guest mutation
 export const useUpdateGuest = () => {
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({
       guestId,
@@ -144,6 +146,11 @@ export const useUpdateGuest = () => {
       if (error) throw new Error(handleSupabaseError(error));
       return data;
     },
+    onMutate: ({ guestId, updates }) =>
+      patchCachedLists<Guest>(queryClient, guestKeys.lists(), (guest) =>
+        guest.guest_id === guestId ? { ...guest, ...updates } : guest
+      ),
+    onError: (_error, _variables, restore) => restore?.(),
     onSettled: () => afterWrite("guests"),
   });
 };

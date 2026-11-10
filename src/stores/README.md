@@ -4,7 +4,7 @@ Entity stores (`useGuestStore`, `useExpenseStore`, `usePaymentStore`) hold clien
 
 ## Rules
 
-- After a write, a mutation calls `afterWrite(...tables)` from `src/lib/after-write.ts` with the tables the write touched, instead of invalidating keys by hand. It also refreshes queries on tables that database triggers write.
+- Server writes, `afterWrite` and optimistic list patches follow the mutation rules in `src/hooks/README.md`. Stores never copy server data.
 - Stores that persist pick their fields with `partialize`. Entity stores keep that list to UI preferences such as sort and table state.
 - Writes need no app-side audit call: the audit trigger records them (`src/components/audit/CLAUDE.md`).
 - Components read data through these hooks or the `db` helpers in `src/lib/supabase.ts`, not through the `supabase` client.

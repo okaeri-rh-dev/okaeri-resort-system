@@ -257,18 +257,23 @@ const GuestsTableComponent: React.FC<GuestsTableProps> = ({
     }
   };
 
-  const confirmDeleteGuest = useCallback(async () => {
-    if (!guestToDelete) return;
-    try {
-      await deleteGuest.mutateAsync(guestToDelete.guest_id);
-      toast.success("Guest deleted successfully");
-      logger.info("Guest deleted successfully");
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to delete guest");
-    } finally {
-      setGuestToDelete(null);
-    }
-  }, [deleteGuest, guestToDelete]);
+  const confirmDeleteGuest = useCallback(
+    async (event: React.MouseEvent) => {
+      // Keep the dialog open while the server decides; delete can refuse with a 409
+      event.preventDefault();
+      if (!guestToDelete) return;
+      try {
+        await deleteGuest.mutateAsync(guestToDelete.guest_id);
+        toast.success("Guest deleted successfully");
+        logger.info("Guest deleted successfully");
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : "Failed to delete guest");
+      } finally {
+        setGuestToDelete(null);
+      }
+    },
+    [deleteGuest, guestToDelete]
+  );
 
   // Export action
   const handleExport = () => {
@@ -626,7 +631,10 @@ const GuestsTableComponent: React.FC<GuestsTableProps> = ({
       )}
 
       {/* Delete Guest Confirmation Dialog */}
-      <AlertDialog open={!!guestToDelete} onOpenChange={(open) => !open && setGuestToDelete(null)}>
+      <AlertDialog
+        open={!!guestToDelete}
+        onOpenChange={(open) => !open && !deleteGuest.isPending && setGuestToDelete(null)}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Guest</AlertDialogTitle>
@@ -636,12 +644,13 @@ const GuestsTableComponent: React.FC<GuestsTableProps> = ({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={deleteGuest.isPending}>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={confirmDeleteGuest}
+              disabled={deleteGuest.isPending}
               className={buttonVariants({ variant: "destructive" })}
             >
-              Delete
+              {deleteGuest.isPending ? "Deleting..." : "Delete"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
