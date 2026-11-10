@@ -74,7 +74,7 @@ export class BookingsTablePage {
     this.loadingState = page.locator(".animate-pulse, .animate-spin");
 
     // Action buttons
-    this.newBookingButton = page.getByRole("button", { name: /new booking/i });
+    this.newBookingButton = page.getByRole("link", { name: "New booking" });
     this.pageMenuButton = page.getByRole("button", { name: "More booking actions" });
     this.exportButton = page.getByRole("menuitem", { name: "Export CSV" });
     this.refreshButton = page.getByRole("button", { name: /refresh/i });

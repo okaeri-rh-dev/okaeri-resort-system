@@ -14,6 +14,7 @@ export const guestKeys = {
   detail: (guestId: string) => [...guestKeys.details(), guestId] as const,
   bookings: (guestId: string) => [...guestKeys.all, "bookings", guestId] as const,
   byEmail: (email: string) => [...guestKeys.all, "by-email", email] as const,
+  pick: (query: string) => [...guestKeys.all, "pick", query] as const,
   statistics: () => [...guestKeys.all, "statistics"] as const,
 };
 

@@ -329,14 +329,13 @@ test.describe("Admin Bookings Management", () => {
       await expect(bookingsTable.newBookingButton).toBeVisible();
     });
 
-    test("new booking menu opens single cabin booking form", async ({ page }) => {
+    test("new booking opens the new booking page", async ({ page }) => {
       const bookingsTable = new BookingsTablePage(page);
       await bookingsTable.goto();
 
       await bookingsTable.clickNewBooking();
-      await page.getByRole("menuitem", { name: /single cabin booking/i }).click();
 
-      await expect(page.getByRole("dialog")).toBeVisible();
+      await expect(page).toHaveURL(/\/admin\/bookings\/new\?step=stay/);
     });
   });
 
