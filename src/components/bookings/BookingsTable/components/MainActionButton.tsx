@@ -1,6 +1,4 @@
-import type { ReactNode } from "react";
-
-import { useNavigate } from "@tanstack/react-router";
+import { useState, type ReactNode } from "react";
 
 import { Button } from "@/components/patterns";
 import { useUserRole } from "@/hooks";
@@ -8,6 +6,7 @@ import { mainActionFor, manilaDayOf, type MainAction } from "@/lib/bookings";
 import type { Booking, BookingStatus } from "@/types";
 
 import type { BookingCardProps } from "../types";
+import { VerifyPaymentDialog } from "./VerifyPaymentDialog";
 
 const NEXT_STATUS: Record<Exclude<MainAction, "Verify payment">, BookingStatus> = {
   Confirm: "Confirmed",
@@ -29,24 +28,30 @@ export const MainActionButton = ({
   className,
   fallback = null,
 }: MainActionButtonProps) => {
-  const navigate = useNavigate();
   const { role } = useUserRole();
+  const [verifyOpen, setVerifyOpen] = useState(false);
   const action = mainActionFor(booking, role, manilaDayOf(new Date()));
   if (!action) return fallback;
 
-  const run = () => {
-    if (action === "Verify payment") {
-      navigate({
-        to: "/admin/verify-payment/$bookingId",
-        params: { bookingId: booking.booking_id },
-      });
-      return;
-    }
-    updateBookingStatus.mutate({ bookingId: booking.booking_id, status: NEXT_STATUS[action] });
-  };
+  if (action === "Verify payment") {
+    return (
+      <>
+        <Button onClick={() => setVerifyOpen(true)} size="sm" className={className}>
+          {action}
+        </Button>
+        <VerifyPaymentDialog booking={booking} open={verifyOpen} onOpenChange={setVerifyOpen} />
+      </>
+    );
+  }
 
   return (
-    <Button onClick={run} size="sm" className={className}>
+    <Button
+      onClick={() =>
+        updateBookingStatus.mutate({ bookingId: booking.booking_id, status: NEXT_STATUS[action] })
+      }
+      size="sm"
+      className={className}
+    >
       {action}
     </Button>
   );
