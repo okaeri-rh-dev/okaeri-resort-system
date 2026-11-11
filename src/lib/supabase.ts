@@ -1,6 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 import { format } from "date-fns";
 
+import type { DocumentType } from "@/components/documents/types";
 import { dayAfter, manilaDayStart, type ManilaDay } from "@/lib/bookings/stay";
 import type { MoveDirection } from "@/lib/contact-channel";
 import { toManilaDateString } from "@/lib/timezone";
@@ -1188,6 +1189,18 @@ export const db = {
 
     /** Get active contact channels in display order (guest pages) */
     active: () => contactChannelsInRankOrder().eq("is_active", true),
+  },
+
+  // Quotations and invoices (manager+): shared numbering and the one letterhead
+  documents: {
+    /** Take the next number for this type in the Manila year; a failed download leaves a gap */
+    allocateNumber: (documentType: DocumentType) =>
+      supabase.rpc("allocate_document_number", { p_document_type: documentType }),
+
+    /** The letterhead row, or null before anyone saves it */
+    letterhead: () => supabase.from("letterhead").select().maybeSingle(),
+
+    saveLetterhead: (data: TablesInsert<"letterhead">) => supabase.from("letterhead").upsert(data),
   },
 
   // Expense Categories configuration (expense form dropdowns)

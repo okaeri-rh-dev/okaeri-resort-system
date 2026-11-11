@@ -3,22 +3,16 @@
  *
  * Tests cover:
  * - Initial state
- * - Letterhead CRUD
  * - Line item management
  * - Pricing calculations (subtotal, discount, VAT, total)
- * - Document number generation
  * - Form reset
  */
 
 import { act, renderHook } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { DEFAULT_LETTERHEAD } from "@/components/documents/constants";
 import type { DocumentLineItem } from "@/components/documents/types";
 import { useDocumentStore } from "@/stores/useDocumentStore";
-
-const NO_CONTACTS = { phone: "", email: "" };
-const CHANNEL_CONTACTS = { phone: "+63 917 123 4567", email: "stay@okaeri-resort.example" };
 
 describe("useDocumentStore", () => {
   beforeEach(() => {
@@ -26,10 +20,7 @@ describe("useDocumentStore", () => {
     const { result } = renderHook(() => useDocumentStore());
     act(() => {
       result.current.resetForm();
-      result.current.resetLetterhead(NO_CONTACTS);
     });
-    // Reset counter by directly accessing the store
-    useDocumentStore.setState({ documentCounter: 0, contactDefaultsApplied: false });
     vi.clearAllMocks();
   });
 
@@ -42,12 +33,6 @@ describe("useDocumentStore", () => {
   // ============================================
 
   describe("Initial State", () => {
-    it("should initialize with default letterhead", () => {
-      const { result } = renderHook(() => useDocumentStore());
-      expect(result.current.letterhead.resort_name).toBe(DEFAULT_LETTERHEAD.resort_name);
-      expect(result.current.letterhead.city).toBe(DEFAULT_LETTERHEAD.city);
-    });
-
     it("should initialize with empty form data", () => {
       const { result } = renderHook(() => useDocumentStore());
       expect(result.current.formData.document_type).toBe("quotation");
@@ -65,107 +50,6 @@ describe("useDocumentStore", () => {
     it("should not be generating by default", () => {
       const { result } = renderHook(() => useDocumentStore());
       expect(result.current.isGenerating).toBe(false);
-    });
-  });
-
-  // ============================================
-  // LETTERHEAD
-  // ============================================
-
-  describe("Letterhead Management", () => {
-    it("should update letterhead fields", () => {
-      const { result } = renderHook(() => useDocumentStore());
-
-      act(() => {
-        result.current.updateLetterhead({ resort_name: "Test Resort" });
-      });
-
-      expect(result.current.letterhead.resort_name).toBe("Test Resort");
-      // Other fields should remain unchanged
-      expect(result.current.letterhead.city).toBe(DEFAULT_LETTERHEAD.city);
-    });
-
-    it("should update multiple letterhead fields at once", () => {
-      const { result } = renderHook(() => useDocumentStore());
-
-      act(() => {
-        result.current.updateLetterhead({
-          resort_name: "New Name",
-          email: "new@email.com",
-          tin: "123-456-789",
-        });
-      });
-
-      expect(result.current.letterhead.resort_name).toBe("New Name");
-      expect(result.current.letterhead.email).toBe("new@email.com");
-      expect(result.current.letterhead.tin).toBe("123-456-789");
-    });
-
-    it("should reset letterhead to defaults", () => {
-      const { result } = renderHook(() => useDocumentStore());
-
-      act(() => {
-        result.current.updateLetterhead({ resort_name: "Changed" });
-      });
-      expect(result.current.letterhead.resort_name).toBe("Changed");
-
-      act(() => {
-        result.current.resetLetterhead(NO_CONTACTS);
-      });
-      expect(result.current.letterhead.resort_name).toBe(DEFAULT_LETTERHEAD.resort_name);
-    });
-
-    it("resets phone and email to the given contact defaults", () => {
-      const { result } = renderHook(() => useDocumentStore());
-
-      act(() => {
-        result.current.updateLetterhead({ phone: "+63 917 555 0101", email: "old@example.com" });
-        result.current.resetLetterhead(CHANNEL_CONTACTS);
-      });
-
-      expect(result.current.letterhead.phone).toBe("+63 917 123 4567");
-      expect(result.current.letterhead.email).toBe("stay@okaeri-resort.example");
-      expect(result.current.contactDefaultsApplied).toBe(true);
-    });
-
-    it("waits for a mobile or email channel before using up the one fill", () => {
-      const { result } = renderHook(() => useDocumentStore());
-
-      act(() => {
-        result.current.applyContactDefaults(NO_CONTACTS);
-        result.current.applyContactDefaults(CHANNEL_CONTACTS);
-      });
-
-      expect(result.current.letterhead.phone).toBe("+63 917 123 4567");
-      expect(result.current.letterhead.email).toBe("stay@okaeri-resort.example");
-    });
-
-    it("fills empty phone and email from contact defaults once", () => {
-      const { result } = renderHook(() => useDocumentStore());
-
-      act(() => {
-        result.current.updateLetterhead({ email: "frontdoor@okaeri-resort.example" });
-        result.current.applyContactDefaults(CHANNEL_CONTACTS);
-      });
-      expect(result.current.letterhead.phone).toBe("+63 917 123 4567");
-      expect(result.current.letterhead.email).toBe("frontdoor@okaeri-resort.example");
-
-      act(() => {
-        result.current.updateLetterhead({ phone: "" });
-        result.current.applyContactDefaults(CHANNEL_CONTACTS);
-      });
-      expect(result.current.letterhead.phone).toBe("");
-    });
-
-    it("should store logo as base64", () => {
-      const { result } = renderHook(() => useDocumentStore());
-      const fakeBase64 = "data:image/png;base64,iVBORw0KGgo=";
-
-      act(() => {
-        result.current.updateLetterhead({ logo_base64: fakeBase64 });
-      });
-
-      expect(result.current.letterhead.logo_base64).toBe(fakeBase64);
     });
   });
 
@@ -395,70 +279,6 @@ describe("useDocumentStore", () => {
   });
 
   // ============================================
-  // DOCUMENT NUMBER GENERATION
-  // ============================================
-
-  describe("Document Number Generation", () => {
-    it("should generate sequential quotation numbers", () => {
-      const { result } = renderHook(() => useDocumentStore());
-
-      let num1: string = "";
-      let num2: string = "";
-
-      act(() => {
-        num1 = result.current.generateDocumentNumber("quotation");
-      });
-
-      act(() => {
-        num2 = result.current.generateDocumentNumber("quotation");
-      });
-
-      expect(num1).toMatch(/^QUO-\d{4}-0001$/);
-      expect(num2).toMatch(/^QUO-\d{4}-0002$/);
-    });
-
-    it("should generate invoice numbers with INV prefix", () => {
-      const { result } = renderHook(() => useDocumentStore());
-
-      let num: string = "";
-      act(() => {
-        num = result.current.generateDocumentNumber("invoice");
-      });
-
-      expect(num).toMatch(/^INV-\d{4}-0001$/);
-    });
-
-    it("should include current year", () => {
-      const { result } = renderHook(() => useDocumentStore());
-      const year = new Date().getFullYear();
-
-      let num: string = "";
-      act(() => {
-        num = result.current.generateDocumentNumber("quotation");
-      });
-
-      expect(num).toContain(String(year));
-    });
-
-    it("should persist counter across document types", () => {
-      const { result } = renderHook(() => useDocumentStore());
-
-      let quo: string = "";
-      let inv: string = "";
-
-      act(() => {
-        quo = result.current.generateDocumentNumber("quotation"); // counter = 1
-      });
-      act(() => {
-        inv = result.current.generateDocumentNumber("invoice"); // counter = 2
-      });
-
-      expect(quo).toMatch(/0001$/);
-      expect(inv).toMatch(/0002$/);
-    });
-  });
-
-  // ============================================
   // FORM MANAGEMENT
   // ============================================
 
@@ -547,71 +367,28 @@ describe("useDocumentStore", () => {
     });
   });
 
-  // ============================================
-  // SAVED LETTERHEAD MIGRATION
-  // ============================================
-
-  describe("Saved letterhead migration", () => {
-    const placeholderLetterhead = {
-      resort_name: "Okaeri Resort",
-      tagline: "Your Home Away From Home",
-      address_line_1: "123 Resort Road",
-      city: "Nasugbu",
-      province: "Batangas",
-      zip_code: "4231",
-      phone: "0917 000 0000",
-      email: "info@okaeriresort.com",
-      website: "www.okaeriresort.com",
-    };
-
-    async function rehydrateFromVersion0(letterhead: Record<string, string>) {
-      localStorage.setItem(
-        "document-storage",
-        JSON.stringify({ state: { letterhead, documentCounter: 7 }, version: 0 })
-      );
-      await useDocumentStore.persist.rehydrate();
-      return useDocumentStore.getState();
-    }
-
+  describe("Old device storage", () => {
     afterEach(() => localStorage.removeItem("document-storage"));
 
-    it("replaces the old placeholders with the real address and blank contacts", async () => {
-      const state = await rehydrateFromVersion0(placeholderLetterhead);
+    it("loads without the letterhead and counter a device saved before they moved to the database", async () => {
+      localStorage.setItem(
+        "document-storage",
+        JSON.stringify({
+          state: {
+            letterhead: { resort_name: "Old" },
+            documentCounter: 7,
+            contactDefaultsApplied: true,
+          },
+          version: 1,
+        })
+      );
+      vi.resetModules();
 
-      expect(state.letterhead).toEqual({
-        resort_name: "Okaeri Resort",
-        tagline: "Your Home Away From Home",
-        address_line_1: "Amita St., Brgy. Taboc",
-        address_line_2: "M8QQ+HF",
-        city: "San Juan",
-        province: "La Union",
-        zip_code: "2514",
-        phone: "",
-        email: "",
-        website: "",
-      });
-      expect(state.documentCounter).toBe(7);
-      expect(state.contactDefaultsApplied).toBe(false);
-    });
+      const { useDocumentStore: freshStore } = await import("@/stores/useDocumentStore");
 
-    it("keeps values that staff changed", async () => {
-      const customLetterhead = {
-        ...placeholderLetterhead,
-        address_line_1: "Purok 3, Barangay Urbiztondo",
-        city: "San Juan",
-        province: "La Union",
-        zip_code: "2514",
-        phone: "+63 917 555 0101",
-        email: "frontdoor@okaeri-resort.example",
-        website: "okaeri-resort.example",
-      };
-
-      const state = await rehydrateFromVersion0(customLetterhead);
-
-      expect(state.letterhead).toEqual({
-        ...customLetterhead,
-        address_line_2: undefined,
-      });
+      expect(freshStore.getState()).not.toHaveProperty("letterhead");
+      expect(freshStore.getState()).not.toHaveProperty("documentCounter");
+      expect(freshStore.getState().formData.line_items).toEqual([]);
     });
   });
 });
