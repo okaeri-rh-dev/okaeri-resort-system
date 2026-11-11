@@ -106,7 +106,7 @@ export interface Booking {
   airbnb_confirmation_code?: string | null;
   is_walk_in?: boolean;
   is_guest_booking?: boolean | null;
-  unit_assignment_status?: string | null;
+  unit_assignment_status?: "pending" | "assigned" | null;
   unit_count?: number | null;
   requested_unit_count?: number | null;
   pricing_metadata?: {
