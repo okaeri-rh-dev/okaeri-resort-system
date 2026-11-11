@@ -4,10 +4,21 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { PaymentProofUpload } from "../PaymentProofUpload";
 
-const PNG_HEADER = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
+const imageCompression = vi.hoisted(() => vi.fn());
+vi.mock("browser-image-compression", () => ({ default: imageCompression }));
 
-function pngFile(name = "gcash.png") {
-  return new File([new Uint8Array([...PNG_HEADER, 0, 0, 0, 0])], name, { type: "image/png" });
+const PNG_HEADER = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
+const MB = 1024 * 1024;
+
+function pngFile(name = "gcash.png", size = 12) {
+  const bytes = new Uint8Array(size);
+  bytes.set(PNG_HEADER);
+  return new File([bytes], name, { type: "image/png" });
+}
+
+function requestedFile() {
+  const [, init] = fetchUploadUrl.mock.calls[0] as [string, RequestInit];
+  return JSON.parse(init.body as string) as { file_type: string; file_size: number };
 }
 
 /** A stand-in for the signed-URL PUT that the test finishes by hand. */
@@ -49,6 +60,7 @@ const fetchUploadUrl = vi.fn();
 let storedPathCount = 0;
 
 beforeEach(() => {
+  imageCompression.mockRejectedValue(new Error("canvas unavailable"));
   FakeUploadRequest.pending = [];
   storedPathCount = 0;
   fetchUploadUrl.mockImplementation(async () => {
@@ -202,5 +214,55 @@ describe("PaymentProofUpload", () => {
     ).toBeInTheDocument();
     expect(fetchUploadUrl).not.toHaveBeenCalled();
     expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it("shrinks a 7 MB phone photo and uploads the small JPEG", async () => {
+    const jpegBytes = new Uint8Array(300_000);
+    jpegBytes.set([0xff, 0xd8, 0xff]);
+    imageCompression.mockResolvedValue(new Blob([jpegBytes], { type: "image/jpeg" }));
+    const { onChange, chooseFile } = renderUpload();
+
+    await uploadSuccessfully(chooseFile, pngFile("phone photo.png", 7 * MB));
+
+    await waitFor(() => expect(onChange).toHaveBeenCalled());
+    expect(requestedFile()).toMatchObject({ file_type: "image/jpeg", file_size: 300_000 });
+    expect(screen.getByText("phone photo.jpg")).toBeInTheDocument();
+  });
+
+  it("rejects an image over 10 MB without uploading it", async () => {
+    const { chooseFile } = renderUpload();
+
+    await chooseFile(pngFile("huge.png", 11 * MB));
+
+    expect(await screen.findByText(/images can be up to 10MB/i)).toBeInTheDocument();
+    expect(fetchUploadUrl).not.toHaveBeenCalled();
+  });
+
+  it("rejects a 7 MB image that cannot be shrunk with a clear message", async () => {
+    const { chooseFile } = renderUpload();
+
+    await chooseFile(pngFile("phone photo.png", 7 * MB));
+
+    expect(
+      await screen.findByText(/couldn.t make this image smaller\. choose an image under 5MB/i)
+    ).toBeInTheDocument();
+    expect(fetchUploadUrl).not.toHaveBeenCalled();
+  });
+
+  it("still rejects a PDF over 5 MB", async () => {
+    const { chooseFile } = renderUpload();
+    const bytes = new Uint8Array(6 * MB);
+    bytes.set([0x25, 0x50, 0x44, 0x46]);
+
+    await chooseFile(new File([bytes], "statement.pdf", { type: "application/pdf" }));
+
+    expect(await screen.findByText(/exceeds 5MB limit/i)).toBeInTheDocument();
+    expect(fetchUploadUrl).not.toHaveBeenCalled();
+  });
+
+  it("states the 10 MB image limit", () => {
+    renderUpload();
+
+    expect(screen.getByText(/images up to 10MB, PDFs up to 5MB/i)).toBeInTheDocument();
   });
 });

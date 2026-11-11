@@ -23,6 +23,10 @@ type UploadState =
   | { status: "empty" | "uploaded"; rejection?: string }
   | { status: "validating" | "uploading" | "failed" };
 
+const MAX_IMAGE_SIZE = 10 * 1024 * 1024;
+// Matches the server limit in functions/api/guest-booking/upload-url.ts.
+const MAX_UPLOAD_SIZE = 5 * 1024 * 1024;
+
 interface CompressionInfo {
   originalSize: number;
   ratio: number;
@@ -139,18 +143,28 @@ export function PaymentProofUpload({
   const checkAndUpload = async (chosenFile: File) => {
     setUploadState({ status: "validating" });
     setCompressionInfo(null);
+    const reject = (message: string) =>
+      setUploadState({ status: value ? "uploaded" : "empty", rejection: message });
+    const isImage = ["image/jpeg", "image/png"].includes(chosenFile.type);
 
     try {
-      const validationError = await validateFile(chosenFile);
-      if (validationError) {
-        setUploadState({
-          status: value ? "uploaded" : "empty",
-          rejection: validationError.message,
-        });
+      if (isImage && chosenFile.size > MAX_IMAGE_SIZE) {
+        reject("Images can be up to 10MB. Choose a smaller image.");
         return;
       }
 
       const shrunk = await shrinkImage(chosenFile);
+      if (isImage && shrunk === chosenFile && chosenFile.size > MAX_UPLOAD_SIZE) {
+        reject("We couldn't make this image smaller. Choose an image under 5MB.");
+        return;
+      }
+
+      const validationError = await validateFile(shrunk);
+      if (validationError) {
+        reject(validationError.message);
+        return;
+      }
+
       if (shrunk !== chosenFile) {
         setCompressionInfo({
           originalSize: chosenFile.size,
@@ -245,7 +259,9 @@ export function PaymentProofUpload({
         >
           <Upload className="text-muted-foreground mx-auto mb-3 size-10" aria-hidden="true" />
           <p className="mb-1 text-sm font-medium">Drop your payment screenshot here</p>
-          <p className="text-muted-foreground mb-4 text-xs">JPEG, PNG or PDF, up to 5MB</p>
+          <p className="text-muted-foreground mb-4 text-xs">
+            JPEG or PNG images up to 10MB, PDFs up to 5MB
+          </p>
           <Button type="button" variant="outline" onClick={openFilePicker} disabled={disabled}>
             <Upload aria-hidden="true" />
             Choose screenshot
