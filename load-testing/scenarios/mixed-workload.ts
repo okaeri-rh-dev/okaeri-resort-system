@@ -125,7 +125,7 @@ function doGuestBooking() {
     }
 
     const success = check(response, {
-      "booking: status 201": (r) => r.status === 201,
+      "booking: status 201 or 200": (r) => r.status === 201 || r.status === 200,
       "booking: has booking_reference": (r) => hasBookingReference(r.body),
     });
 

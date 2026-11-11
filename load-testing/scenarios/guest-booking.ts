@@ -68,7 +68,7 @@ export default function () {
   }
 
   const success = check(response, {
-    "status is 201 (created)": (r) => r.status === 201,
+    "status is 201 (created) or 200 (replay)": (r) => r.status === 201 || r.status === 200,
     "has booking_reference": (r) => hasBookingReference(r.body),
     "response time < 500ms": (r) => r.timings.duration < 500,
   });
