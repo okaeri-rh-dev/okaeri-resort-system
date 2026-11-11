@@ -653,6 +653,34 @@ export type Database = {
         };
         Relationships: [];
       };
+      document_number_sequences: {
+        Row: {
+          created_at: string;
+          document_type: string;
+          id: string;
+          last_number: number;
+          updated_at: string;
+          year: number;
+        };
+        ComputedFields: never;
+        Insert: {
+          created_at?: string;
+          document_type: string;
+          id?: string;
+          last_number: number;
+          updated_at?: string;
+          year: number;
+        };
+        Update: {
+          created_at?: string;
+          document_type?: string;
+          id?: string;
+          last_number?: number;
+          updated_at?: string;
+          year?: number;
+        };
+        Relationships: [];
+      };
       expense_categories: {
         Row: {
           created_at: string | null;
@@ -871,6 +899,61 @@ export type Database = {
             referencedColumns: ["booking_id"];
           },
         ];
+      };
+      letterhead: {
+        Row: {
+          address_line_1: string;
+          address_line_2: string;
+          city: string;
+          created_at: string;
+          email: string;
+          id: boolean;
+          logo_base64: string;
+          phone: string;
+          province: string;
+          resort_name: string;
+          tagline: string;
+          tin: string;
+          updated_at: string;
+          website: string;
+          zip_code: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          address_line_1: string;
+          address_line_2?: string;
+          city: string;
+          created_at?: string;
+          email: string;
+          id?: boolean;
+          logo_base64?: string;
+          phone: string;
+          province: string;
+          resort_name: string;
+          tagline?: string;
+          tin?: string;
+          updated_at?: string;
+          website?: string;
+          zip_code: string;
+        };
+        Update: {
+          address_line_1?: string;
+          address_line_2?: string;
+          city?: string;
+          created_at?: string;
+          email?: string;
+          id?: boolean;
+          logo_base64?: string;
+          phone?: string;
+          province?: string;
+          resort_name?: string;
+          tagline?: string;
+          tin?: string;
+          updated_at?: string;
+          website?: string;
+          zip_code?: string;
+        };
+        Relationships: [];
       };
       maintenance_logs: {
         Row: {
@@ -1239,6 +1322,7 @@ export type Database = {
       _audit_ids_for_records: { Args: { p_record_ids: string[] }; Returns: string[] };
       _payment_proof_path: { Args: { p_url: string }; Returns: string };
       airbnb_payout_id: { Args: { p_booking_id: string }; Returns: string };
+      allocate_document_number: { Args: { p_document_type: string }; Returns: string };
       anonymize_audit_logs: {
         Args: { p_older_than?: string };
         Returns: {
@@ -1486,6 +1570,7 @@ export type Database = {
         }[];
       };
       next_contact_channel_order: { Args: Record<PropertyKey, never>; Returns: number };
+      next_document_number: { Args: { p_document_type: string; p_year: number }; Returns: string };
       normalize_booking_stays: {
         Args: { p_check_in_time?: string; p_check_out_time?: string };
         Returns: {

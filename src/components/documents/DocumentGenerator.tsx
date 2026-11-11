@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 
 import { Download, Eye, FileText, Settings } from "lucide-react";
 
@@ -13,39 +13,31 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/patterns";
-import { useActiveContactChannels } from "@/hooks/useContactChannels";
+import { useAllocateDocumentNumber, useLetterhead } from "@/hooks/useDocuments";
 import { useDocumentStore } from "@/stores/useDocumentStore";
 
+import { DEFAULT_LETTERHEAD } from "./constants";
 import { DocumentForm } from "./DocumentForm";
 import { DocumentPreview } from "./DocumentPreview";
-import { toLetterheadContacts } from "./letterhead-contacts";
 import { LetterheadSettings } from "./LetterheadSettings";
 import { useGeneratePDF } from "./pdf/useGeneratePDF";
 import type { GeneratedDocument } from "./types";
 
 export function DocumentGenerator() {
-  const {
-    letterhead,
-    formData,
-    isGenerating,
-    setDocumentType,
-    generateDocumentNumber,
-    setFormData,
-    applyContactDefaults,
-  } = useDocumentStore();
-  const { data: contactChannels } = useActiveContactChannels();
-
-  useEffect(() => {
-    if (contactChannels) applyContactDefaults(toLetterheadContacts(contactChannels));
-  }, [contactChannels, applyContactDefaults]);
-
+  const { formData, isGenerating, setDocumentType, setFormData } = useDocumentStore();
+  const letterhead = useLetterhead();
+  const { mutateAsync: allocateDocumentNumber, isPending: isAllocating } =
+    useAllocateDocumentNumber();
   const { generate } = useGeneratePDF();
 
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [mobilePreviewOpen, setMobilePreviewOpen] = useState(false);
 
   const handleDownloadPDF = useCallback(async () => {
-    const docNumber = generateDocumentNumber(formData.document_type);
+    if (!letterhead) return;
+    // The mutation shows the error; without a shared number there is no PDF.
+    const docNumber = await allocateDocumentNumber(formData.document_type).catch(() => null);
+    if (!docNumber) return;
     const doc: GeneratedDocument = {
       metadata: {
         document_number: docNumber,
@@ -62,7 +54,11 @@ export function DocumentGenerator() {
       cancellation_policy: formData.cancellation_policy,
     };
     await generate(doc);
-  }, [formData, letterhead, generate, generateDocumentNumber]);
+  }, [formData, letterhead, generate, allocateDocumentNumber]);
+
+  const isBusy = isGenerating || isAllocating;
+  const canDownload = !!letterhead && !isBusy && formData.line_items.length > 0;
+  const previewLetterhead = letterhead ?? DEFAULT_LETTERHEAD;
 
   return (
     <div className="flex h-full flex-col">
@@ -114,6 +110,7 @@ export function DocumentGenerator() {
             size="icon"
             className="h-9 w-9"
             onClick={() => setSettingsOpen(true)}
+            disabled={!letterhead}
             aria-label="Letterhead settings"
           >
             <Settings className="h-4 w-4" />
@@ -123,10 +120,10 @@ export function DocumentGenerator() {
           <Button
             className="expanded:inline-flex hidden"
             onClick={handleDownloadPDF}
-            disabled={isGenerating || formData.line_items.length === 0}
+            disabled={!canDownload}
           >
             <Download className="mr-2 h-4 w-4" />
-            {isGenerating ? "Generating..." : "Download PDF"}
+            {isBusy ? "Generating..." : "Download PDF"}
           </Button>
         </div>
       </div>
@@ -139,7 +136,7 @@ export function DocumentGenerator() {
         </div>
         {/* Right panel: Preview */}
         <div className="flex-1 overflow-hidden rounded-lg border">
-          <DocumentPreview formData={formData} letterhead={letterhead} />
+          <DocumentPreview formData={formData} letterhead={previewLetterhead} />
         </div>
       </div>
 
@@ -158,7 +155,7 @@ export function DocumentGenerator() {
             <DocumentForm />
           </TabsContent>
           <TabsContent value="preview" className="flex-1 overflow-hidden">
-            <DocumentPreview formData={formData} letterhead={letterhead} />
+            <DocumentPreview formData={formData} letterhead={previewLetterhead} />
           </TabsContent>
         </Tabs>
       </div>
@@ -179,13 +176,9 @@ export function DocumentGenerator() {
           <Eye className="mr-2 h-4 w-4" />
           Preview
         </Button>
-        <Button
-          className="min-h-[44px] flex-1"
-          onClick={handleDownloadPDF}
-          disabled={isGenerating || formData.line_items.length === 0}
-        >
+        <Button className="min-h-[44px] flex-1" onClick={handleDownloadPDF} disabled={!canDownload}>
           <Download className="mr-2 h-4 w-4" />
-          {isGenerating ? "Generating..." : "Download PDF"}
+          {isBusy ? "Generating..." : "Download PDF"}
         </Button>
       </div>
 
@@ -196,13 +189,19 @@ export function DocumentGenerator() {
             <SheetTitle>Document Preview</SheetTitle>
           </SheetHeader>
           <div className="h-full overflow-auto">
-            <DocumentPreview formData={formData} letterhead={letterhead} />
+            <DocumentPreview formData={formData} letterhead={previewLetterhead} />
           </div>
         </SheetContent>
       </Sheet>
 
       {/* Letterhead Settings Dialog */}
-      <LetterheadSettings open={settingsOpen} onOpenChange={setSettingsOpen} />
+      {letterhead && (
+        <LetterheadSettings
+          open={settingsOpen}
+          onOpenChange={setSettingsOpen}
+          letterhead={letterhead}
+        />
+      )}
     </div>
   );
 }
