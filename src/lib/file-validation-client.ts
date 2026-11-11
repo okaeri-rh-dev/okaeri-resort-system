@@ -9,6 +9,8 @@
  * @see vault note [[008-payment-proof-upload README]]
  */
 
+import type { Options } from "browser-image-compression";
+
 /**
  * Magic number signatures for supported file types
  *
@@ -92,6 +94,15 @@ export async function validateFileContent(file: File): Promise<boolean> {
   }
 }
 
+/** Compress an image on the main thread. The library's web worker loads from a CDN, which the CSP blocks. */
+export async function compressImage(
+  file: File,
+  options: Omit<Options, "useWebWorker">
+): Promise<File> {
+  const { default: imageCompression } = await import("browser-image-compression");
+  return imageCompression(file, { ...options, useWebWorker: false });
+}
+
 /**
  * Shrink a JPEG or PNG to a JPEG with a 1600 px long edge and about 300 KB, so that
  * receipt text stays readable at a small stored size.
@@ -102,13 +113,10 @@ export async function shrinkImage(file: File): Promise<File> {
   if (!SHRINKABLE_TYPES.includes(file.type)) return file;
 
   try {
-    const { default: imageCompression } = await import("browser-image-compression");
-    const shrunk = await imageCompression(file, {
+    const shrunk = await compressImage(file, {
       maxWidthOrHeight: 1600,
       maxSizeMB: 0.3,
       fileType: "image/jpeg",
-      // The worker script loads from a CDN, which the CSP blocks.
-      useWebWorker: false,
     });
     if (shrunk.size >= file.size) return file;
     return new File([shrunk], `${file.name.replace(/\.[^.]*$/, "")}.jpg`, { type: "image/jpeg" });

@@ -17,7 +17,12 @@ describe("shrinkImage", () => {
 
     expect(imageCompression).toHaveBeenCalledWith(
       screenshot,
-      expect.objectContaining({ maxWidthOrHeight: 1600, maxSizeMB: 0.3, fileType: "image/jpeg" })
+      expect.objectContaining({
+        maxWidthOrHeight: 1600,
+        maxSizeMB: 0.3,
+        fileType: "image/jpeg",
+        useWebWorker: false,
+      })
     );
     expect(shrunk.size).toBe(250_000);
     expect(shrunk.type).toBe("image/jpeg");
