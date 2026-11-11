@@ -28,6 +28,11 @@ export const MAGIC_NUMBERS = {
 
 export type AllowedFileType = keyof typeof MAGIC_NUMBERS;
 
+// Matches the server limit in functions/api/guest-booking/upload-url.ts.
+const MAX_UPLOAD_SIZE = 5 * 1024 * 1024;
+const MAX_IMAGE_SIZE = 10 * 1024 * 1024;
+const SHRINKABLE_TYPES = ["image/jpeg", "image/jpg", "image/png"];
+
 /**
  * Validation error types for structured error handling
  */
@@ -94,7 +99,7 @@ export async function validateFileContent(file: File): Promise<boolean> {
  * @returns The shrunk image, or the original file for a PDF, on failure, or when shrinking does not help
  */
 export async function shrinkImage(file: File): Promise<File> {
-  if (!["image/jpeg", "image/jpg", "image/png"].includes(file.type)) return file;
+  if (!SHRINKABLE_TYPES.includes(file.type)) return file;
 
   try {
     const { default: imageCompression } = await import("browser-image-compression");
@@ -169,8 +174,7 @@ export async function validateFile(file: File): Promise<FileValidationError | nu
   }
 
   // 2. Check file size (5MB hard limit)
-  const maxSize = 5 * 1024 * 1024; // 5MB in bytes
-  if (file.size > maxSize) {
+  if (file.size > MAX_UPLOAD_SIZE) {
     const sizeMB = (file.size / 1024 / 1024).toFixed(2);
     return {
       type: "FILE_SIZE_EXCEEDED",
@@ -190,4 +194,32 @@ export async function validateFile(file: File): Promise<FileValidationError | nu
   }
 
   return null; // Valid file
+}
+
+/**
+ * Shrink an image of up to 10MB, then validate the file that will be uploaded.
+ * PDFs are not shrunk, so they must already be under 5MB.
+ *
+ * @returns The file to upload, or the reason it was rejected
+ */
+export async function shrinkAndValidate(file: File): Promise<File | FileValidationError> {
+  const isImage = SHRINKABLE_TYPES.includes(file.type);
+  if (isImage && file.size > MAX_IMAGE_SIZE) {
+    return {
+      type: "FILE_SIZE_EXCEEDED",
+      message: "Images can be up to 10MB. Choose a smaller image.",
+      severity: "error",
+    };
+  }
+
+  const shrunk = await shrinkImage(file);
+  if (isImage && shrunk === file && file.size > MAX_UPLOAD_SIZE) {
+    return {
+      type: "FILE_SIZE_EXCEEDED",
+      message: "We couldn't make this image smaller. Choose an image under 5MB.",
+      severity: "error",
+    };
+  }
+
+  return (await validateFile(shrunk)) ?? shrunk;
 }

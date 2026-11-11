@@ -3,7 +3,7 @@ import { useRef, useState } from "react";
 import { CheckCircle, FileImage, FileText, Loader2, RotateCcw, Upload, X } from "lucide-react";
 
 import { Button, Callout, Progress } from "@/components/patterns";
-import { formatFileSize, shrinkImage, validateFile } from "@/lib/file-validation-client";
+import { formatFileSize, shrinkAndValidate } from "@/lib/file-validation-client";
 import { cn } from "@/lib/utils";
 
 export interface PaymentProofUploadProps {
@@ -141,16 +141,15 @@ export function PaymentProofUpload({
     setCompressionInfo(null);
 
     try {
-      const validationError = await validateFile(chosenFile);
-      if (validationError) {
+      const shrunk = await shrinkAndValidate(chosenFile);
+      if (!(shrunk instanceof File)) {
         setUploadState({
           status: value ? "uploaded" : "empty",
-          rejection: validationError.message,
+          rejection: shrunk.message,
         });
         return;
       }
 
-      const shrunk = await shrinkImage(chosenFile);
       if (shrunk !== chosenFile) {
         setCompressionInfo({
           originalSize: chosenFile.size,
@@ -245,7 +244,9 @@ export function PaymentProofUpload({
         >
           <Upload className="text-muted-foreground mx-auto mb-3 size-10" aria-hidden="true" />
           <p className="mb-1 text-sm font-medium">Drop your payment screenshot here</p>
-          <p className="text-muted-foreground mb-4 text-xs">JPEG, PNG or PDF, up to 5MB</p>
+          <p className="text-muted-foreground mb-4 text-xs">
+            JPEG or PNG images up to 10MB, PDFs up to 5MB
+          </p>
           <Button type="button" variant="outline" onClick={openFilePicker} disabled={disabled}>
             <Upload aria-hidden="true" />
             Choose screenshot
