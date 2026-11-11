@@ -23,8 +23,7 @@
   "ignoreIssues": {
     "src/components/ui/**": ["exports", "types"],
     "src/components/patterns/index.ts": ["exports", "types"],
-    "functions/_middleware.ts": ["duplicates"],
-    "src/utils/file-compression.ts": ["duplicates"]
+    "functions/_middleware.ts": ["duplicates"]
   },
   "rules": {
     "enumMembers": "off"
