@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 
+import { E2E_REF } from "../scripts/e2e/fixtures";
 import { loginAsAdmin } from "./fixtures/auth";
 import {
   addDays,
@@ -53,27 +54,11 @@ test.describe("Pricing Integrity", () => {
 
       const bookingsTable = new BookingsTablePage(page);
 
-      // Find a confirmed booking
       await bookingsTable.selectView("Upcoming");
       await bookingsTable.waitForTableLoad();
 
-      const rowCount = await bookingsTable.getRowCount();
-      if (rowCount === 0) {
-        test.skip();
-        return;
-      }
-
-      // Get first booking reference
-      const refs = await bookingsTable.getBookingReferences();
-      if (refs.length === 0) {
-        test.skip();
-        return;
-      }
-
-      const bookingRef = refs[0];
-
-      // View booking details and note the price
-      await bookingsTable.clickBookingRow(bookingRef);
+      // A seeded booking: the newest row may belong to a parallel spec that deletes it
+      await bookingsTable.clickBookingRow(E2E_REF.CONF_PAID);
 
       const detailPage = new BookingDetailPage(page);
       await detailPage.expectPageLoaded();
@@ -618,22 +603,7 @@ test.describe("Pricing Integrity", () => {
       const bookingsTable = new BookingsTablePage(page);
       await bookingsTable.goto();
 
-      const rowCount = await bookingsTable.getRowCount();
-      if (rowCount === 0) {
-        test.skip();
-        return;
-      }
-
-      // Find a price cell in the table
-      const priceCell = page
-        .locator('td:has-text("PHP"), td:has-text("₱"), [class*="amount"]')
-        .first();
-
-      if (await priceCell.isVisible()) {
-        const priceText = await priceCell.textContent();
-        // Should contain PHP symbol or peso sign
-        expect(priceText).toMatch(/PHP|₱|[\d,]+/);
-      }
+      await expect(bookingsTable.getRowByReference(E2E_REF.CONF_PAID)).toContainText("₱5,000.00");
     });
 
     test("price preview updates reactively", async ({ page }) => {

@@ -164,14 +164,8 @@ test.describe("Multi-Role Workflows", () => {
       const bookingsTable = new BookingsTablePage(page);
       await bookingsTable.goto();
 
-      const rowCount = await bookingsTable.getRowCount();
-      if (rowCount === 0) {
-        test.skip();
-        return;
-      }
-
-      const refs = await bookingsTable.getBookingReferences();
-      await bookingsTable.clickBookingRow(refs[0]);
+      // A seeded booking: the newest row may belong to a parallel spec that deletes it
+      await bookingsTable.clickBookingRow(E2E_REF.CONFIRMED);
 
       const detailPage = new BookingDetailPage(page);
       await detailPage.expectPageLoaded();
