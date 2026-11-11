@@ -45,7 +45,8 @@ export function LogoUploader({ logo_base64, onLogoChange }: LogoUploaderProps) {
           imageToConvert = await imageCompression.default(file, {
             maxSizeMB: LOGO_COMPRESSED_MAX_BYTES / (1024 * 1024),
             maxWidthOrHeight: 400,
-            useWebWorker: true,
+            // The worker script loads from a CDN, which the CSP blocks.
+            useWebWorker: false,
           });
         }
 
