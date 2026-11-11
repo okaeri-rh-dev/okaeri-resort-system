@@ -277,20 +277,9 @@ test.describe("Admin Bookings Management", () => {
       const bookingsTable = new BookingsTablePage(page);
       await bookingsTable.goto();
 
-      // Check if there are any bookings
-      const rowCount = await bookingsTable.getRowCount();
-
-      if (rowCount > 0) {
-        // Get first booking reference
-        const refs = await bookingsTable.getBookingReferences();
-        if (refs.length > 0) {
-          await bookingsTable.clickBookingRow(refs[0]);
-          await expect(page).toHaveURL(/\/admin\/bookings\//);
-        }
-      } else {
-        // Skip if no bookings exist
-        test.skip();
-      }
+      // A seeded booking: the newest row may belong to a parallel spec that deletes it
+      await bookingsTable.clickBookingRow(E2E_REF.CONFIRMED);
+      await expect(page).toHaveURL(/\/admin\/bookings\//);
     });
 
     test("booking detail page shows guest information", async ({ page }) => {
@@ -298,18 +287,7 @@ test.describe("Admin Bookings Management", () => {
       const bookingsTable = new BookingsTablePage(page);
       await bookingsTable.goto();
 
-      const rowCount = await bookingsTable.getRowCount();
-      if (rowCount === 0) {
-        test.skip();
-      }
-
-      // Click first booking
-      const refs = await bookingsTable.getBookingReferences();
-      if (refs.length === 0) {
-        test.skip();
-      }
-
-      await bookingsTable.clickBookingRow(refs[0]);
+      await bookingsTable.clickBookingRow(E2E_REF.CONFIRMED);
 
       // Verify detail page has guest info section
       await expect(
@@ -417,17 +395,10 @@ test.describe("Role-Based Access", () => {
     const bookingsTable = new BookingsTablePage(page);
     await bookingsTable.goto();
 
-    // Check if edit functionality is available
-    const rowCount = await bookingsTable.getRowCount();
-    if (rowCount > 0) {
-      const refs = await bookingsTable.getBookingReferences();
-      if (refs.length > 0) {
-        await bookingsTable.openActionsMenu(refs[0]);
+    await bookingsTable.openActionsMenu(E2E_REF.CONFIRMED);
 
-        // Edit option should be available for admins
-        await expect(page.getByRole("menuitem", { name: /edit/i })).toBeVisible();
-      }
-    }
+    // Edit option should be available for admins
+    await expect(page.getByRole("menuitem", { name: /edit/i })).toBeVisible();
   });
 });
 

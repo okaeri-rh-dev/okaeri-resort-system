@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 
+import { E2E_REF } from "../scripts/e2e/fixtures";
 import { loginAsAdmin } from "./fixtures/auth";
 import {
   addDays,
@@ -53,27 +54,11 @@ test.describe("Pricing Integrity", () => {
 
       const bookingsTable = new BookingsTablePage(page);
 
-      // Find a confirmed booking
       await bookingsTable.selectView("Upcoming");
       await bookingsTable.waitForTableLoad();
 
-      const rowCount = await bookingsTable.getRowCount();
-      if (rowCount === 0) {
-        test.skip();
-        return;
-      }
-
-      // Get first booking reference
-      const refs = await bookingsTable.getBookingReferences();
-      if (refs.length === 0) {
-        test.skip();
-        return;
-      }
-
-      const bookingRef = refs[0];
-
-      // View booking details and note the price
-      await bookingsTable.clickBookingRow(bookingRef);
+      // A seeded booking: the newest row may belong to a parallel spec that deletes it
+      await bookingsTable.clickBookingRow(E2E_REF.CONF_PAID);
 
       const detailPage = new BookingDetailPage(page);
       await detailPage.expectPageLoaded();

@@ -1,6 +1,18 @@
 import { expect, test } from "@playwright/test";
 
 import { loginAsStaff } from "./fixtures/auth";
+import { serviceClient } from "./fixtures/service-client";
+
+const db = serviceClient();
+let bookingId = "";
+
+// The random month can repeat, so a booking left behind blocks the cabins on a later run.
+test.afterEach(async () => {
+  if (!bookingId) return;
+  const { error } = await db.from("bookings").delete().eq("booking_id", bookingId);
+  expect(error).toBeNull();
+  bookingId = "";
+});
 
 /** Staff enter an Airbnb booking with its payout: Confirmed and fully paid (ADR 0006). */
 test("staff create a 2-cabin Airbnb booking with its payout through the new flow", async ({
@@ -48,6 +60,7 @@ test("staff create a 2-cabin Airbnb booking with its payout through the new flow
   await page.getByRole("button", { name: "Save booking" }).click();
 
   await expect(page).toHaveURL(/\/admin\/bookings\?booking=[0-9a-f-]{36}/);
+  bookingId = new URL(page.url()).searchParams.get("booking")!;
   const sheet = page.getByRole("dialog");
   await expect(sheet.getByRole("heading", { name: guestName })).toBeVisible();
   await expect(sheet.getByText("Confirmed").first()).toBeVisible();

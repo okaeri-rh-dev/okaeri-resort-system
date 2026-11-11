@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 
+import { E2E_REF } from "../scripts/e2e/fixtures";
 import { loginAsAdmin } from "./fixtures/auth";
 import { ROUTES } from "./fixtures/test-data";
 import { BookingDetailPage } from "./pages/BookingDetailPage";
@@ -109,31 +110,14 @@ test.describe("Availability Calendar", () => {
       await bookingsTable.selectView("Upcoming");
       await bookingsTable.waitForTableLoad();
 
-      const rowCount = await bookingsTable.getRowCount();
-      if (rowCount === 0) {
-        test.skip();
-        return;
-      }
-
-      const refs = await bookingsTable.getBookingReferences();
-      if (refs.length === 0) {
-        test.skip();
-        return;
-      }
-
-      // Get booking dates
-      await bookingsTable.clickBookingRow(refs[0]);
+      // A seeded booking: the newest row may belong to a parallel spec that deletes it
+      await bookingsTable.clickBookingRow(E2E_REF.CONFIRMED);
 
       const detailPage = new BookingDetailPage(page);
       await detailPage.expectPageLoaded();
 
-      const checkInDate = await detailPage.getCheckInDate();
-      const assignedUnits = await detailPage.getAssignedUnits();
-
-      if (assignedUnits.length === 0 || !checkInDate) {
-        test.skip();
-        return;
-      }
+      expect(await detailPage.getCheckInDate()).toBeTruthy();
+      expect(await detailPage.getAssignedUnits()).not.toHaveLength(0);
 
       // Now check public calendar
       await page.goto(ROUTES.public.home);
@@ -165,10 +149,7 @@ test.describe("Availability Calendar", () => {
   });
 
   test.describe("3. Cancelled Booking Releases Dates", () => {
-    test("cancelled booking dates become available again", async ({ page }) => {
-      // This test verifies the concept - actual implementation
-      // would require creating and cancelling a booking
-
+    test("seeded cancelled booking shows in the Cancelled view", async ({ page }) => {
       await loginAsAdmin(page);
 
       const bookingsTable = new BookingsTablePage(page);
@@ -178,16 +159,7 @@ test.describe("Availability Calendar", () => {
       await bookingsTable.selectView("Cancelled");
       await bookingsTable.waitForTableLoad();
 
-      const rowCount = await bookingsTable.getRowCount();
-      if (rowCount === 0) {
-        // No cancelled bookings to verify
-        test.skip();
-        return;
-      }
-
-      // Verify cancelled booking exists
-      const refs = await bookingsTable.getBookingReferences();
-      expect(refs.length).toBeGreaterThan(0);
+      await expect(bookingsTable.getRowByReference(E2E_REF.CANCELLED)).toBeVisible();
     });
   });
 
