@@ -2,27 +2,27 @@
  * Mixed Workload Load Test Scenario
  *
  * Simulates realistic production traffic with a mix of:
- * - 10% Guest Bookings (write-heavy)
+ * - 10% Guest Bookings (POST /api/guest-booking/multi-unit, write-heavy)
  * - 60% Availability Checks (read-heavy)
  * - 30% Status Checks (POST /api/guest-booking/status, read-heavy)
  *
  * This distribution mirrors expected production traffic patterns.
  */
 
-import http from "k6/http";
 import { check, group, sleep } from "k6";
+import http from "k6/http";
 import { Counter, Rate, Trend } from "k6/metrics";
 
-import { getEnvironment } from "../config/environments.js";
-import { getMixedWorkloadThresholds } from "../config/thresholds.js";
+import { getEnvironment } from "../config/environments.ts";
+import { getMixedWorkloadThresholds } from "../config/thresholds.ts";
 import {
   generateBookingDates,
-  generateGuestBookingData,
-  generateIdempotencyKey,
   getRandomUnitId,
   getStatusLookups,
+  hasBookingReference,
+  postMultiUnitBooking,
   type StatusLookup,
-} from "../utils/data-generators.js";
+} from "../utils/data-generators.ts";
 
 // Custom metrics
 const bookingRequests = new Counter("booking_requests");
@@ -104,37 +104,24 @@ export default function (data: { statusLookups: StatusLookup[] }) {
 function doGuestBooking() {
   group("Guest Booking", () => {
     bookingRequests.add(1);
-    const unitId = getRandomUnitId();
-    const bookingData = generateGuestBookingData(unitId);
-
-    const response = http.post(`${env.baseUrl}/api/guest-booking`, JSON.stringify(bookingData), {
-      headers: {
-        "Content-Type": "application/json",
-        "X-Idempotency-Key": generateIdempotencyKey(),
-      },
-      tags: { endpoint: "guest-booking", operation: "booking" },
+    const response = postMultiUnitBooking(env.baseUrl, {
+      endpoint: "guest-booking",
+      operation: "booking",
     });
 
     bookingDuration.add(response.timings.duration);
 
+    if (response.status === 429) {
+      sleep(10);
+      return;
+    }
+
     const success = check(response, {
-      "booking: status 201": (r) => r.status === 201,
-      "booking: has booking_id": (r) => {
-        try {
-          const body = JSON.parse(r.body as string);
-          return !!body.booking?.booking_id;
-        } catch {
-          return false;
-        }
-      },
+      "booking: status 201 or 200": (r) => r.status === 201 || r.status === 200,
+      "booking: has booking_reference": (r) => hasBookingReference(r.body),
     });
 
     overallSuccessRate.add(success);
-
-    // Rate limited? Back off
-    if (response.status === 429) {
-      sleep(10);
-    }
   });
 
   // Think time after booking

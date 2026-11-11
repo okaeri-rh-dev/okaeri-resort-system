@@ -7,13 +7,13 @@
  * Target: P95 < 100ms, Error Rate < 1%
  */
 
-import http from "k6/http";
 import { check, sleep } from "k6";
+import http from "k6/http";
 import { Rate, Trend } from "k6/metrics";
 
-import { getEnvironment } from "../config/environments.js";
-import { endpointThresholds } from "../config/thresholds.js";
-import { generateBookingDates, getRandomUnitId } from "../utils/data-generators.js";
+import { getEnvironment } from "../config/environments.ts";
+import { endpointThresholds } from "../config/thresholds.ts";
+import { generateBookingDates, getRandomUnitId } from "../utils/data-generators.ts";
 
 // Custom metrics
 const availabilitySuccessRate = new Rate("availability_success_rate");

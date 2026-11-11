@@ -1,23 +1,18 @@
 /**
  * Guest Booking Load Test Scenario
  *
- * Tests the POST /api/guest-booking endpoint under load.
+ * Tests the POST /api/guest-booking/multi-unit endpoint under load.
  * This is the most critical endpoint for the resort system.
  *
  * Target: P95 < 500ms, Error Rate < 1%
  */
 
-import http from "k6/http";
 import { check, sleep } from "k6";
 import { Rate, Trend } from "k6/metrics";
 
-import { getEnvironment } from "../config/environments.js";
-import { endpointThresholds } from "../config/thresholds.js";
-import {
-  generateGuestBookingData,
-  generateIdempotencyKey,
-  getRandomUnitId,
-} from "../utils/data-generators.js";
+import { getEnvironment } from "../config/environments.ts";
+import { endpointThresholds } from "../config/thresholds.ts";
+import { hasBookingReference, postMultiUnitBooking } from "../utils/data-generators.ts";
 
 // Custom metrics
 const bookingSuccessRate = new Rate("booking_success_rate");
@@ -49,49 +44,10 @@ export const options = {
 };
 
 export default function () {
-  const unitId = getRandomUnitId();
-  const bookingData = generateGuestBookingData(unitId);
+  const response = postMultiUnitBooking(env.baseUrl, { endpoint: "guest-booking" });
 
-  const headers = {
-    "Content-Type": "application/json",
-    "X-Idempotency-Key": generateIdempotencyKey(),
-  };
+  bookingDuration.add(response.timings.duration);
 
-  const startTime = Date.now();
-
-  const response = http.post(`${env.baseUrl}/api/guest-booking`, JSON.stringify(bookingData), {
-    headers,
-    tags: { endpoint: "guest-booking" },
-  });
-
-  const duration = Date.now() - startTime;
-  bookingDuration.add(duration);
-
-  // Check response
-  const success = check(response, {
-    "status is 201 (created)": (r) => r.status === 201,
-    "has booking_id": (r) => {
-      try {
-        const body = JSON.parse(r.body as string);
-        return !!body.booking?.booking_id;
-      } catch {
-        return false;
-      }
-    },
-    "has upload credentials": (r) => {
-      try {
-        const body = JSON.parse(r.body as string);
-        return !!body.upload?.token;
-      } catch {
-        return false;
-      }
-    },
-    "response time < 500ms": (r) => r.timings.duration < 500,
-  });
-
-  bookingSuccessRate.add(success);
-
-  // Handle rate limiting
   if (response.status === 429) {
     const retryAfter = parseInt(response.headers["Retry-After"] || "60");
     console.log(`Rate limited. Waiting ${retryAfter}s before retry.`);
@@ -99,8 +55,15 @@ export default function () {
     return;
   }
 
-  // Log failures for debugging
-  if (!success && response.status !== 429) {
+  const success = check(response, {
+    "status is 201 (created) or 200 (replay)": (r) => r.status === 201 || r.status === 200,
+    "has booking_reference": (r) => hasBookingReference(r.body),
+    "response time < 500ms": (r) => r.timings.duration < 500,
+  });
+
+  bookingSuccessRate.add(success);
+
+  if (!success) {
     console.log(`Booking failed: Status ${response.status}, Body: ${response.body}`);
   }
 
@@ -122,7 +85,7 @@ function generateTextSummary(data: Record<string, unknown>): string {
 ╔═══════════════════════════════════════════════════════════════╗
 ║              GUEST BOOKING LOAD TEST RESULTS                  ║
 ╠═══════════════════════════════════════════════════════════════╣
-║ Endpoint: POST /api/guest-booking                             ║
+║ Endpoint: POST /api/guest-booking/multi-unit                  ║
 ║ Target: P95 < 500ms, Error Rate < 1%                          ║
 ╠═══════════════════════════════════════════════════════════════╣
 ║ Response Time:                                                ║

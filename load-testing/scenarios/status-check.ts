@@ -7,13 +7,13 @@
  * Target: P95 < 200ms, Error Rate < 1%
  */
 
-import http from "k6/http";
 import { check, sleep } from "k6";
+import http from "k6/http";
 import { Counter, Rate, Trend } from "k6/metrics";
 
-import { getEnvironment } from "../config/environments.js";
-import { endpointThresholds } from "../config/thresholds.js";
-import { getStatusLookups, type StatusLookup } from "../utils/data-generators.js";
+import { getEnvironment } from "../config/environments.ts";
+import { endpointThresholds } from "../config/thresholds.ts";
+import { getStatusLookups, type StatusLookup } from "../utils/data-generators.ts";
 
 // Custom metrics
 const statusSuccessRate = new Rate("status_success_rate");

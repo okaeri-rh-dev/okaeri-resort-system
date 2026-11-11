@@ -7,8 +7,7 @@ Serverless Cloudflare Pages Functions. Implementation, validation, and middlewar
 | Endpoint                        | Method | Purpose                                                                  | Rate Limit                     |
 | ------------------------------- | ------ | ------------------------------------------------------------------------ | ------------------------------ |
 | `/api/health`                   | GET    | Health check                                                             | None                           |
-| `/api/guest-booking`            | POST   | Create booking                                                           | 5/hour per IP                  |
-| `/api/guest-booking/confirm`    | POST   | Confirm upload                                                           | 5/hour per IP                  |
+| `/api/guest-booking/multi-unit` | POST   | Create booking                                                           | 5/hour per IP                  |
 | `/api/guest-booking/status`     | POST   | Check status, JSON body `{ booking_reference, email, turnstile_token? }` | 20/hour per client fingerprint |
 | `/api/guest-booking/upload-url` | POST   | Proof upload URL                                                         | 10/hour per IP                 |
 
