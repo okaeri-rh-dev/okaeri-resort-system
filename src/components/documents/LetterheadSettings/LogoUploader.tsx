@@ -8,6 +8,7 @@ import {
   LOGO_MAX_SIZE_BYTES,
 } from "@/components/documents/constants";
 import { Button } from "@/components/patterns";
+import { compressImage } from "@/lib/file-validation-client";
 
 interface LogoUploaderProps {
   logo_base64?: string;
@@ -41,11 +42,9 @@ export function LogoUploader({ logo_base64, onLogoChange }: LogoUploaderProps) {
 
         // Compress if over target size
         if (file.size > LOGO_COMPRESSED_MAX_BYTES) {
-          const imageCompression = await import("browser-image-compression");
-          imageToConvert = await imageCompression.default(file, {
+          imageToConvert = await compressImage(file, {
             maxSizeMB: LOGO_COMPRESSED_MAX_BYTES / (1024 * 1024),
             maxWidthOrHeight: 400,
-            useWebWorker: true,
           });
         }
 
