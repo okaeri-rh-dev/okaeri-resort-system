@@ -96,6 +96,10 @@ export const contactChannelKeys = {
   active: () => [...contactChannelKeys.all, "active"] as const,
 };
 
+export const letterheadKeys = {
+  all: ["letterhead"] as const,
+};
+
 export const expenseCategoryKeys = {
   all: ["expense-categories"] as const,
   list: () => [...expenseCategoryKeys.all, "list"] as const,

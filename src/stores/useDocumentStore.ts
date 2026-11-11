@@ -1,20 +1,16 @@
 import { create } from "zustand";
-import { devtools, persist } from "zustand/middleware";
+import { devtools } from "zustand/middleware";
 
 import {
   DEFAULT_CANCELLATION_POLICY,
-  DEFAULT_LETTERHEAD,
   DEFAULT_PAYMENT_TERMS,
   DEFAULT_VAT_RATE,
-  DOCUMENT_PREFIX_MAP,
 } from "@/components/documents/constants";
 import type {
   DocumentFormData,
   DocumentLineItem,
   DocumentPricing,
   DocumentType,
-  LetterheadConfig,
-  LetterheadContacts,
 } from "@/components/documents/types";
 import { toManilaDateString } from "@/lib/timezone";
 
@@ -25,22 +21,9 @@ import { toManilaDateString } from "@/lib/timezone";
 type PreviewMode = "form" | "preview" | "split";
 
 interface DocumentStore {
-  // Persisted state
-  letterhead: LetterheadConfig;
-  documentCounter: number;
-  /** Set once the Contact channel phone and email have filled the letterhead on this device. */
-  contactDefaultsApplied: boolean;
-
-  // Transient state
   formData: DocumentFormData;
   isGenerating: boolean;
   previewMode: PreviewMode;
-
-  // Letterhead actions
-  updateLetterhead: (partial: Partial<LetterheadConfig>) => void;
-  resetLetterhead: (contacts: LetterheadContacts) => void;
-  /** Fills empty phone and email once per device; later blanks are kept. */
-  applyContactDefaults: (contacts: LetterheadContacts) => void;
 
   // Form actions
   setFormData: (partial: Partial<DocumentFormData>) => void;
@@ -57,9 +40,6 @@ interface DocumentStore {
   setDiscountAmount: (amount: number) => void;
   setDiscountLabel: (label: string) => void;
   setVatRate: (rate: number) => void;
-
-  // Document number
-  generateDocumentNumber: (type: DocumentType) => string;
 
   // UI state
   setIsGenerating: (value: boolean) => void;
@@ -122,54 +102,11 @@ function createInitialFormData(): DocumentFormData {
   };
 }
 
-// ============================================
-// PERSISTENCE
-// ============================================
-
-const DOCUMENT_STORE_VERSION = 1;
-
-type PersistedDocumentState = Pick<
-  DocumentStore,
-  "letterhead" | "documentCounter" | "contactDefaultsApplied"
->;
-
-// Version 0 shipped made-up contact details; staff-edited values must survive the upgrade.
-const VERSION_0_PLACEHOLDERS: Partial<Record<keyof LetterheadConfig, string>> = {
-  address_line_1: "123 Resort Road",
-  city: "Nasugbu",
-  province: "Batangas",
-  zip_code: "4231",
-  phone: "0917 000 0000",
-  email: "info@okaeriresort.com",
-  website: "www.okaeriresort.com",
-};
-
-function replaceVersion0Placeholders(letterhead: LetterheadConfig): LetterheadConfig {
-  const migrated = { ...letterhead };
-  for (const [field, placeholder] of Object.entries(VERSION_0_PLACEHOLDERS)) {
-    const key = field as keyof LetterheadConfig;
-    if (migrated[key] === placeholder) migrated[key] = DEFAULT_LETTERHEAD[key] ?? "";
-  }
-  // The Plus Code belongs to the new address, so it only joins a placeholder address.
-  if (
-    letterhead.address_line_1 === VERSION_0_PLACEHOLDERS.address_line_1 &&
-    !letterhead.address_line_2
-  ) {
-    migrated.address_line_2 = DEFAULT_LETTERHEAD.address_line_2;
-  }
-  return migrated;
-}
-
-function migrateDocumentState(persisted: unknown, version: number): PersistedDocumentState {
-  const state = persisted as PersistedDocumentState;
-  if (version === 0) {
-    return {
-      ...state,
-      letterhead: replaceVersion0Placeholders(state.letterhead),
-      contactDefaultsApplied: false,
-    };
-  }
-  return state;
+// The letterhead and counter that devices saved here now live in the database.
+try {
+  localStorage.removeItem("document-storage");
+} catch {
+  // Storage is blocked; nothing reads the old key anyway.
 }
 
 // ============================================
@@ -178,241 +115,180 @@ function migrateDocumentState(persisted: unknown, version: number): PersistedDoc
 
 export const useDocumentStore = create<DocumentStore>()(
   devtools(
-    persist(
-      (set, get) => ({
-        // Persisted state
-        letterhead: { ...DEFAULT_LETTERHEAD },
-        documentCounter: 0,
-        contactDefaultsApplied: false,
+    (set) => ({
+      formData: createInitialFormData(),
+      isGenerating: false,
+      previewMode: "split" as PreviewMode,
 
-        // Transient state
-        formData: createInitialFormData(),
-        isGenerating: false,
-        previewMode: "split" as PreviewMode,
+      // Form actions
+      setFormData: (partial) =>
+        set(
+          (state) => ({
+            formData: { ...state.formData, ...partial },
+          }),
+          false,
+          "setFormData"
+        ),
 
-        // Letterhead actions
-        updateLetterhead: (partial) =>
-          set(
-            (state) => ({ letterhead: { ...state.letterhead, ...partial } }),
-            false,
-            "updateLetterhead"
-          ),
+      setDocumentType: (type) =>
+        set(
+          (state) => ({
+            formData: { ...state.formData, document_type: type },
+          }),
+          false,
+          "setDocumentType"
+        ),
 
-        resetLetterhead: (contacts) =>
-          set(
-            { letterhead: { ...DEFAULT_LETTERHEAD, ...contacts }, contactDefaultsApplied: true },
-            false,
-            "resetLetterhead"
-          ),
-
-        applyContactDefaults: (contacts) => {
-          const { letterhead, contactDefaultsApplied } = get();
-          if (contactDefaultsApplied || (!contacts.phone && !contacts.email)) return;
-          set(
-            {
-              letterhead: {
-                ...letterhead,
-                phone: letterhead.phone || contacts.phone,
-                email: letterhead.email || contacts.email,
-              },
-              contactDefaultsApplied: true,
+      setRecipientField: (field, value) =>
+        set(
+          (state) => ({
+            formData: {
+              ...state.formData,
+              recipient: { ...state.formData.recipient, [field]: value },
             },
-            false,
-            "applyContactDefaults"
-          );
-        },
+          }),
+          false,
+          "setRecipientField"
+        ),
 
-        // Form actions
-        setFormData: (partial) =>
-          set(
-            (state) => ({
-              formData: { ...state.formData, ...partial },
-            }),
-            false,
-            "setFormData"
-          ),
+      // Line item actions
+      addLineItem: (item) =>
+        set(
+          (state) => {
+            const newItems = [...state.formData.line_items, item];
+            const pricing = calculatePricing(
+              newItems,
+              state.formData.pricing.discount_amount,
+              state.formData.pricing.vat_rate,
+              state.formData.pricing.discount_label
+            );
+            return {
+              formData: { ...state.formData, line_items: newItems, pricing },
+            };
+          },
+          false,
+          "addLineItem"
+        ),
 
-        setDocumentType: (type) =>
-          set(
-            (state) => ({
-              formData: { ...state.formData, document_type: type },
-            }),
-            false,
-            "setDocumentType"
-          ),
+      removeLineItem: (id) =>
+        set(
+          (state) => {
+            const newItems = state.formData.line_items.filter((item) => item.id !== id);
+            const pricing = calculatePricing(
+              newItems,
+              state.formData.pricing.discount_amount,
+              state.formData.pricing.vat_rate,
+              state.formData.pricing.discount_label
+            );
+            return {
+              formData: { ...state.formData, line_items: newItems, pricing },
+            };
+          },
+          false,
+          "removeLineItem"
+        ),
 
-        setRecipientField: (field, value) =>
-          set(
-            (state) => ({
-              formData: {
-                ...state.formData,
-                recipient: { ...state.formData.recipient, [field]: value },
-              },
-            }),
-            false,
-            "setRecipientField"
-          ),
+      updateLineItem: (id, partial) =>
+        set(
+          (state) => {
+            const newItems = state.formData.line_items.map((item) => {
+              if (item.id !== id) return item;
+              const updated = { ...item, ...partial };
+              updated.amount = updated.quantity * updated.unit_price;
+              return updated;
+            });
+            const pricing = calculatePricing(
+              newItems,
+              state.formData.pricing.discount_amount,
+              state.formData.pricing.vat_rate,
+              state.formData.pricing.discount_label
+            );
+            return {
+              formData: { ...state.formData, line_items: newItems, pricing },
+            };
+          },
+          false,
+          "updateLineItem"
+        ),
 
-        // Line item actions
-        addLineItem: (item) =>
-          set(
-            (state) => {
-              const newItems = [...state.formData.line_items, item];
-              const pricing = calculatePricing(
-                newItems,
-                state.formData.pricing.discount_amount,
-                state.formData.pricing.vat_rate,
-                state.formData.pricing.discount_label
-              );
-              return {
-                formData: { ...state.formData, line_items: newItems, pricing },
-              };
+      // Pricing actions
+      recalculatePricing: () =>
+        set(
+          (state) => {
+            const pricing = calculatePricing(
+              state.formData.line_items,
+              state.formData.pricing.discount_amount,
+              state.formData.pricing.vat_rate,
+              state.formData.pricing.discount_label
+            );
+            return {
+              formData: { ...state.formData, pricing },
+            };
+          },
+          false,
+          "recalculatePricing"
+        ),
+
+      setDiscountAmount: (amount) =>
+        set(
+          (state) => {
+            const pricing = calculatePricing(
+              state.formData.line_items,
+              amount,
+              state.formData.pricing.vat_rate,
+              state.formData.pricing.discount_label
+            );
+            return {
+              formData: { ...state.formData, pricing },
+            };
+          },
+          false,
+          "setDiscountAmount"
+        ),
+
+      setDiscountLabel: (label) =>
+        set(
+          (state) => ({
+            formData: {
+              ...state.formData,
+              pricing: { ...state.formData.pricing, discount_label: label },
             },
-            false,
-            "addLineItem"
-          ),
+          }),
+          false,
+          "setDiscountLabel"
+        ),
 
-        removeLineItem: (id) =>
-          set(
-            (state) => {
-              const newItems = state.formData.line_items.filter((item) => item.id !== id);
-              const pricing = calculatePricing(
-                newItems,
-                state.formData.pricing.discount_amount,
-                state.formData.pricing.vat_rate,
-                state.formData.pricing.discount_label
-              );
-              return {
-                formData: { ...state.formData, line_items: newItems, pricing },
-              };
-            },
-            false,
-            "removeLineItem"
-          ),
+      setVatRate: (rate) =>
+        set(
+          (state) => {
+            const pricing = calculatePricing(
+              state.formData.line_items,
+              state.formData.pricing.discount_amount,
+              rate,
+              state.formData.pricing.discount_label
+            );
+            return {
+              formData: { ...state.formData, pricing },
+            };
+          },
+          false,
+          "setVatRate"
+        ),
 
-        updateLineItem: (id, partial) =>
-          set(
-            (state) => {
-              const newItems = state.formData.line_items.map((item) => {
-                if (item.id !== id) return item;
-                const updated = { ...item, ...partial };
-                updated.amount = updated.quantity * updated.unit_price;
-                return updated;
-              });
-              const pricing = calculatePricing(
-                newItems,
-                state.formData.pricing.discount_amount,
-                state.formData.pricing.vat_rate,
-                state.formData.pricing.discount_label
-              );
-              return {
-                formData: { ...state.formData, line_items: newItems, pricing },
-              };
-            },
-            false,
-            "updateLineItem"
-          ),
+      // UI state
+      setIsGenerating: (value) => set({ isGenerating: value }, false, "setIsGenerating"),
+      setPreviewMode: (mode) => set({ previewMode: mode }, false, "setPreviewMode"),
 
-        // Pricing actions
-        recalculatePricing: () =>
-          set(
-            (state) => {
-              const pricing = calculatePricing(
-                state.formData.line_items,
-                state.formData.pricing.discount_amount,
-                state.formData.pricing.vat_rate,
-                state.formData.pricing.discount_label
-              );
-              return {
-                formData: { ...state.formData, pricing },
-              };
-            },
-            false,
-            "recalculatePricing"
-          ),
-
-        setDiscountAmount: (amount) =>
-          set(
-            (state) => {
-              const pricing = calculatePricing(
-                state.formData.line_items,
-                amount,
-                state.formData.pricing.vat_rate,
-                state.formData.pricing.discount_label
-              );
-              return {
-                formData: { ...state.formData, pricing },
-              };
-            },
-            false,
-            "setDiscountAmount"
-          ),
-
-        setDiscountLabel: (label) =>
-          set(
-            (state) => ({
-              formData: {
-                ...state.formData,
-                pricing: { ...state.formData.pricing, discount_label: label },
-              },
-            }),
-            false,
-            "setDiscountLabel"
-          ),
-
-        setVatRate: (rate) =>
-          set(
-            (state) => {
-              const pricing = calculatePricing(
-                state.formData.line_items,
-                state.formData.pricing.discount_amount,
-                rate,
-                state.formData.pricing.discount_label
-              );
-              return {
-                formData: { ...state.formData, pricing },
-              };
-            },
-            false,
-            "setVatRate"
-          ),
-
-        // Document number
-        generateDocumentNumber: (type) => {
-          const state = get();
-          const nextCounter = state.documentCounter + 1;
-          set({ documentCounter: nextCounter }, false, "incrementCounter");
-          const prefix = DOCUMENT_PREFIX_MAP[type];
-          const year = new Date().getFullYear();
-          const padded = String(nextCounter).padStart(4, "0");
-          return `${prefix}-${year}-${padded}`;
-        },
-
-        // UI state
-        setIsGenerating: (value) => set({ isGenerating: value }, false, "setIsGenerating"),
-        setPreviewMode: (mode) => set({ previewMode: mode }, false, "setPreviewMode"),
-
-        resetForm: () =>
-          set(
-            {
-              formData: createInitialFormData(),
-              isGenerating: false,
-            },
-            false,
-            "resetForm"
-          ),
-      }),
-      {
-        name: "document-storage",
-        version: DOCUMENT_STORE_VERSION,
-        migrate: migrateDocumentState,
-        partialize: (state): PersistedDocumentState => ({
-          letterhead: state.letterhead,
-          documentCounter: state.documentCounter,
-          contactDefaultsApplied: state.contactDefaultsApplied,
-        }),
-      }
-    ),
+      resetForm: () =>
+        set(
+          {
+            formData: createInitialFormData(),
+            isGenerating: false,
+          },
+          false,
+          "resetForm"
+        ),
+    }),
     { name: "DocumentStore" }
   )
 );

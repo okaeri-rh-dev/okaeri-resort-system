@@ -1,8 +1,18 @@
 import { useState } from "react";
 
+import { DEFAULT_LETTERHEAD } from "@/components/documents/constants";
 import { toLetterheadContacts } from "@/components/documents/letterhead-contacts";
 import type { LetterheadConfig } from "@/components/documents/types";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
   Button,
   Dialog,
   DialogContent,
@@ -14,37 +24,54 @@ import {
   Label,
 } from "@/components/patterns";
 import { useActiveContactChannels } from "@/hooks/useContactChannels";
-import { useDocumentStore } from "@/stores/useDocumentStore";
+import { useSaveLetterhead } from "@/hooks/useDocuments";
 
 import { LogoUploader } from "./LogoUploader";
 
 interface LetterheadSettingsProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  letterhead: LetterheadConfig;
 }
 
-export function LetterheadSettings({ open, onOpenChange }: LetterheadSettingsProps) {
-  const { letterhead, updateLetterhead, resetLetterhead } = useDocumentStore();
-  const { data: contactChannels } = useActiveContactChannels();
+export function LetterheadSettings({ open, onOpenChange, letterhead }: LetterheadSettingsProps) {
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-h-[85vh] max-w-lg overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Letterhead Settings</DialogTitle>
+          <DialogDescription>
+            Configure your resort's letterhead details. These appear on all generated documents, on
+            every device.
+          </DialogDescription>
+        </DialogHeader>
 
-  // Local state for the form to batch updates on save
+        <LetterheadForm letterhead={letterhead} onSaved={() => onOpenChange(false)} />
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// Mounts each time the dialog opens, so the form starts from the latest shared letterhead.
+function LetterheadForm({
+  letterhead,
+  onSaved,
+}: {
+  letterhead: LetterheadConfig;
+  onSaved: () => void;
+}) {
+  const { data: contactChannels } = useActiveContactChannels();
+  const saveLetterhead = useSaveLetterhead();
   const [local, setLocal] = useState(letterhead);
 
-  // Sync local state when dialog opens
-  const handleOpenChange = (nextOpen: boolean) => {
-    if (nextOpen) setLocal(letterhead);
-    onOpenChange(nextOpen);
-  };
-
   const handleSave = () => {
-    updateLetterhead(local);
-    onOpenChange(false);
+    saveLetterhead.mutate(local, { onSuccess: onSaved });
   };
 
   const handleReset = () => {
     if (!contactChannels) return;
-    resetLetterhead(toLetterheadContacts(contactChannels));
-    setLocal(useDocumentStore.getState().letterhead);
+    const defaults = { ...DEFAULT_LETTERHEAD, ...toLetterheadContacts(contactChannels) };
+    saveLetterhead.mutate(defaults, { onSuccess: () => setLocal(defaults) });
   };
 
   const set = (field: keyof LetterheadConfig, value: string | undefined) => {
@@ -52,133 +79,141 @@ export function LetterheadSettings({ open, onOpenChange }: LetterheadSettingsPro
   };
 
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="max-h-[85vh] max-w-lg overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Letterhead Settings</DialogTitle>
-          <DialogDescription>
-            Configure your resort's letterhead details. These appear on all generated documents.
-          </DialogDescription>
-        </DialogHeader>
+    <>
+      <div className="@container space-y-4 py-2">
+        <LogoUploader
+          logo_base64={local.logo_base64}
+          onLogoChange={(val) => set("logo_base64", val)}
+        />
 
-        <div className="@container space-y-4 py-2">
-          <LogoUploader
-            logo_base64={local.logo_base64}
-            onLogoChange={(val) => set("logo_base64", val)}
-          />
+        <div className="grid gap-3 @md:grid-cols-2">
+          <div className="@md:col-span-2">
+            <Label htmlFor="resort_name">Resort Name</Label>
+            <Input
+              id="resort_name"
+              value={local.resort_name}
+              onChange={(e) => set("resort_name", e.target.value)}
+            />
+          </div>
 
-          <div className="grid gap-3 @md:grid-cols-2">
-            <div className="@md:col-span-2">
-              <Label htmlFor="resort_name">Resort Name</Label>
-              <Input
-                id="resort_name"
-                value={local.resort_name}
-                onChange={(e) => set("resort_name", e.target.value)}
-              />
-            </div>
+          <div className="@md:col-span-2">
+            <Label htmlFor="tagline">Tagline</Label>
+            <Input
+              id="tagline"
+              value={local.tagline || ""}
+              onChange={(e) => set("tagline", e.target.value)}
+              placeholder="Your Home Away From Home"
+            />
+          </div>
 
-            <div className="@md:col-span-2">
-              <Label htmlFor="tagline">Tagline</Label>
-              <Input
-                id="tagline"
-                value={local.tagline || ""}
-                onChange={(e) => set("tagline", e.target.value)}
-                placeholder="Your Home Away From Home"
-              />
-            </div>
+          <div className="@md:col-span-2">
+            <Label htmlFor="address_line_1">Address Line 1</Label>
+            <Input
+              id="address_line_1"
+              value={local.address_line_1}
+              onChange={(e) => set("address_line_1", e.target.value)}
+            />
+          </div>
 
-            <div className="@md:col-span-2">
-              <Label htmlFor="address_line_1">Address Line 1</Label>
-              <Input
-                id="address_line_1"
-                value={local.address_line_1}
-                onChange={(e) => set("address_line_1", e.target.value)}
-              />
-            </div>
+          <div className="@md:col-span-2">
+            <Label htmlFor="address_line_2">Address Line 2</Label>
+            <Input
+              id="address_line_2"
+              value={local.address_line_2 || ""}
+              onChange={(e) => set("address_line_2", e.target.value)}
+              placeholder="Building, Floor, etc."
+            />
+          </div>
 
-            <div className="@md:col-span-2">
-              <Label htmlFor="address_line_2">Address Line 2</Label>
-              <Input
-                id="address_line_2"
-                value={local.address_line_2 || ""}
-                onChange={(e) => set("address_line_2", e.target.value)}
-                placeholder="Building, Floor, etc."
-              />
-            </div>
+          <div>
+            <Label htmlFor="city">City</Label>
+            <Input id="city" value={local.city} onChange={(e) => set("city", e.target.value)} />
+          </div>
 
-            <div>
-              <Label htmlFor="city">City</Label>
-              <Input id="city" value={local.city} onChange={(e) => set("city", e.target.value)} />
-            </div>
+          <div>
+            <Label htmlFor="province">Province</Label>
+            <Input
+              id="province"
+              value={local.province}
+              onChange={(e) => set("province", e.target.value)}
+            />
+          </div>
 
-            <div>
-              <Label htmlFor="province">Province</Label>
-              <Input
-                id="province"
-                value={local.province}
-                onChange={(e) => set("province", e.target.value)}
-              />
-            </div>
+          <div>
+            <Label htmlFor="zip_code">ZIP Code</Label>
+            <Input
+              id="zip_code"
+              value={local.zip_code}
+              onChange={(e) => set("zip_code", e.target.value)}
+            />
+          </div>
 
-            <div>
-              <Label htmlFor="zip_code">ZIP Code</Label>
-              <Input
-                id="zip_code"
-                value={local.zip_code}
-                onChange={(e) => set("zip_code", e.target.value)}
-              />
-            </div>
+          <div>
+            <Label htmlFor="phone">Phone</Label>
+            <Input id="phone" value={local.phone} onChange={(e) => set("phone", e.target.value)} />
+          </div>
 
-            <div>
-              <Label htmlFor="phone">Phone</Label>
-              <Input
-                id="phone"
-                value={local.phone}
-                onChange={(e) => set("phone", e.target.value)}
-              />
-            </div>
+          <div>
+            <Label htmlFor="email">Email</Label>
+            <Input
+              id="email"
+              type="email"
+              value={local.email}
+              onChange={(e) => set("email", e.target.value)}
+            />
+          </div>
 
-            <div>
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                value={local.email}
-                onChange={(e) => set("email", e.target.value)}
-              />
-            </div>
+          <div>
+            <Label htmlFor="website">Website</Label>
+            <Input
+              id="website"
+              value={local.website || ""}
+              onChange={(e) => set("website", e.target.value)}
+              placeholder="www.example.com"
+            />
+          </div>
 
-            <div>
-              <Label htmlFor="website">Website</Label>
-              <Input
-                id="website"
-                value={local.website || ""}
-                onChange={(e) => set("website", e.target.value)}
-                placeholder="www.example.com"
-              />
-            </div>
-
-            <div className="@md:col-span-2">
-              <Label htmlFor="tin">TIN (Tax Identification Number)</Label>
-              <Input
-                id="tin"
-                value={local.tin || ""}
-                onChange={(e) => set("tin", e.target.value)}
-                placeholder="000-000-000-000"
-              />
-            </div>
+          <div className="@md:col-span-2">
+            <Label htmlFor="tin">TIN (Tax Identification Number)</Label>
+            <Input
+              id="tin"
+              value={local.tin || ""}
+              onChange={(e) => set("tin", e.target.value)}
+              placeholder="000-000-000-000"
+            />
           </div>
         </div>
+      </div>
 
-        <DialogFooter className="gap-2">
-          <Button type="button" variant="outline" onClick={handleReset} disabled={!contactChannels}>
-            Reset to Defaults
-          </Button>
-          <Button type="button" onClick={handleSave}>
-            Save Settings
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+      <DialogFooter className="gap-2">
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button
+              type="button"
+              variant="outline"
+              disabled={!contactChannels || saveLetterhead.isPending}
+            >
+              Reset to Defaults
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Reset the letterhead?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This replaces the letterhead on every device with the default one and the phone and
+                email of the active contact channels.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Keep it</AlertDialogCancel>
+              <AlertDialogAction onClick={handleReset}>Reset letterhead</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+        <Button type="button" onClick={handleSave} disabled={saveLetterhead.isPending}>
+          Save Settings
+        </Button>
+      </DialogFooter>
+    </>
   );
 }

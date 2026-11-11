@@ -42,7 +42,7 @@ export const FORM_SYNC_DEBOUNCE_MS = 300;
 
 export const LOGO_MAX_SIZE_BYTES = 500 * 1024; // 500KB
 export const LOGO_COMPRESSED_MAX_BYTES = 200 * 1024; // 200KB target after compression
-export const LOGO_BASE64_MAX_BYTES = 300 * 1024; // ~300KB base64 limit for localStorage safety
+export const LOGO_BASE64_MAX_BYTES = 300 * 1024; // ~300KB; the letterhead table checks the same limit
 
 /** Validate that a base64 string is a safe raster image data URI (blocks SVG to prevent XSS) */
 export function isValidImageDataUri(src: string | undefined): src is string {
