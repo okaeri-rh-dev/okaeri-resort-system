@@ -102,6 +102,13 @@ function createInitialFormData(): DocumentFormData {
   };
 }
 
+// The letterhead and counter that devices saved here now live in the database.
+try {
+  localStorage.removeItem("document-storage");
+} catch {
+  // Storage is blocked; nothing reads the old key anyway.
+}
+
 // ============================================
 // STORE
 // ============================================

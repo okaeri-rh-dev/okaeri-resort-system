@@ -21,14 +21,17 @@ const letterheadQuery = () =>
   });
 
 /** The shared letterhead; until someone saves it, the default one with the active contact channels. */
-export function useLetterhead(): LetterheadConfig | undefined {
-  const { data: saved } = useQuery(letterheadQuery());
-  const { data: channels } = useActiveContactChannels();
-  if (saved) return saved;
+export function useLetterhead(): { letterhead?: LetterheadConfig; isError: boolean } {
+  const { data: saved, isError: savedFailed } = useQuery(letterheadQuery());
+  const { data: channels, isError: channelsFailed } = useActiveContactChannels();
+  if (saved) return { letterhead: saved, isError: false };
   if (saved === null && channels) {
-    return { ...DEFAULT_LETTERHEAD, ...toLetterheadContacts(channels) };
+    return {
+      letterhead: { ...DEFAULT_LETTERHEAD, ...toLetterheadContacts(channels) },
+      isError: false,
+    };
   }
-  return undefined;
+  return { isError: savedFailed || (saved === null && channelsFailed) };
 }
 
 // Blank optional fields go as "", so a cleared logo or TIN is also cleared in the shared row.

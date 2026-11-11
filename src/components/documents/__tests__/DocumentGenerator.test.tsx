@@ -79,6 +79,25 @@ describe("DocumentGenerator shared letterhead", () => {
     expect(screen.getAllByText("Amita St., Brgy. Taboc").length).toBeGreaterThan(0);
   });
 
+  it("says the letterhead failed to load and keeps Download off", async () => {
+    documents.letterhead.mockResolvedValue({ data: null, error: { message: "Failed to fetch" } });
+    useDocumentStore.getState().addLineItem({
+      id: "item-1",
+      type: "accommodation",
+      description: "Cabin stay",
+      quantity: 1,
+      unit_label: "night",
+      unit_price: 5000,
+      amount: 5000,
+    });
+    renderGenerator();
+
+    expect(await screen.findByText("Could not load the letterhead")).toBeInTheDocument();
+    for (const download of screen.getAllByRole("button", { name: "Download PDF" })) {
+      expect(download).toBeDisabled();
+    }
+  });
+
   it("shows the saved letterhead", async () => {
     documents.letterhead.mockResolvedValue({
       data: { ...DEFAULT_LETTERHEAD, phone: "+63 917 555 0101", email: "" },

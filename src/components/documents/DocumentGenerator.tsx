@@ -4,6 +4,7 @@ import { Download, Eye, FileText, Settings } from "lucide-react";
 
 import {
   Button,
+  Callout,
   Sheet,
   SheetContent,
   SheetHeader,
@@ -25,7 +26,7 @@ import type { GeneratedDocument } from "./types";
 
 export function DocumentGenerator() {
   const { formData, isGenerating, setDocumentType, setFormData } = useDocumentStore();
-  const letterhead = useLetterhead();
+  const { letterhead, isError: letterheadFailed } = useLetterhead();
   const { mutateAsync: allocateDocumentNumber, isPending: isAllocating } =
     useAllocateDocumentNumber();
   const { generate } = useGeneratePDF();
@@ -127,6 +128,12 @@ export function DocumentGenerator() {
           </Button>
         </div>
       </div>
+
+      {letterheadFailed && (
+        <Callout tone="danger" title="Could not load the letterhead" className="mb-4">
+          Documents need the shared letterhead. Check the connection and reload the page.
+        </Callout>
+      )}
 
       {/* ========== Desktop Layout (≥1200px): Side-by-side ========== */}
       <div className="large:flex hidden flex-1 gap-4 overflow-hidden">

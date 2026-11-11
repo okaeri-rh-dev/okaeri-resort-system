@@ -48,6 +48,7 @@ BEGIN
         DO UPDATE SET last_number = public.document_number_sequences.last_number + 1
     RETURNING last_number INTO v_number;
 
+    -- Prefixes match DOCUMENT_PREFIX_MAP in the app.
     RETURN CASE p_document_type WHEN 'quotation' THEN 'QUO' ELSE 'INV' END
         || '-' || p_year
         || '-' || lpad(v_number::TEXT, GREATEST(4, length(v_number::TEXT)), '0');

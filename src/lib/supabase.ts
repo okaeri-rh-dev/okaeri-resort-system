@@ -1200,8 +1200,7 @@ export const db = {
     /** The letterhead row, or null before anyone saves it */
     letterhead: () => supabase.from("letterhead").select().maybeSingle(),
 
-    saveLetterhead: (data: TablesInsert<"letterhead">) =>
-      supabase.from("letterhead").upsert(data).select().single(),
+    saveLetterhead: (data: TablesInsert<"letterhead">) => supabase.from("letterhead").upsert(data),
   },
 
   // Expense Categories configuration (expense form dropdowns)
