@@ -3,7 +3,7 @@ import { useRef, useState } from "react";
 import { CheckCircle, FileImage, FileText, Loader2, RotateCcw, Upload, X } from "lucide-react";
 
 import { Button, Callout, Progress } from "@/components/patterns";
-import { formatFileSize, shrinkImage, validateFile } from "@/lib/file-validation-client";
+import { formatFileSize, shrinkAndValidate } from "@/lib/file-validation-client";
 import { cn } from "@/lib/utils";
 
 export interface PaymentProofUploadProps {
@@ -22,10 +22,6 @@ export interface PaymentProofUploadProps {
 type UploadState =
   | { status: "empty" | "uploaded"; rejection?: string }
   | { status: "validating" | "uploading" | "failed" };
-
-const MAX_IMAGE_SIZE = 10 * 1024 * 1024;
-// Matches the server limit in functions/api/guest-booking/upload-url.ts.
-const MAX_UPLOAD_SIZE = 5 * 1024 * 1024;
 
 interface CompressionInfo {
   originalSize: number;
@@ -143,25 +139,14 @@ export function PaymentProofUpload({
   const checkAndUpload = async (chosenFile: File) => {
     setUploadState({ status: "validating" });
     setCompressionInfo(null);
-    const reject = (message: string) =>
-      setUploadState({ status: value ? "uploaded" : "empty", rejection: message });
-    const isImage = ["image/jpeg", "image/png"].includes(chosenFile.type);
 
     try {
-      if (isImage && chosenFile.size > MAX_IMAGE_SIZE) {
-        reject("Images can be up to 10MB. Choose a smaller image.");
-        return;
-      }
-
-      const shrunk = await shrinkImage(chosenFile);
-      if (isImage && shrunk === chosenFile && chosenFile.size > MAX_UPLOAD_SIZE) {
-        reject("We couldn't make this image smaller. Choose an image under 5MB.");
-        return;
-      }
-
-      const validationError = await validateFile(shrunk);
-      if (validationError) {
-        reject(validationError.message);
+      const shrunk = await shrinkAndValidate(chosenFile);
+      if (!(shrunk instanceof File)) {
+        setUploadState({
+          status: value ? "uploaded" : "empty",
+          rejection: shrunk.message,
+        });
         return;
       }
 
