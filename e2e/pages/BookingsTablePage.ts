@@ -169,24 +169,6 @@ export class BookingsTablePage {
     return this.tableBodyRows.count();
   }
 
-  /**
-   * Get all booking references from the table
-   * References open the booking sheet
-   */
-  async getBookingReferences(): Promise<string[]> {
-    const refs: string[] = [];
-    const refLinks = this.page.locator('table tbody td a[href*="booking="]');
-    const count = await refLinks.count();
-
-    for (let i = 0; i < count; i++) {
-      const text = await refLinks.nth(i).textContent();
-      if (text) {
-        refs.push(text.trim());
-      }
-    }
-    return refs;
-  }
-
   /** The booking open in its sheet (`?booking=<id>`) */
   get bookingSheet(): Locator {
     return this.page.getByRole("dialog");

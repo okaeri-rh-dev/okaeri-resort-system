@@ -12,13 +12,11 @@ import { COMPACT, EXPANDED, expectReadable, useTheme } from "./fixtures/contrast
 
 const THEMES = ["light", "dark"] as const;
 
-const isoDay = (offsetDays: number) => {
-  const day = new Date();
-  day.setDate(day.getDate() + offsetDays);
-  const month = String(day.getMonth() + 1).padStart(2, "0");
-  const date = String(day.getDate()).padStart(2, "0");
-  return `${day.getFullYear()}-${month}-${date}`;
-};
+// The dashboard's "Today" is the Manila day, not the runner's (UTC in CI)
+const isoDay = (offsetDays: number) =>
+  new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Manila" }).format(
+    Date.now() + offsetDays * 24 * 60 * 60 * 1000
+  );
 
 const stubUnit = (unitCode: string) => ({
   unit_id: `00000000-0000-4000-8000-00000000c${unitCode.slice(-1)}00`,
