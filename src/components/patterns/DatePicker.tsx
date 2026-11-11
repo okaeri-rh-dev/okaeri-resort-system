@@ -5,6 +5,7 @@ import type { DateRange } from "react-day-picker";
 import {
   ResponsiveDatePicker,
   ResponsiveDateRangePicker,
+  type ResponsiveDateRangePickerProps,
 } from "@/components/ui/responsive-date-picker";
 
 import { CompactWindowContext } from "./window-size";
@@ -64,7 +65,10 @@ export function DatePicker({
   );
 }
 
-export interface DateRangePickerProps {
+export interface DateRangePickerProps extends Pick<
+  ResponsiveDateRangePickerProps,
+  "allowSameDay" | "startHint" | "endHint"
+> {
   value?: DateRange;
   onChange: (range: DateRange | undefined) => void;
   /** Return true for dates that can't be picked, such as booked days. */
@@ -83,11 +87,16 @@ export interface DateRangePickerProps {
 
 /**
  * A from–to date field, such as stay dates. Same trigger and sheet/popover behaviour as
- * `DatePicker`; the sheet closes once both ends are picked.
+ * `DatePicker`, but a tap never closes it; the sheet has a "Done" button. A `role="status"` hint above the
+ * calendar names the end the next tap sets; `startHint` / `endHint` reword it, and
+ * `allowSameDay={false}` makes the end come after the start.
  *
  * @example
  * ```tsx
- * <DateRangePicker value={stay} onChange={setStay} placeholder="Stay dates" aria-label="Stay dates" />
+ * <DateRangePicker value={range} onChange={setRange} placeholder="Dates" aria-label="Dates" />
+ *
+ * <DateRangePicker value={stay} onChange={setStay} placeholder="Stay dates" aria-label="Stay dates"
+ *   startHint="Select check-in day" endHint="Select check-out day" allowSameDay={false} />
  * ```
  */
 export function DateRangePicker({
@@ -100,6 +109,9 @@ export function DateRangePicker({
   "aria-describedby": ariaDescribedby,
   disabled,
   className,
+  allowSameDay,
+  startHint,
+  endHint,
 }: DateRangePickerProps) {
   const isCompact = useContext(CompactWindowContext);
   return (
@@ -114,6 +126,9 @@ export function DateRangePicker({
       aria-describedby={ariaDescribedby}
       buttonDisabled={disabled}
       buttonClassName={className}
+      allowSameDay={allowSameDay}
+      startHint={startHint}
+      endHint={endHint}
     />
   );
 }

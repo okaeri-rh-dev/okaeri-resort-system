@@ -12,10 +12,13 @@ import "./responsive-date-picker.css";
 import { Button } from "./button";
 import { Calendar } from "./calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "./popover";
+import { nextRangeOnTap, nextTapHint } from "./range-tap-cycle";
 import {
   Sheet,
+  SheetClose,
   SheetContent,
   SheetDescription,
+  SheetFooter,
   SheetHeader,
   SheetTitle,
   SheetTrigger,
@@ -174,6 +177,12 @@ export interface ResponsiveDateRangePickerProps {
   buttonDisabled?: boolean;
   /** Open in a bottom sheet with one month instead of a popover. */
   sheet?: boolean;
+  /** False ignores a second tap on the start day, so the end must come after it. Defaults to true. */
+  allowSameDay?: boolean;
+  /** Hint shown while the next tap sets the start. Defaults to "Select start date". */
+  startHint?: string;
+  /** Hint shown while the next tap sets the end. Defaults to "Select end date". */
+  endHint?: string;
 }
 
 export function ResponsiveDateRangePicker({
@@ -191,20 +200,15 @@ export function ResponsiveDateRangePicker({
   "aria-describedby": ariaDescribedby,
   buttonDisabled = false,
   sheet = false,
+  allowSameDay,
+  startHint,
+  endHint,
 }: ResponsiveDateRangePickerProps) {
-  const [open, setOpen] = React.useState(false);
-  const autoCloseTimeout = React.useRef<ReturnType<typeof setTimeout>>(undefined);
-
-  React.useEffect(() => () => clearTimeout(autoCloseTimeout.current), []);
-
-  const handleSelect = (range: DateRange | undefined) => {
-    onChange?.(range);
-    // Auto-close on mobile when both dates are selected
-    if (sheet && range?.from && range?.to) {
-      clearTimeout(autoCloseTimeout.current);
-      autoCloseTimeout.current = setTimeout(() => setOpen(false), 200); // Small delay for visual feedback
-    }
+  const handleSelect = (_libraryRange: DateRange | undefined, tappedDay: Date) => {
+    onChange?.(nextRangeOnTap(value, tappedDay, { allowSameDay }));
   };
+
+  const hint = nextTapHint(value, { startHint, endHint });
 
   const displayText = React.useMemo(() => {
     if (!value?.from) return placeholder;
@@ -235,7 +239,7 @@ export function ResponsiveDateRangePicker({
   // Mobile: Bottom Sheet with single month view
   if (sheet) {
     return (
-      <Sheet open={open} onOpenChange={setOpen}>
+      <Sheet>
         <SheetTrigger asChild>{triggerButton}</SheetTrigger>
         <SheetContent
           side="bottom"
@@ -243,7 +247,7 @@ export function ResponsiveDateRangePicker({
         >
           <SheetHeader className="mb-4">
             <SheetTitle>Select Date Range</SheetTitle>
-            <SheetDescription>Choose your check-in and check-out dates</SheetDescription>
+            <SheetDescription role="status">{hint}</SheetDescription>
           </SheetHeader>
           <div className="flex justify-center">
             <Calendar
@@ -258,6 +262,11 @@ export function ResponsiveDateRangePicker({
               className={cn("mobile-calendar touch-manipulation", calendarClassName)}
             />
           </div>
+          <SheetFooter className="mt-4">
+            <SheetClose asChild>
+              <Button className="w-full">Done</Button>
+            </SheetClose>
+          </SheetFooter>
         </SheetContent>
       </Sheet>
     );
@@ -268,10 +277,13 @@ export function ResponsiveDateRangePicker({
     <Popover>
       <PopoverTrigger asChild>{triggerButton}</PopoverTrigger>
       <PopoverContent className="w-auto p-0" align={align} aria-label="Select date range">
+        <p role="status" className="text-muted-foreground px-3 pt-3 text-sm">
+          {hint}
+        </p>
         <Calendar
           mode="range"
           selected={value}
-          onSelect={onChange}
+          onSelect={handleSelect}
           disabled={disabled}
           initialFocus
           numberOfMonths={numberOfMonths}

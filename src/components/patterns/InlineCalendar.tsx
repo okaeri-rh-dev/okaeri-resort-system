@@ -3,6 +3,7 @@ import type { ComponentProps, JSX } from "react";
 import type { DateRange, DayButton } from "react-day-picker";
 
 import { Calendar } from "@/components/ui/calendar";
+import { nextRangeOnTap, nextTapHint } from "@/components/ui/range-tap-cycle";
 import { cn } from "@/lib/utils";
 
 /** Props the month grid passes to a caller's day cell: spread the rest onto its `<button>`. */
@@ -63,7 +64,9 @@ const monthGridClassNames = {
  * A calendar that is always open, for a surface that is already open. Use `DatePicker` or
  * `DateRangePicker` for a date field.
  *
- * - `variant="range"`: a from–to picker, such as a date filter inside `FilterPopover`.
+ * - `variant="range"`: a from–to picker, such as a date filter inside `FilterPopover`. Taps
+ *   cycle start, end, new start, and a `role="status"` line above the grid names the end the
+ *   next tap sets ("Select start date" / "Select end date").
  * - `variant="month-grid"`: a full-width month whose day cells the caller renders, such as a
  *   schedule. It has no caption or arrows; the caller shows the month and moves it.
  *
@@ -95,13 +98,18 @@ export function InlineCalendar(props: InlineCalendarProps) {
 
   const { selected, onSelect, defaultMonth, className } = props;
   return (
-    <Calendar
-      mode="range"
-      selected={selected}
-      onSelect={onSelect}
-      defaultMonth={defaultMonth ?? selected?.from}
-      required={false}
-      className={cn("rounded-md border", className)}
-    />
+    <div className={className}>
+      <p role="status" className="text-muted-foreground mb-2 text-sm">
+        {nextTapHint(selected)}
+      </p>
+      <Calendar
+        mode="range"
+        selected={selected}
+        onSelect={(_libraryRange, tappedDay) => onSelect(nextRangeOnTap(selected, tappedDay))}
+        defaultMonth={defaultMonth ?? selected?.from}
+        required={false}
+        className="rounded-md border"
+      />
+    </div>
   );
 }

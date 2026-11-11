@@ -103,6 +103,9 @@ function StayDates({ draft, nights, update }: { draft: Draft; nights: number; up
         aria-label="Stay dates"
         placeholder="Check-in → check-out"
         numberOfMonths={2}
+        startHint="Select check-in day"
+        endHint="Select check-out day"
+        allowSameDay={false}
         onChange={(range) => {
           const checkIn = range?.from && pickedDay(range.from);
           const checkOut = range?.to && pickedDay(range.to);

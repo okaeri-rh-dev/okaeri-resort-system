@@ -8,6 +8,8 @@ import { axe } from "vitest-axe";
 import { InlineCalendar, type CalendarDayButtonProps, type DateRange } from "@/components/patterns";
 
 const OCTOBER_2026 = new Date(2026, 9, 1);
+// the hint is a live region, so screen readers announce it
+const STATUS = "[role=status]";
 
 function dayButton(dayOfMonth: number) {
   const grid = screen.getByRole("grid");
@@ -75,6 +77,32 @@ describe("InlineCalendar, range", () => {
     const range = onSelect.mock.lastCall?.[0] as DateRange;
     expect(range.from?.getDate()).toBe(12);
     expect(range.to?.getDate()).toBe(15);
+  });
+
+  it.each([
+    { taps: [12], from: 12, to: undefined },
+    { taps: [12, 9], from: 9, to: undefined },
+    { taps: [12, 15, 20], from: 20, to: undefined },
+    { taps: [12, 12], from: 12, to: 12 },
+  ])("follows the tap cycle for taps $taps", async ({ taps, from, to }) => {
+    const onSelect = vi.fn();
+    render(<StayRange onSelect={onSelect} />);
+
+    for (const day of taps) await userEvent.click(dayButton(day));
+
+    const range = onSelect.mock.lastCall?.[0] as DateRange;
+    expect(range.from?.getDate()).toBe(from);
+    expect(range.to?.getDate()).toBe(to);
+  });
+
+  it("hints the next end to set", async () => {
+    render(<StayRange onSelect={() => {}} />);
+
+    expect(screen.getByText("Select start date", { selector: STATUS })).toBeInTheDocument();
+    await userEvent.click(dayButton(12));
+    expect(screen.getByText("Select end date", { selector: STATUS })).toBeInTheDocument();
+    await userEvent.click(dayButton(15));
+    expect(screen.getByText("Select start date", { selector: STATUS })).toBeInTheDocument();
   });
 
   it("has no axe violations", async () => {

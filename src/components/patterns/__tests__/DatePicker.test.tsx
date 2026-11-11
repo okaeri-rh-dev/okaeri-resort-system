@@ -11,7 +11,13 @@ import userEvent from "@testing-library/user-event";
 import { beforeAll, describe, expect, it, vi } from "vitest";
 import { axe } from "vitest-axe";
 
-import { AppShell, DatePicker, DateRangePicker, type DateRange } from "@/components/patterns";
+import {
+  AppShell,
+  DatePicker,
+  DateRangePicker,
+  type DateRange,
+  type DateRangePickerProps,
+} from "@/components/patterns";
 
 // The setup file's vi.fn() ResizeObserver is reset between tests; Radix Popover measures with it
 beforeAll(() => {
@@ -22,8 +28,11 @@ beforeAll(() => {
   };
 });
 
+// the hint is a live region, so screen readers announce it
+const STATUS = "[role=status]";
+
 function dayButton(dayOfMonth: number) {
-  const grid = screen.getByRole("grid");
+  const [grid] = screen.getAllByRole("grid");
   return within(grid)
     .getAllByRole("button")
     .find(
@@ -83,7 +92,9 @@ describe("DatePicker", () => {
 });
 
 describe("DateRangePicker", () => {
-  function StayDates() {
+  const checkInWording = { startHint: "Select check-in day", endHint: "Select check-out day" };
+
+  function StayDates(props: Pick<DateRangePickerProps, "allowSameDay" | "startHint" | "endHint">) {
     const [range, setRange] = useState<DateRange | undefined>();
     return (
       <DateRangePicker
@@ -92,6 +103,7 @@ describe("DateRangePicker", () => {
         numberOfMonths={1}
         placeholder="Stay dates"
         aria-label="Stay dates"
+        {...props}
       />
     );
   }
@@ -106,6 +118,78 @@ describe("DateRangePicker", () => {
     expect(screen.getByRole("button", { name: "Stay dates" })).toHaveTextContent(
       /10, \d{4} - .*12/
     );
+  });
+
+  async function tapDays(...days: number[]) {
+    for (const day of days) await userEvent.click(dayButton(day) as HTMLElement);
+  }
+
+  const trigger = () => screen.getByRole("button", { name: "Stay dates" });
+
+  it("sets only the start on the first tap", async () => {
+    render(<StayDates />);
+
+    await userEvent.click(trigger());
+    await tapDays(10);
+
+    expect(trigger()).toHaveTextContent(/^\w{3} 10, \d{4}$/);
+  });
+
+  it("makes a second tap before the start the new start, with no end", async () => {
+    render(<StayDates />);
+
+    await userEvent.click(trigger());
+    await tapDays(10, 8);
+
+    expect(trigger()).toHaveTextContent(/^\w{3} 08, \d{4}$/);
+  });
+
+  it("starts a new range on a third tap", async () => {
+    render(<StayDates />);
+
+    await userEvent.click(trigger());
+    await tapDays(10, 12, 20);
+
+    expect(trigger()).toHaveTextContent(/^\w{3} 20, \d{4}$/);
+  });
+
+  it("gives a one-day range for two taps on the same day", async () => {
+    render(<StayDates />);
+
+    await userEvent.click(trigger());
+    await tapDays(10, 10);
+
+    expect(trigger()).toHaveTextContent(/^\w{3} 10, \d{4} - \w{3} 10, \d{4}$/);
+  });
+
+  it("hints the next end to set, back to the start after a full range", async () => {
+    render(<StayDates />);
+
+    await userEvent.click(trigger());
+    expect(screen.getByText("Select start date", { selector: STATUS })).toBeInTheDocument();
+    await tapDays(10);
+    expect(screen.getByText("Select end date", { selector: STATUS })).toBeInTheDocument();
+    await tapDays(12);
+    expect(screen.getByText("Select start date", { selector: STATUS })).toBeInTheDocument();
+  });
+
+  it("shows the caller's hint wording", async () => {
+    render(<StayDates {...checkInWording} />);
+
+    await userEvent.click(trigger());
+    expect(screen.getByText("Select check-in day", { selector: STATUS })).toBeInTheDocument();
+    await tapDays(10);
+    expect(screen.getByText("Select check-out day", { selector: STATUS })).toBeInTheDocument();
+  });
+
+  it("ignores a second tap on the start day when a same-day range is not allowed", async () => {
+    render(<StayDates allowSameDay={false} {...checkInWording} />);
+
+    await userEvent.click(trigger());
+    await tapDays(10, 10);
+
+    expect(trigger()).toHaveTextContent(/^\w{3} 10, \d{4}$/);
+    expect(screen.getByText("Select check-out day", { selector: STATUS })).toBeInTheDocument();
   });
 
   it("has no axe violations", async () => {
@@ -150,6 +234,140 @@ describe("DatePicker in a shell", () => {
     await userEvent.click(dayButton(15) as HTMLElement);
     expect(onChange).toHaveBeenCalledTimes(1);
     expect(screen.queryByRole("dialog", { name: "Select Date" })).not.toBeInTheDocument();
+  });
+
+  describe("range picker", () => {
+    function StayDates() {
+      const [range, setRange] = useState<DateRange | undefined>();
+      return (
+        <DateRangePicker
+          value={range}
+          onChange={setRange}
+          placeholder="Stay dates"
+          aria-label="Stay dates"
+        />
+      );
+    }
+
+    // an open sheet aria-hides the page, trigger included
+    const rangeTrigger = () => screen.getByRole("button", { name: "Stay dates", hidden: true });
+    const rangeSheet = () => screen.queryByRole("dialog", { name: "Select Date Range" });
+    // the sheet used to close on a timer once both ends were set
+    const outlastOldAutoClose = () => new Promise((resolve) => setTimeout(resolve, 300));
+
+    async function openAndTap(compact: boolean, ...days: number[]) {
+      renderInShell(<StayDates />, compact);
+      await userEvent.click(await screen.findByRole("button", { name: "Stay dates" }));
+      for (const day of days) await userEvent.click(dayButton(day) as HTMLElement);
+      await outlastOldAutoClose();
+    }
+
+    it("keeps the sheet open after tap 1, tap 2 and tap 3", async () => {
+      await openAndTap(true, 10);
+      expect(rangeSheet()).toBeVisible();
+
+      await userEvent.click(dayButton(12) as HTMLElement);
+      await outlastOldAutoClose();
+      expect(rangeSheet()).toBeVisible();
+
+      await userEvent.click(dayButton(20) as HTMLElement);
+      await outlastOldAutoClose();
+      expect(rangeSheet()).toBeVisible();
+      expect(rangeTrigger()).toHaveTextContent(/^\w{3} 20, \d{4}$/);
+    });
+
+    it("closes the sheet with Done and keeps the selection", async () => {
+      await openAndTap(true, 10, 12);
+
+      await userEvent.click(screen.getByRole("button", { name: "Done" }));
+
+      expect(rangeSheet()).not.toBeInTheDocument();
+      expect(rangeTrigger()).toHaveTextContent(/10, \d{4} - .*12/);
+    });
+
+    it("enables Done with no selection and with only a start", async () => {
+      await openAndTap(true);
+      expect(screen.getByRole("button", { name: "Done" })).toBeEnabled();
+
+      await userEvent.click(dayButton(10) as HTMLElement);
+      await userEvent.click(screen.getByRole("button", { name: "Done" }));
+
+      expect(rangeSheet()).not.toBeInTheDocument();
+      expect(rangeTrigger()).toHaveTextContent(/^\w{3} 10, \d{4}$/);
+    });
+
+    it("keeps the selection when the sheet is dismissed without Done", async () => {
+      await openAndTap(true, 10, 12);
+
+      await userEvent.keyboard("{Escape}");
+
+      expect(rangeSheet()).not.toBeInTheDocument();
+      expect(rangeTrigger()).toHaveTextContent(/10, \d{4} - .*12/);
+    });
+
+    it("reaches Done by keyboard", async () => {
+      await openAndTap(true, 10);
+
+      const done = screen.getByRole("button", { name: "Done" });
+      for (let tab = 0; tab < 60 && document.activeElement !== done; tab++) {
+        await userEvent.tab();
+      }
+      expect(done).toHaveFocus();
+      await userEvent.keyboard("{Enter}");
+      expect(rangeSheet()).not.toBeInTheDocument();
+    });
+
+    it("has no axe violations with the sheet open", async () => {
+      await openAndTap(true, 10);
+
+      expect(await axe(rangeSheet() as HTMLElement)).toHaveNoViolations();
+    });
+
+    it("keeps the popover open after tap 2 and closes it on Escape", async () => {
+      await openAndTap(false, 10, 12);
+
+      const popover = screen.getByRole("dialog", { name: "Select date range" });
+      expect(popover).toBeVisible();
+      expect(within(popover).queryByRole("button", { name: "Done" })).not.toBeInTheDocument();
+
+      await userEvent.keyboard("{Escape}");
+      expect(screen.queryByRole("dialog", { name: "Select date range" })).not.toBeInTheDocument();
+      expect(rangeTrigger()).toHaveTextContent(/10, \d{4} - .*12/);
+    });
+
+    it("closes the popover on an outside click and keeps the selection", async () => {
+      await openAndTap(false, 10, 12);
+
+      await userEvent.click(document.body);
+
+      expect(screen.queryByRole("dialog", { name: "Select date range" })).not.toBeInTheDocument();
+      expect(rangeTrigger()).toHaveTextContent(/10, \d{4} - .*12/);
+    });
+  });
+
+  it("shows the hint as the range sheet's description", async () => {
+    function StayDates() {
+      const [range, setRange] = useState<DateRange | undefined>();
+      return (
+        <DateRangePicker
+          value={range}
+          onChange={setRange}
+          placeholder="Stay dates"
+          startHint="Select check-in day"
+          endHint="Select check-out day"
+        />
+      );
+    }
+    renderInShell(<StayDates />, true);
+
+    await userEvent.click(await screen.findByRole("button", { name: /Stay dates/ }));
+    const sheet = screen.getByRole("dialog", { name: "Select Date Range" });
+    expect(sheet).toHaveAccessibleDescription("Select check-in day");
+    await userEvent.click(dayButton(10) as HTMLElement);
+    expect(sheet).toHaveAccessibleDescription("Select check-out day");
+    expect(
+      within(sheet).getByText("Select check-out day", { selector: STATUS })
+    ).toBeInTheDocument();
   });
 
   it("opens in a popover on a wider window", async () => {
