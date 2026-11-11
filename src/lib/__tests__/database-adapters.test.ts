@@ -33,4 +33,14 @@ describe("adaptBookingFromDB", () => {
     expect(booking.is_guest_booking).toBe(true);
     expect(booking.unit_assignment_status).toBe("pending");
   });
+
+  it.each([
+    { anonymized_at: "2026-11-01T00:00:00Z", pricing_metadata: { nights: 2, total: 9000 } },
+    { anonymized_at: null, pricing_metadata: null },
+  ])("keeps anonymized_at and pricing_metadata ($anonymized_at)", (fields) => {
+    const booking = adaptBookingFromDB({ ...walkInRow, ...fields });
+
+    expect(booking.anonymized_at).toBe(fields.anonymized_at);
+    expect(booking.pricing_metadata).toEqual(fields.pricing_metadata);
+  });
 });
