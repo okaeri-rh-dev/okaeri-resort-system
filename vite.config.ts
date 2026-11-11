@@ -88,8 +88,6 @@ export default defineConfig(({ mode }) => ({
           "vendor-ui": ["react-day-picker", "sonner", "lucide-react"],
           // PDF generation - lazy loaded only when user clicks "Download PDF"
           "vendor-pdf": ["@react-pdf/renderer"],
-          // Note: heic2any and browser-image-compression are dynamically imported
-          // in src/utils/file-compression.ts and will be automatically code-split
         },
       },
     },
