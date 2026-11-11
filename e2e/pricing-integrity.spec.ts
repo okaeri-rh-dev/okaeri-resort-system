@@ -603,22 +603,7 @@ test.describe("Pricing Integrity", () => {
       const bookingsTable = new BookingsTablePage(page);
       await bookingsTable.goto();
 
-      const rowCount = await bookingsTable.getRowCount();
-      if (rowCount === 0) {
-        test.skip();
-        return;
-      }
-
-      // Find a price cell in the table
-      const priceCell = page
-        .locator('td:has-text("PHP"), td:has-text("₱"), [class*="amount"]')
-        .first();
-
-      if (await priceCell.isVisible()) {
-        const priceText = await priceCell.textContent();
-        // Should contain PHP symbol or peso sign
-        expect(priceText).toMatch(/PHP|₱|[\d,]+/);
-      }
+      await expect(bookingsTable.getRowByReference(E2E_REF.CONF_PAID)).toContainText("₱5,000.00");
     });
 
     test("price preview updates reactively", async ({ page }) => {
