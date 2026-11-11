@@ -5,7 +5,7 @@
  * Generates valid Philippine phone numbers, names, and booking data.
  */
 
-import { randomIntBetween, randomItem } from "https://jslib.k6.io/k6-utils/1.4.0/index.js";
+import { randomIntBetween, randomItem, uuidv4 } from "https://jslib.k6.io/k6-utils/1.4.0/index.js";
 
 // Common Philippine first names
 const firstNames = [
@@ -74,7 +74,8 @@ export function generateName(): string {
  * Generate a random email address
  */
 export function generateEmail(name?: string): string {
-  const baseName = name?.toLowerCase().replace(/\s+/g, ".") || generateName().toLowerCase().replace(/\s+/g, ".");
+  const baseName =
+    name?.toLowerCase().replace(/\s+/g, ".") || generateName().toLowerCase().replace(/\s+/g, ".");
   const randomNum = randomIntBetween(1, 999);
   const domain = randomItem(emailDomains);
   return `${baseName}${randomNum}@${domain}`;
@@ -141,57 +142,54 @@ export function generateSpecialRequests(): string | undefined {
 }
 
 /**
- * Generate a mock file for payment proof upload
+ * Generate check-in and check-out days (`YYYY-MM-DD`) for a booking request.
+ * Check-in is 1-30 days out, so it is today or later in Manila time.
  */
-export function generatePaymentProof(): { fileName: string; fileType: string; fileSize: number } {
-  const fileTypes = [
-    { ext: "jpg", type: "image/jpeg", minSize: 50000, maxSize: 500000 },
-    { ext: "png", type: "image/png", minSize: 100000, maxSize: 800000 },
-    { ext: "pdf", type: "application/pdf", minSize: 30000, maxSize: 200000 },
-  ];
-
-  const fileInfo = randomItem(fileTypes);
-  const timestamp = Date.now();
-  const randomId = Math.random().toString(36).substring(7);
-
-  return {
-    fileName: `payment_proof_${timestamp}_${randomId}.${fileInfo.ext}`,
-    fileType: fileInfo.type,
-    fileSize: randomIntBetween(fileInfo.minSize, fileInfo.maxSize),
+function generateStayDays(): { checkIn: string; checkOut: string } {
+  const dayMs = 24 * 60 * 60 * 1000;
+  const checkIn = Date.now() + randomIntBetween(1, 30) * dayMs;
+  const checkOut = checkIn + randomIntBetween(1, 7) * dayMs;
+  // Manila is UTC+8 with no DST; k6 cannot import @/lib/timezone.
+  const toDay = (ms: number) => {
+    const manila = new Date(ms + 8 * 60 * 60 * 1000);
+    const pad = (n: number) => String(n).padStart(2, "0");
+    return `${manila.getUTCFullYear()}-${pad(manila.getUTCMonth() + 1)}-${pad(manila.getUTCDate())}`;
   };
+  return { checkIn: toDay(checkIn), checkOut: toDay(checkOut) };
 }
 
 /**
- * Generate a complete guest booking request body
+ * Generate a POST /api/guest-booking/multi-unit request body
  */
-export function generateGuestBookingData(unitId: string): Record<string, unknown> {
+export function generateMultiUnitBookingData(): Record<string, unknown> {
   const name = generateName();
-  const dates = generateBookingDates();
-  const paymentProof = generatePaymentProof();
+  const stay = generateStayDays();
 
   return {
     guest_name: name,
     email: generateEmail(name),
     phone_number: generatePhoneNumber(),
-    unit_id: unitId,
-    check_in: dates.checkIn,
-    check_out: dates.checkOut,
-    num_guests: generateGuestCount(),
+    check_in: stay.checkIn,
+    check_out: stay.checkOut,
+    unit_requests: Array.from({ length: randomIntBetween(1, 2) }, () => ({
+      guests_per_unit: generateGuestCount(),
+    })),
     special_requests: generateSpecialRequests(),
     turnstile_token: "mock-turnstile-token-for-testing",
-    file_name: paymentProof.fileName,
-    file_type: paymentProof.fileType,
-    file_size: paymentProof.fileSize,
+    terms_accepted: true,
+    idempotency_key: uuidv4(),
   };
 }
 
 /**
- * Generate a unique idempotency key
+ * Whether a multi-unit booking response body carries a booking reference
  */
-export function generateIdempotencyKey(): string {
-  const timestamp = Date.now();
-  const random = Math.random().toString(36).substring(2, 15);
-  return `load-test-${timestamp}-${random}`;
+export function hasBookingReference(body: unknown): boolean {
+  try {
+    return !!JSON.parse(body as string).booking?.booking_reference;
+  } catch {
+    return false;
+  }
 }
 
 /**
