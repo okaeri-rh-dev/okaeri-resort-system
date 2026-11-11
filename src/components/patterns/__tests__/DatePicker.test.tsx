@@ -11,7 +11,13 @@ import userEvent from "@testing-library/user-event";
 import { beforeAll, describe, expect, it, vi } from "vitest";
 import { axe } from "vitest-axe";
 
-import { AppShell, DatePicker, DateRangePicker, type DateRange } from "@/components/patterns";
+import {
+  AppShell,
+  DatePicker,
+  DateRangePicker,
+  type DateRange,
+  type DateRangePickerProps,
+} from "@/components/patterns";
 
 // The setup file's vi.fn() ResizeObserver is reset between tests; Radix Popover measures with it
 beforeAll(() => {
@@ -86,7 +92,9 @@ describe("DatePicker", () => {
 });
 
 describe("DateRangePicker", () => {
-  function StayDates({ stay = false }: { stay?: boolean }) {
+  const checkInWording = { startHint: "Select check-in day", endHint: "Select check-out day" };
+
+  function StayDates(props: Pick<DateRangePickerProps, "allowSameDay" | "startHint" | "endHint">) {
     const [range, setRange] = useState<DateRange | undefined>();
     return (
       <DateRangePicker
@@ -95,7 +103,7 @@ describe("DateRangePicker", () => {
         numberOfMonths={1}
         placeholder="Stay dates"
         aria-label="Stay dates"
-        stay={stay}
+        {...props}
       />
     );
   }
@@ -165,8 +173,8 @@ describe("DateRangePicker", () => {
     expect(screen.getByText("Select start date", { selector: STATUS })).toBeInTheDocument();
   });
 
-  it("hints check-in and check-out days for a stay", async () => {
-    render(<StayDates stay />);
+  it("shows the caller's hint wording", async () => {
+    render(<StayDates {...checkInWording} />);
 
     await userEvent.click(trigger());
     expect(screen.getByText("Select check-in day", { selector: STATUS })).toBeInTheDocument();
@@ -174,8 +182,8 @@ describe("DateRangePicker", () => {
     expect(screen.getByText("Select check-out day", { selector: STATUS })).toBeInTheDocument();
   });
 
-  it("ignores a second tap on the check-in day for a stay", async () => {
-    render(<StayDates stay />);
+  it("ignores a second tap on the start day when a same-day range is not allowed", async () => {
+    render(<StayDates allowSameDay={false} {...checkInWording} />);
 
     await userEvent.click(trigger());
     await tapDays(10, 10);
@@ -326,12 +334,29 @@ describe("DatePicker in a shell", () => {
       expect(screen.queryByRole("dialog", { name: "Select date range" })).not.toBeInTheDocument();
       expect(rangeTrigger()).toHaveTextContent(/10, \d{4} - .*12/);
     });
+
+    it("closes the popover on an outside click and keeps the selection", async () => {
+      await openAndTap(false, 10, 12);
+
+      await userEvent.click(document.body);
+
+      expect(screen.queryByRole("dialog", { name: "Select date range" })).not.toBeInTheDocument();
+      expect(rangeTrigger()).toHaveTextContent(/10, \d{4} - .*12/);
+    });
   });
 
   it("shows the hint as the range sheet's description", async () => {
     function StayDates() {
       const [range, setRange] = useState<DateRange | undefined>();
-      return <DateRangePicker value={range} onChange={setRange} placeholder="Stay dates" stay />;
+      return (
+        <DateRangePicker
+          value={range}
+          onChange={setRange}
+          placeholder="Stay dates"
+          startHint="Select check-in day"
+          endHint="Select check-out day"
+        />
+      );
     }
     renderInShell(<StayDates />, true);
 

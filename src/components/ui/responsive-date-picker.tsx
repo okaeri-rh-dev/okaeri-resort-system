@@ -177,8 +177,12 @@ export interface ResponsiveDateRangePickerProps {
   buttonDisabled?: boolean;
   /** Open in a bottom sheet with one month instead of a popover. */
   sheet?: boolean;
-  /** Stay dates: check-in/check-out wording, and the check-out day must come after check-in. */
-  stay?: boolean;
+  /** False ignores a second tap on the start day, so the end must come after it. Defaults to true. */
+  allowSameDay?: boolean;
+  /** Hint shown while the next tap sets the start. Defaults to "Select start date". */
+  startHint?: string;
+  /** Hint shown while the next tap sets the end. Defaults to "Select end date". */
+  endHint?: string;
 }
 
 export function ResponsiveDateRangePicker({
@@ -196,13 +200,15 @@ export function ResponsiveDateRangePicker({
   "aria-describedby": ariaDescribedby,
   buttonDisabled = false,
   sheet = false,
-  stay = false,
+  allowSameDay,
+  startHint,
+  endHint,
 }: ResponsiveDateRangePickerProps) {
   const handleSelect = (_libraryRange: DateRange | undefined, tappedDay: Date) => {
-    onChange?.(nextRangeOnTap(value, tappedDay, { stay }));
+    onChange?.(nextRangeOnTap(value, tappedDay, { allowSameDay }));
   };
 
-  const hint = nextTapHint(value, { stay });
+  const hint = nextTapHint(value, { startHint, endHint });
 
   const displayText = React.useMemo(() => {
     if (!value?.from) return placeholder;

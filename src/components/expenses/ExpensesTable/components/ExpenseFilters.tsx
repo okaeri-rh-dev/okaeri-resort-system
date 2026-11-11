@@ -108,11 +108,10 @@ export const ExpenseFilters: React.FC<ExpenseFiltersProps> = ({
 
   const applyDateRange = (range: DateRange | undefined) => {
     const fromDate = range?.from;
-    const toDate = range?.to;
     setFilters({
       ...filters,
       dateFrom: fromDate ? toISODateString(fromDate) : undefined,
-      dateTo: toDate ? toISODateString(toDate) : undefined,
+      dateTo: range?.to ? toISODateString(range.to) : undefined,
     });
   };
 

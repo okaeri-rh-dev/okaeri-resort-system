@@ -64,7 +64,9 @@ const monthGridClassNames = {
  * A calendar that is always open, for a surface that is already open. Use `DatePicker` or
  * `DateRangePicker` for a date field.
  *
- * - `variant="range"`: a from–to picker, such as a date filter inside `FilterPopover`.
+ * - `variant="range"`: a from–to picker, such as a date filter inside `FilterPopover`. Taps
+ *   cycle start, end, new start, and a `role="status"` line above the grid names the end the
+ *   next tap sets ("Select start date" / "Select end date").
  * - `variant="month-grid"`: a full-width month whose day cells the caller renders, such as a
  *   schedule. It has no caption or arrows; the caller shows the month and moves it.
  *
