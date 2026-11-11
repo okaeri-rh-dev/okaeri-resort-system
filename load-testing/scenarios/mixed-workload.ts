@@ -17,10 +17,10 @@ import { getEnvironment } from "../config/environments.ts";
 import { getMixedWorkloadThresholds } from "../config/thresholds.ts";
 import {
   generateBookingDates,
-  generateMultiUnitBookingData,
   getRandomUnitId,
   getStatusLookups,
   hasBookingReference,
+  postMultiUnitBooking,
   type StatusLookup,
 } from "../utils/data-generators.ts";
 
@@ -104,18 +104,10 @@ export default function (data: { statusLookups: StatusLookup[] }) {
 function doGuestBooking() {
   group("Guest Booking", () => {
     bookingRequests.add(1);
-    const bookingData = generateMultiUnitBookingData();
-
-    // 429 is the endpoint's own rate limiter (5/hour per IP), so it is an expected result.
-    const response = http.post(
-      `${env.baseUrl}/api/guest-booking/multi-unit`,
-      JSON.stringify(bookingData),
-      {
-        headers: { "Content-Type": "application/json" },
-        tags: { endpoint: "guest-booking", operation: "booking" },
-        responseCallback: http.expectedStatuses(200, 201, 429),
-      }
-    );
+    const response = postMultiUnitBooking(env.baseUrl, {
+      endpoint: "guest-booking",
+      operation: "booking",
+    });
 
     bookingDuration.add(response.timings.duration);
 

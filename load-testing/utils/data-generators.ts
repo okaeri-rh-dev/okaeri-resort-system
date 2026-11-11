@@ -6,6 +6,7 @@
  */
 
 import { randomIntBetween, randomItem, uuidv4 } from "https://jslib.k6.io/k6-utils/1.4.0/index.js";
+import http from "k6/http";
 
 // Common Philippine first names
 const firstNames = [
@@ -161,7 +162,7 @@ function generateStayDays(): { checkIn: string; checkOut: string } {
 /**
  * Generate a POST /api/guest-booking/multi-unit request body
  */
-export function generateMultiUnitBookingData(): Record<string, unknown> {
+function generateMultiUnitBookingData(): Record<string, unknown> {
   const name = generateName();
   const stay = generateStayDays();
 
@@ -179,6 +180,22 @@ export function generateMultiUnitBookingData(): Record<string, unknown> {
     terms_accepted: true,
     idempotency_key: uuidv4(),
   };
+}
+
+/**
+ * POST a generated booking to /api/guest-booking/multi-unit
+ */
+export function postMultiUnitBooking(baseUrl: string, tags: Record<string, string>) {
+  // 429 is the endpoint's own rate limiter (5/hour per IP), so it is an expected result.
+  return http.post(
+    `${baseUrl}/api/guest-booking/multi-unit`,
+    JSON.stringify(generateMultiUnitBookingData()),
+    {
+      headers: { "Content-Type": "application/json" },
+      tags,
+      responseCallback: http.expectedStatuses(200, 201, 429),
+    }
+  );
 }
 
 /**

@@ -8,12 +8,11 @@
  */
 
 import { check, sleep } from "k6";
-import http from "k6/http";
 import { Rate, Trend } from "k6/metrics";
 
 import { getEnvironment } from "../config/environments.ts";
 import { endpointThresholds } from "../config/thresholds.ts";
-import { generateMultiUnitBookingData, hasBookingReference } from "../utils/data-generators.ts";
+import { hasBookingReference, postMultiUnitBooking } from "../utils/data-generators.ts";
 
 // Custom metrics
 const bookingSuccessRate = new Rate("booking_success_rate");
@@ -45,18 +44,7 @@ export const options = {
 };
 
 export default function () {
-  const bookingData = generateMultiUnitBookingData();
-
-  // 429 is the endpoint's own rate limiter (5/hour per IP), so it is an expected result.
-  const response = http.post(
-    `${env.baseUrl}/api/guest-booking/multi-unit`,
-    JSON.stringify(bookingData),
-    {
-      headers: { "Content-Type": "application/json" },
-      tags: { endpoint: "guest-booking" },
-      responseCallback: http.expectedStatuses(200, 201, 429),
-    }
-  );
+  const response = postMultiUnitBooking(env.baseUrl, { endpoint: "guest-booking" });
 
   bookingDuration.add(response.timings.duration);
 
