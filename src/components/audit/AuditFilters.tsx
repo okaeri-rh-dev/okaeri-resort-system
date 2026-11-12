@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-import { format } from "date-fns";
+import { endOfDay, format } from "date-fns";
 import { Download, X, Zap } from "lucide-react";
 
 import {
@@ -234,7 +234,7 @@ export function AuditFilters() {
     setFilters({
       ...filters,
       startDate: fromDate?.toISOString(),
-      endDate: range?.to?.toISOString(),
+      endDate: range?.to && endOfDay(range.to).toISOString(),
       offset: 0,
     });
   };
