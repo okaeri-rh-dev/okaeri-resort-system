@@ -11,7 +11,7 @@
  */
 
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it, onTestFinished, vi } from "vitest";
 
 import { DEFAULT_LETTERHEAD } from "@/components/documents/constants";
 import { DocumentPage } from "@/components/documents/DocumentPreview/DocumentPage";
@@ -211,6 +211,10 @@ describe("DocumentPage", () => {
     ["2026-12-31T16:30:00Z", "QUO-2027-DRAFT"],
     ["2026-12-31T15:30:00Z", "QUO-2026-DRAFT"],
   ])("should use the Manila year in the DRAFT number at %s", (now, expected) => {
+    const previousTime = new Date();
+    onTestFinished(() => {
+      vi.setSystemTime(previousTime);
+    });
     vi.setSystemTime(new Date(now));
     render(<DocumentPage formData={defaultFormData} letterhead={defaultLetterhead} />);
     expect(screen.getByText(expected)).toBeInTheDocument();
