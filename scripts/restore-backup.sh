@@ -1,8 +1,7 @@
 #!/usr/bin/env bash
 # Restore a nightly backup (.github/workflows/nightly-backup.yml) into the local stack.
 # Usage: scripts/restore-backup.sh <backup-dir> <age-identity-file>
-# The schema comes from the local migrations; schema.sql is only decrypted as a check,
-# because it has no storage policies. This wipes the local database. See docs/backups.md.
+# Wipes the local database. See docs/backups.md.
 set -euo pipefail
 
 if [ $# -ne 2 ]; then

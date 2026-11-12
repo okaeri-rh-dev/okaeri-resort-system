@@ -36,7 +36,7 @@ The R2 lifecycle rule deletes backups after 30 days. A backup keeps guest data f
 
 ## Restore into the local stack
 
-The restore script refuses any target except the local stack. It runs `supabase db reset --local --no-seed`, so it wipes local data. The schema comes from the local migrations, because `schema.sql` has no storage policies. `schema.sql` is for a restore into a new Supabase project (Supabase guide: "Restore dashboard backup").
+The restore script refuses any target except the local stack. It runs `supabase db reset --local --no-seed`, so it wipes local data. The schema comes from the local migrations, because `schema.sql` has no storage policies. `schema.sql` is for a restore into a new Supabase project (Supabase guide: "Restore dashboard backup"). Run the restore from a checkout whose migrations match prod on the backup date, or the data load fails on a column difference.
 
 ```sh
 rclone copy r2:<bucket>/<YYYY-MM-DD> ./backup  # any S3 client works
