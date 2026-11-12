@@ -30,9 +30,7 @@ fi
 
 echo "${GREEN}🚀 Running pre-push unit tests (${changed_flag:-full suite})...${NC}"
 
-SKIP_DB_SETUP=1 npx vitest run $changed_flag --passWithNoTests --fileParallelism \
-  --exclude 'src/__tests__/database/**' \
-  --exclude '__tests__/database/**' \
-  --exclude 'src/__tests__/performance/multi-unit-availability.test.ts'
+# SKIP_DB_SETUP=1 also excludes the DB test files (vitest.config.ts).
+SKIP_DB_SETUP=1 npx vitest run $changed_flag --passWithNoTests --fileParallelism
 
 echo "${GREEN}✅ Pre-push checks passed. ${YELLOW}Full lint/type-check/unit run in CI.${NC}"
