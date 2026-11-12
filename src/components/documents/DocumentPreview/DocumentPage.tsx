@@ -3,6 +3,7 @@ import { memo } from "react";
 import { DOCUMENT_PREFIX_MAP, isValidImageDataUri } from "@/components/documents/constants";
 import type { DocumentFormData, LetterheadConfig } from "@/components/documents/types";
 import { formatCurrency, formatFullDate } from "@/lib/formatters";
+import { toManilaDateString } from "@/lib/timezone";
 import { cn } from "@/lib/utils";
 
 interface DocumentPageProps {
@@ -21,7 +22,7 @@ export const DocumentPage = memo(function DocumentPage({
   const docTypeLabel = formData.document_type === "quotation" ? "QUOTATION" : "INVOICE";
   const displayNumber =
     documentNumber ||
-    `${DOCUMENT_PREFIX_MAP[formData.document_type]}-${new Date().getFullYear()}-DRAFT`;
+    `${DOCUMENT_PREFIX_MAP[formData.document_type]}-${toManilaDateString(new Date()).slice(0, 4)}-DRAFT`;
 
   return (
     <div
