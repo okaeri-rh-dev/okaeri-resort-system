@@ -1,5 +1,5 @@
 /**
- * Multi-Unit Booking Zustand Store (Phase 3)
+ * Multi-Unit Booking Zustand Store
  *
  * Draft state for the staff multi-unit booking form: selected units,
  * guest assignments and pricing.
@@ -15,54 +15,37 @@ import { immer } from "zustand/middleware/immer";
 import { priceCabin } from "@/lib/pricing/cabin-pricing";
 import type { MultiUnitBookingStore } from "@/types";
 
-// ============================================
-// CONSTANTS
-// ============================================
-
 const MAX_UNITS_PER_BOOKING = 10;
-
-// ============================================
-// STORE IMPLEMENTATION
-// ============================================
 
 export const useMultiUnitBookingStore = create<MultiUnitBookingStore>()(
   subscribeWithSelector(
     devtools(
       persist(
         immer((set, get) => ({
-          // ========== INITIAL STATE ==========
-
           draftBooking: null,
           selectedUnits: [],
           error: null,
 
-          // ========== UNIT MANAGEMENT ==========
-
           addUnit: (unit, checkIn?, checkOut?) =>
             set((state: Draft<MultiUnitBookingStore>) => {
-              // Prevent duplicates
               const exists = state.selectedUnits.some((u) => u.unit_id === unit.unit_id);
               if (exists) {
                 state.error = new Error("Unit already added to booking");
                 return;
               }
 
-              // Check max units limit
               if (state.selectedUnits.length >= MAX_UNITS_PER_BOOKING) {
                 state.error = new Error(`Maximum ${MAX_UNITS_PER_BOOKING} units per booking`);
                 return;
               }
 
-              // Add unit
               state.selectedUnits.push(unit);
 
-              // Auto-calculate pricing if dates are available
               // Priority: 1. Passed dates, 2. Draft booking dates
               const effectiveCheckIn = checkIn || state.draftBooking?.check_in;
               const effectiveCheckOut = checkOut || state.draftBooking?.check_out;
 
               if (effectiveCheckIn && effectiveCheckOut) {
-                // Convert Date objects to ISO strings for calculateUnitPricing
                 const checkInStr =
                   effectiveCheckIn instanceof Date
                     ? effectiveCheckIn.toISOString()
@@ -85,13 +68,11 @@ export const useMultiUnitBookingStore = create<MultiUnitBookingStore>()(
 
           removeUnit: (unitId) =>
             set((state: Draft<MultiUnitBookingStore>) => {
-              // Prevent removing last unit
               if (state.selectedUnits.length <= 1) {
                 state.error = new Error("Cannot remove the last unit from booking");
                 return;
               }
 
-              // Remove unit
               state.selectedUnits = state.selectedUnits.filter((u) => u.unit_id !== unitId);
               state.error = null;
             }),
@@ -106,7 +87,6 @@ export const useMultiUnitBookingStore = create<MultiUnitBookingStore>()(
                   special_requests: unit.guest_assignment?.special_requests,
                 };
 
-                // Inline pricing recalculation
                 const draft = state.draftBooking;
                 const checkIn = draft?.check_in;
                 const checkOut = draft?.check_out;
@@ -114,15 +94,15 @@ export const useMultiUnitBookingStore = create<MultiUnitBookingStore>()(
                   let baseAmount = 0;
                   let totalSurcharges = 0;
 
-                  state.selectedUnits.forEach((unit) => {
+                  state.selectedUnits.forEach((selected) => {
                     const pricing = get().calculateUnitPricing(
-                      unit,
+                      selected,
                       checkIn,
                       checkOut,
-                      unit.guest_assignment?.num_guests || unit.base_occupancy
+                      selected.guest_assignment?.num_guests || selected.base_occupancy
                     );
 
-                    unit.pricing = pricing;
+                    selected.pricing = pricing;
                     baseAmount += pricing.base_total;
                     totalSurcharges += pricing.weekend_surcharge + pricing.extra_person_fee;
                   });
@@ -134,12 +114,8 @@ export const useMultiUnitBookingStore = create<MultiUnitBookingStore>()(
               }
             }),
 
-          // ========== PRICING CALCULATIONS ==========
-
           calculateUnitPricing: (unit, checkIn, checkOut, numGuests) =>
             priceCabin(unit, checkIn, checkOut, numGuests),
-
-          // ========== STATE MANAGEMENT ==========
 
           setDraftBooking: (booking) =>
             set((state: Draft<MultiUnitBookingStore>) => {

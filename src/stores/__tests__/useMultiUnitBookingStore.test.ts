@@ -1,13 +1,11 @@
 /**
- * Unit Tests for Multi-Unit Booking Store (Phase 3)
+ * Unit Tests for Multi-Unit Booking Store
  *
  * Tests cover:
  * - Initial state and store creation
  * - Unit management (add/remove/assign)
  * - Pricing calculations
  * - Edge cases and boundary conditions
- *
- * Target: ≥95% code coverage
  */
 
 import { act, renderHook } from "@testing-library/react";
@@ -19,7 +17,6 @@ import { useMultiUnitBookingStore } from "../useMultiUnitBookingStore";
 
 describe("useMultiUnitBookingStore", () => {
   beforeEach(() => {
-    // Reset store state before each test
     act(() => {
       useMultiUnitBookingStore.getState().clearDraftBooking();
     });
@@ -29,10 +26,6 @@ describe("useMultiUnitBookingStore", () => {
   afterEach(() => {
     vi.restoreAllMocks();
   });
-
-  // ============================================
-  // INITIAL STATE TESTS
-  // ============================================
 
   describe("Initial State", () => {
     it("should initialize with default state", () => {
@@ -50,12 +43,10 @@ describe("useMultiUnitBookingStore", () => {
 
       const { result, unmount } = renderHook(() => useMultiUnitBookingStore());
 
-      // Set draft booking
       act(() => {
         result.current.setDraftBooking(mockDraft);
       });
 
-      // Verify state is set
       expect(result.current.draftBooking).toEqual(mockDraft);
 
       // Unmount to trigger persistence
@@ -67,10 +58,6 @@ describe("useMultiUnitBookingStore", () => {
       expect(newResult.current.draftBooking).toEqual(mockDraft);
     });
   });
-
-  // ============================================
-  // UNIT MANAGEMENT TESTS
-  // ============================================
 
   describe("Unit Management", () => {
     const mockUnit: BookingUnit = {
@@ -112,7 +99,7 @@ describe("useMultiUnitBookingStore", () => {
 
       act(() => {
         result.current.addUnit(mockUnit);
-        result.current.addUnit(mockUnit); // Attempt duplicate
+        result.current.addUnit(mockUnit);
       });
 
       expect(result.current.selectedUnits).toHaveLength(1);
@@ -122,7 +109,6 @@ describe("useMultiUnitBookingStore", () => {
       const { result } = renderHook(() => useMultiUnitBookingStore());
 
       act(() => {
-        // Add 10 units (the max)
         for (let i = 0; i < 10; i++) {
           result.current.addUnit({
             ...mockUnit,
@@ -130,7 +116,6 @@ describe("useMultiUnitBookingStore", () => {
           });
         }
 
-        // Attempt to add 11th unit
         result.current.addUnit({
           ...mockUnit,
           unit_id: "unit-11",
@@ -151,7 +136,6 @@ describe("useMultiUnitBookingStore", () => {
         result.current.removeUnit("unit-1");
       });
 
-      // Should have 1 unit remaining after removing one from two
       expect(result.current.selectedUnits).toHaveLength(1);
       expect(result.current.selectedUnits[0].unit_id).toBe("unit-2");
     });
@@ -164,8 +148,6 @@ describe("useMultiUnitBookingStore", () => {
         result.current.removeUnit("unit-1");
       });
 
-      // Last unit should not be removed if it's the only one
-      // The store should set an error and keep the unit
       expect(result.current.selectedUnits).toHaveLength(1);
       expect(result.current.error?.message).toContain("Cannot remove the last unit");
     });
@@ -206,10 +188,6 @@ describe("useMultiUnitBookingStore", () => {
     });
   });
 
-  // ============================================
-  // PRICING CALCULATION TESTS
-  // ============================================
-
   describe("Pricing Calculations", () => {
     it("should calculate pricing with weekend surcharge", () => {
       const { result } = renderHook(() => useMultiUnitBookingStore());
@@ -233,7 +211,6 @@ describe("useMultiUnitBookingStore", () => {
         );
       });
 
-      // Should have 2 nights with weekend surcharge
       expect(pricing!.nights).toBe(2);
       expect(pricing!.weekend_surcharge).toBeGreaterThan(0);
     });
@@ -264,10 +241,6 @@ describe("useMultiUnitBookingStore", () => {
     });
   });
 
-  // ============================================
-  // EDGE CASES & BOUNDARY CONDITIONS
-  // ============================================
-
   describe("Edge Cases", () => {
     it("should handle invalid date ranges", () => {
       const { result } = renderHook(() => useMultiUnitBookingStore());
@@ -291,7 +264,6 @@ describe("useMultiUnitBookingStore", () => {
         );
       });
 
-      // Should handle gracefully (negative nights)
       expect(pricing!.nights).toBeLessThanOrEqual(0);
     });
 
@@ -317,14 +289,9 @@ describe("useMultiUnitBookingStore", () => {
         result.current.removeUnit("non-existent-unit");
       });
 
-      // Should not throw error
       expect(result.current.selectedUnits).toHaveLength(0);
     });
   });
-
-  // ============================================
-  // GROUPED OPERATIONS TESTS
-  // ============================================
 
   describe("Grouped Operations", () => {
     it("should handle bulk unit addition", () => {
