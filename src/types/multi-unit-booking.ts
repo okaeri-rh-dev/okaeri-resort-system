@@ -154,17 +154,9 @@ export interface AdminMultiUnitBookingCreate {
 // ============================================
 
 export interface MultiUnitBookingState {
-  selectedBooking: MultiUnitBooking | null;
-
   // Draft booking state (during creation)
   draftBooking: Partial<MultiUnitBooking> | null;
   selectedUnits: BookingUnit[];
-
-  // Pricing cache
-  unitPricingCache: Map<string, BookingUnit["pricing"]>;
-
-  // UI state
-  isLoading: boolean;
   error: Error | null;
 }
 
@@ -173,47 +165,16 @@ export interface MultiUnitBookingState {
 // ============================================
 
 export interface MultiUnitBookingActions {
-  // ========== UNIT MANAGEMENT ACTIONS ==========
-
   addUnit: (unit: BookingUnit, checkIn?: string | Date, checkOut?: string | Date) => void;
   removeUnit: (unitId: string) => void;
-  updateUnit: (unitId: string, updates: Partial<BookingUnit>) => void;
   assignGuestsToUnit: (unitId: string, guestIds: string[], numGuests: number) => void;
-  reorderUnits: (fromIndex: number, toIndex: number) => void;
-  selectUnit: (unitId: string) => void;
-
-  // ========== PRICING ACTIONS ==========
-
   calculateUnitPricing: (
     unit: BookingUnit,
     checkIn: string,
     checkOut: string,
     numGuests: number
   ) => BookingUnit["pricing"];
-
-  recalculateTotalPricing: (checkIn?: string | Date, checkOut?: string | Date) => void;
-  applyBulkDiscount: (discountPercent: number) => void;
-  clearDiscount: () => void;
-
-  // ========== STATE MANAGEMENT ACTIONS ==========
-
-  setSelectedBooking: (booking: MultiUnitBooking | null) => void;
-  setDraftBooking: (booking: Partial<MultiUnitBooking> | null) => void;
   clearDraftBooking: () => void;
-  saveDraftBooking: () => void;
-  loadDraftBooking: () => void;
-  setLoading: (loading: boolean) => void;
-  setError: (error: Error | null) => void;
-  reset: () => void;
-
-  // ========== COMPUTED VALUES ==========
-
-  getTotalAmount: () => number;
-  getTotalGuests: () => number;
-  getUnitCount: () => number;
-  canAddMoreUnits: (maxUnits?: number) => boolean;
-  hasUnavailableUnits: () => boolean;
-  getUnavailableUnits: () => BookingUnit[];
 }
 
 // ============================================
