@@ -207,6 +207,15 @@ describe("DocumentPage", () => {
     expect(screen.getByText(/DRAFT/)).toBeInTheDocument();
   });
 
+  it.each([
+    ["2026-12-31T16:30:00Z", "QUO-2027-DRAFT"],
+    ["2026-12-31T15:30:00Z", "QUO-2026-DRAFT"],
+  ])("should use the Manila year in the DRAFT number at %s", (now, expected) => {
+    vi.setSystemTime(new Date(now));
+    render(<DocumentPage formData={defaultFormData} letterhead={defaultLetterhead} />);
+    expect(screen.getByText(expected)).toBeInTheDocument();
+  });
+
   it("should not render empty sections", () => {
     const formNoNotes: DocumentFormData = {
       ...defaultFormData,
