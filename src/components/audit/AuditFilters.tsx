@@ -230,10 +230,9 @@ export function AuditFilters() {
     : undefined;
 
   const applyDateRange = (range: DateRange | undefined) => {
-    const fromDate = range?.from;
     setFilters({
       ...filters,
-      startDate: fromDate?.toISOString(),
+      startDate: range?.from?.toISOString(),
       endDate: range?.to && endOfDay(range.to).toISOString(),
       offset: 0,
     });
