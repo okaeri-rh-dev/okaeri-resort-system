@@ -63,7 +63,21 @@ export default defineConfig(({ mode }) => {
 
       // Test execution configuration
       include: ["src/**/*.{test,spec}.{ts,tsx}", "__tests__/**/*.{test,spec}.{ts,tsx}"],
-      exclude: ["node_modules", "dist", ".idea", ".git", ".cache"],
+      exclude: [
+        "node_modules",
+        "dist",
+        ".idea",
+        ".git",
+        ".cache",
+        // SKIP_DB_SETUP skips the DB lock, so its run must not touch the shared DB.
+        ...(process.env.SKIP_DB_SETUP === "1"
+          ? [
+              "src/__tests__/database/**",
+              "__tests__/database/**",
+              "src/__tests__/performance/multi-unit-availability.test.ts",
+            ]
+          : []),
+      ],
       testTimeout: 10000,
       hookTimeout: 10000,
 
