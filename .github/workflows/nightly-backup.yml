@@ -1,0 +1,90 @@
+# Nightly Backup
+#
+# Dumps the prod database and copies the payment-proofs and receipts buckets,
+# encrypts everything with age, and uploads only the .age files to Cloudflare R2
+# under <R2_BUCKET>/<YYYY-MM-DD>/. Guest PII is in every file and the repo is public:
+# never add -v to rclone, upload an artifact, or print a dump.
+#
+# Setup, secret names and restore: docs/backups.md
+
+name: Nightly Backup
+
+on:
+  schedule:
+    # Daily at 6:00 PM UTC (2:00 AM PHT).
+    - cron: "0 18 * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: nightly-backup
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash # -eo pipefail: a failed dump fails the pipe into age
+
+env:
+  SUPABASE_S3_ENDPOINT: https://gxgpdlvathotgqtszabo.supabase.co/storage/v1/s3
+  SUPABASE_S3_REGION: ap-southeast-1
+
+jobs:
+  backup:
+    name: Back up prod to R2
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: supabase/setup-cli@v3
+        with:
+          version: 2.122.1 # keep in step with the e2e pin in infra-health.yml
+
+      - name: Install age and rclone
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq age rclone
+
+      - name: Dump and encrypt the database
+        env:
+          DB_URL: ${{ secrets.BACKUP_DB_URL }}
+          AGE_RECIPIENT: ${{ secrets.BACKUP_AGE_RECIPIENT }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/out"
+          supabase db dump --db-url "$DB_URL" --role-only | age -r "$AGE_RECIPIENT" > "$RUNNER_TEMP/out/roles.sql.age"
+          supabase db dump --db-url "$DB_URL" | age -r "$AGE_RECIPIENT" > "$RUNNER_TEMP/out/schema.sql.age"
+          supabase db dump --db-url "$DB_URL" --data-only --use-copy | age -r "$AGE_RECIPIENT" > "$RUNNER_TEMP/out/data.sql.age"
+
+      - name: Copy and encrypt the Storage buckets
+        env:
+          AGE_RECIPIENT: ${{ secrets.BACKUP_AGE_RECIPIENT }}
+          RCLONE_CONFIG_SUPABASE_TYPE: s3
+          RCLONE_CONFIG_SUPABASE_PROVIDER: Other
+          RCLONE_CONFIG_SUPABASE_ENDPOINT: ${{ env.SUPABASE_S3_ENDPOINT }}
+          RCLONE_CONFIG_SUPABASE_REGION: ${{ env.SUPABASE_S3_REGION }}
+          RCLONE_CONFIG_SUPABASE_FORCE_PATH_STYLE: "true"
+          RCLONE_CONFIG_SUPABASE_ACCESS_KEY_ID: ${{ secrets.SUPABASE_S3_ACCESS_KEY_ID }}
+          RCLONE_CONFIG_SUPABASE_SECRET_ACCESS_KEY: ${{ secrets.SUPABASE_S3_SECRET_ACCESS_KEY }}
+        run: |
+          storage_dir="$RUNNER_TEMP/storage"
+          mkdir -p "$storage_dir"
+          for bucket in payment-proofs receipts; do
+            rclone copy "supabase:$bucket" "$storage_dir/$bucket"
+          done
+          tar -C "$storage_dir" -cf - . | age -r "$AGE_RECIPIENT" > "$RUNNER_TEMP/out/storage.tar.age"
+          rm -rf "$storage_dir"
+
+      - name: Upload the encrypted files to R2
+        env:
+          RCLONE_CONFIG_R2_TYPE: s3
+          RCLONE_CONFIG_R2_PROVIDER: Cloudflare
+          RCLONE_CONFIG_R2_REGION: auto
+          RCLONE_CONFIG_R2_ENDPOINT: https://${{ secrets.R2_ACCOUNT_ID }}.r2.cloudflarestorage.com
+          RCLONE_CONFIG_R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          RCLONE_CONFIG_R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          RCLONE_CONFIG_R2_NO_CHECK_BUCKET: "true"
+          R2_BUCKET: ${{ secrets.R2_BUCKET }}
+        run: |
+          prefix="$(date -u +%F)"
+          rclone copy "$RUNNER_TEMP/out" "r2:$R2_BUCKET/$prefix" --include "*.age"
+          rclone ls "r2:$R2_BUCKET/$prefix"

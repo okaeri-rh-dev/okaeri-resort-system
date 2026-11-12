@@ -38,6 +38,8 @@ The guest's records are: the guest row, their bookings, those bookings' `booking
 
 **Fail-safe:** the clear-list and an explicit keep-list together must cover every column of `guests`, `bookings`, `booking_units`, `payments` and `guest_assignments`. A DB test reads `information_schema.columns` and fails on an unclassified column, so a new column (for example `guests.nationality` from the online-booking restore) cannot merge unclassified.
 
+**Backups:** the nightly R2 backup (`docs/backups.md`) keeps anonymized or cleaned-up data for up to 30 days.
+
 **Marker:** new column `anonymized_at timestamptz` on `guests` and `bookings`. Marked rows are skipped, which makes every path idempotent; the UI reads it.
 
 ## Components
