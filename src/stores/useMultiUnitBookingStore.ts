@@ -141,6 +141,11 @@ export const useMultiUnitBookingStore = create<MultiUnitBookingStore>()(
 
           // ========== STATE MANAGEMENT ==========
 
+          setDraftBooking: (booking) =>
+            set((state: Draft<MultiUnitBookingStore>) => {
+              state.draftBooking = booking;
+            }),
+
           clearDraftBooking: () =>
             set((state: Draft<MultiUnitBookingStore>) => {
               state.draftBooking = null;

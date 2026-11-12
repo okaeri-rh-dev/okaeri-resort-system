@@ -174,6 +174,7 @@ export interface MultiUnitBookingActions {
     checkOut: string,
     numGuests: number
   ) => BookingUnit["pricing"];
+  setDraftBooking: (booking: Partial<MultiUnitBooking> | null) => void;
   clearDraftBooking: () => void;
 }
 

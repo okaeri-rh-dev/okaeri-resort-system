@@ -52,7 +52,7 @@ describe("useMultiUnitBookingStore", () => {
 
       // Set draft booking
       act(() => {
-        useMultiUnitBookingStore.setState({ draftBooking: mockDraft });
+        result.current.setDraftBooking(mockDraft);
       });
 
       // Verify state is set
@@ -188,8 +188,10 @@ describe("useMultiUnitBookingStore", () => {
       const { result } = renderHook(() => useMultiUnitBookingStore());
 
       act(() => {
-        useMultiUnitBookingStore.setState({
-          draftBooking: { check_in: "2025-10-01", check_out: "2025-10-03", discount_amount: 100 },
+        result.current.setDraftBooking({
+          check_in: "2025-10-01",
+          check_out: "2025-10-03",
+          discount_amount: 100,
         });
         result.current.addUnit({ ...mockUnit, weekend_rate: 1000 });
         result.current.assignGuestsToUnit("unit-1", ["guest-1"], 3);
@@ -291,6 +293,21 @@ describe("useMultiUnitBookingStore", () => {
 
       // Should handle gracefully (negative nights)
       expect(pricing!.nights).toBeLessThanOrEqual(0);
+    });
+
+    it("should clear the draft, units and error", () => {
+      const { result } = renderHook(() => useMultiUnitBookingStore());
+
+      act(() => {
+        result.current.setDraftBooking({ check_in: "2025-10-01" });
+        result.current.addUnit({ unit_id: "unit-1" } as BookingUnit);
+        result.current.removeUnit("unit-1");
+        result.current.clearDraftBooking();
+      });
+
+      expect(result.current.draftBooking).toBeNull();
+      expect(result.current.selectedUnits).toEqual([]);
+      expect(result.current.error).toBeNull();
     });
 
     it("should handle unit not found in remove operations", () => {
