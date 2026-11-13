@@ -3,12 +3,20 @@ import { lazy, Suspense } from "react";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 
+import { VariantA, VariantB, VariantC } from "@/components/bookings/BookingDetail/prototype-450";
 import { DetailPageSkeleton } from "@/components/entity-detail/DetailPageSkeleton";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { Button } from "@/components/patterns";
+import { PrototypeSwitcher } from "@/components/prototype/PrototypeSwitcher";
 import { bookingDetailQuery } from "@/hooks/useBookings";
 import { recentRecordAuditLogsQuery } from "@/lib/audit-hooks";
 import { AuditRole, hasAuditRole } from "@/lib/audit-roles";
+
+const VARIANTS = [
+  { key: "A", name: "Summary rail", Component: VariantA },
+  { key: "B", name: "One column", Component: VariantB },
+  { key: "C", name: "Hero + tabs", Component: VariantC },
+];
 
 // Lazy load the detail page component
 const BookingDetailPage = lazy(() =>
@@ -18,6 +26,9 @@ const BookingDetailPage = lazy(() =>
 );
 
 export const Route = createFileRoute("/admin/bookings/$bookingId/")({
+  validateSearch: (search: Record<string, unknown>): { variant?: string } => ({
+    variant: typeof search.variant === "string" ? search.variant : undefined,
+  }),
   // Loader function to prefetch all necessary data
   loader: async ({ params, context }) => {
     const { bookingId } = params;
@@ -80,12 +91,25 @@ export const Route = createFileRoute("/admin/bookings/$bookingId/")({
 function BookingDetailComponent() {
   const { bookingId } = Route.useParams();
   const { data: booking } = useSuspenseQuery(bookingDetailQuery(bookingId));
+  const { variant = "A" } = Route.useSearch();
+  const navigate = Route.useNavigate();
+  const Variant = VARIANTS.find((v) => v.key === variant)?.Component;
 
   return (
     <ErrorBoundary level="page">
       <Suspense fallback={<DetailPageSkeleton />}>
-        {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-        <BookingDetailPage booking={booking as any} bookingId={bookingId} />
+        {Variant ? (
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          <Variant booking={booking as any} />
+        ) : (
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          <BookingDetailPage booking={booking as any} bookingId={bookingId} />
+        )}
+        <PrototypeSwitcher
+          variants={[...VARIANTS, { key: "old", name: "Current page" }]}
+          current={variant}
+          onChange={(key) => void navigate({ search: { variant: key }, replace: true })}
+        />
       </Suspense>
     </ErrorBoundary>
   );
