@@ -3,9 +3,12 @@
 // except Verify payment, which still opens the real dialog. Never merge to main.
 import { useState, type ReactNode } from "react";
 
+import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { ChevronLeft, ChevronRight, FileImage, Pencil } from "lucide-react";
+import { ChevronDown, ChevronLeft, ChevronRight, FileImage, History, Pencil } from "lucide-react";
 
+import { ActionBadge } from "@/components/audit/ActionBadge";
+import { SafeAuditText } from "@/components/audit/SafeAuditText";
 import { BookingOverflowMenu } from "@/components/bookings/BookingsTable/components/BookingOverflowMenu";
 import { CabinChip } from "@/components/bookings/BookingsTable/components/CabinChip";
 import { MainActionButton } from "@/components/bookings/BookingsTable/components/MainActionButton";
@@ -23,6 +26,9 @@ import {
   Button,
   Card,
   CardContent,
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
   DetailField,
   DetailSection,
   ListCard,
@@ -34,8 +40,11 @@ import {
   TabsTrigger,
   toast,
 } from "@/components/patterns";
+import { auditActorLabel } from "@/lib/audit-display";
+import { recentRecordAuditLogsQuery } from "@/lib/audit-hooks";
 import { formatCurrency } from "@/lib/formatters";
 import { statusBadgeProps } from "@/lib/status-tone";
+import { formatPhilippineDate } from "@/lib/timezone";
 import { cn } from "@/lib/utils";
 import type { Booking } from "@/types";
 
@@ -656,7 +665,7 @@ function DenseNotes({ booking }: { booking: Booking }) {
 export function VariantD({ booking }: { booking: Booking }) {
   const { outstanding } = money(booking);
   return (
-    <div className="expanded:pb-0 space-y-4 pb-16">
+    <div className="expanded:pb-0 space-y-4 pb-24">
       <header className="expanded:flex-row expanded:items-start expanded:justify-between flex flex-col gap-3">
         <div className="min-w-0 space-y-1">
           <Link
@@ -689,8 +698,56 @@ export function VariantD({ booking }: { booking: Booking }) {
         </div>
         <DensePayments booking={booking} />
       </div>
-      <Audit booking={booking} />
+      <DenseAudit booking={booking} />
       <StickyActionBar booking={booking} />
     </div>
+  );
+}
+
+function DenseAudit({ booking }: { booking: Booking }) {
+  const [open, setOpen] = useState(false);
+  const { data: logs, isPending } = useQuery(
+    recentRecordAuditLogsQuery("bookings", booking.booking_id)
+  );
+  return (
+    <Collapsible open={open} onOpenChange={setOpen} asChild>
+      <ListCard>
+        <CollapsibleTrigger className="flex min-h-8 w-full items-center justify-between gap-2 text-left">
+          <h2 className="font-display flex items-center gap-2 text-base font-semibold">
+            <History className="size-4" aria-hidden />
+            History
+            {logs && (
+              <span className="text-muted-foreground text-xs font-medium">{logs.length}</span>
+            )}
+          </h2>
+          <ChevronDown className={cn("size-4 duration-150", open && "rotate-180")} aria-hidden />
+        </CollapsibleTrigger>
+        <CollapsibleContent>
+          {isPending ? (
+            <p className="text-muted-foreground text-sm">Loading history…</p>
+          ) : !logs?.length ? (
+            <p className="text-muted-foreground text-sm">No history yet</p>
+          ) : (
+            <ul className="divide-y border-t">
+              {logs.slice(0, 10).map((log) => (
+                <li key={log.audit_id} className="space-y-0.5 py-2">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <ActionBadge log={log} />
+                    {log.description && (
+                      <SafeAuditText text={log.description} className="text-sm" />
+                    )}
+                  </div>
+                  <p className="text-muted-foreground text-xs tabular-nums">
+                    {auditActorLabel(log)}
+                    {log.created_at &&
+                      ` · ${formatPhilippineDate(new Date(log.created_at), "MMM d, h:mm a")}`}
+                  </p>
+                </li>
+              ))}
+            </ul>
+          )}
+        </CollapsibleContent>
+      </ListCard>
+    </Collapsible>
   );
 }
