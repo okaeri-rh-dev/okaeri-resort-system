@@ -9,6 +9,11 @@ interface AcquireOptions {
   onWait?: (holderPid: number) => void;
 }
 
+function logWait(holderPid: number) {
+  // eslint-disable-next-line no-console
+  console.log(`⏳ Waiting for test run ${holderPid} to finish with the test database...`);
+}
+
 /** One lock per Supabase stack, shared by every checkout and worktree on the machine. */
 export function dbLockPath(supabaseUrl: string): string {
   const url = new URL(supabaseUrl);
@@ -53,7 +58,7 @@ function tryCreateLock(lockPath: string): boolean {
 /** Waits for a cross-process lock file, and returns the function that releases it. */
 export async function acquireDbLock(
   lockPath: string,
-  { pollMs = 1000, onWait }: AcquireOptions = {}
+  { pollMs = 1000, onWait = logWait }: AcquireOptions = {}
 ): Promise<() => void> {
   let toldToWait = false;
 
@@ -66,7 +71,7 @@ export async function acquireDbLock(
       continue;
     }
     if (holderPid && !toldToWait) {
-      onWait?.(holderPid);
+      onWait(holderPid);
       toldToWait = true;
     }
     await new Promise((r) => setTimeout(r, pollMs));
