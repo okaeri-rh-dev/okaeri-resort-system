@@ -12,7 +12,6 @@ Entity stores (`useGuestStore`, `useExpenseStore`, `usePaymentStore`) hold clien
 ## Files outside the entity pattern
 
 - `useUIStore.ts`: theme, toasts, modals and confirm dialogs.
-- `useMultiUnitBookingStore.ts`: the staff multi-unit booking form draft (selected units, guest assignments, pricing). It persists the `draftBooking`.
 - `useAuditStore.ts`: audit log filters, quick filter presets and table state. It has no query hooks.
 - `useDocumentStore.ts`: the document draft and preview mode. Nothing is persisted; the letterhead and document numbers live in the database (`src/hooks/useDocuments.ts`).
 - `useInstallPromptStore.ts`: the PWA install prompt (`useCanShowInstallBanner`).
