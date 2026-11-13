@@ -6,7 +6,16 @@ import path from "path";
 
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
-import { acquireDbLock, runHoldingLock } from "./db-lock";
+import { acquireDbLock, dbLockPath, runHoldingLock } from "./db-lock";
+
+describe("dbLockPath", () => {
+  it("gives every spelling of the local stack's URL the same lock", () => {
+    const lockPath = dbLockPath("http://127.0.0.1:54321");
+
+    expect(dbLockPath("http://localhost:54321")).toBe(lockPath);
+    expect(dbLockPath("http://127.0.0.1:54321/")).toBe(lockPath);
+  });
+});
 
 describe("acquireDbLock", () => {
   let dir: string;

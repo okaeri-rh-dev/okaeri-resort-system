@@ -11,7 +11,9 @@ interface AcquireOptions {
 
 /** One lock per Supabase stack, shared by every checkout and worktree on the machine. */
 export function dbLockPath(supabaseUrl: string): string {
-  const urlHash = createHash("sha256").update(supabaseUrl).digest("hex").slice(0, 12);
+  const url = new URL(supabaseUrl);
+  if (url.hostname === "localhost") url.hostname = "127.0.0.1";
+  const urlHash = createHash("sha256").update(url.origin).digest("hex").slice(0, 12);
   return path.join(tmpdir(), `okaeri-vitest-db-${urlHash}.lock`);
 }
 
