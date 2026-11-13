@@ -1,10 +1,10 @@
 // PROTOTYPE (issue 450): three layouts of the booking page, switched by ?variant=A|B|C on
 // /admin/bookings/$bookingId. Payments are sample rows and every action is a toast stub,
 // except Verify payment, which still opens the real dialog. Never merge to main.
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 
 import { Link } from "@tanstack/react-router";
-import { ChevronRight, FileImage, Pencil } from "lucide-react";
+import { ChevronLeft, ChevronRight, FileImage, Pencil } from "lucide-react";
 
 import { BookingOverflowMenu } from "@/components/bookings/BookingsTable/components/BookingOverflowMenu";
 import { CabinChip } from "@/components/bookings/BookingsTable/components/CabinChip";
@@ -25,6 +25,8 @@ import {
   CardContent,
   DetailField,
   DetailSection,
+  ListCard,
+  ListCardRow,
   StatusBadge,
   Tabs,
   TabsContent,
@@ -485,6 +487,209 @@ export function VariantC({ booking }: { booking: Booking }) {
           <Audit booking={booking} />
         </TabsContent>
       </Tabs>
+      <StickyActionBar booking={booking} />
+    </div>
+  );
+}
+
+const shortDay = (iso: string) =>
+  new Date(iso).toLocaleDateString("en-PH", {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+    timeZone: "Asia/Manila",
+  });
+
+const nightsOf = (booking: Booking) =>
+  Math.round(
+    (new Date(booking.check_out.slice(0, 10)).getTime() -
+      new Date(booking.check_in.slice(0, 10)).getTime()) /
+      86_400_000
+  );
+
+function DenseCard({
+  title,
+  action,
+  children,
+}: {
+  title: string;
+  action?: ReactNode;
+  children: ReactNode;
+}) {
+  return (
+    <ListCard>
+      <div className="flex min-h-8 items-center justify-between gap-2">
+        <h2 className="font-display text-base font-semibold">{title}</h2>
+        {action}
+      </div>
+      {children}
+    </ListCard>
+  );
+}
+
+function SmallPencil({ booking, section }: { booking: Booking; section: string }) {
+  if (readOnly(booking)) return null;
+  return (
+    <Button
+      variant="ghost"
+      size="sm"
+      className="-mr-2"
+      aria-label={`Edit ${section}`}
+      onClick={stub(`Edit ${section} sheet`)}
+    >
+      <Pencil className="size-4" aria-hidden />
+      Edit
+    </Button>
+  );
+}
+
+function DenseStay({ booking }: { booking: Booking }) {
+  const nights = nightsOf(booking);
+  return (
+    <DenseCard title="Stay" action={<SmallPencil booking={booking} section="stay" />}>
+      <ListCardRow label="Check-in" value={shortDay(booking.check_in)} />
+      <ListCardRow label="Check-out" value={shortDay(booking.check_out)} />
+      <ListCardRow
+        label="Length"
+        value={`${nights} ${nights === 1 ? "night" : "nights"} · ${booking.num_guests} guests`}
+      />
+      <ul className="divide-y border-t">
+        {(booking.booking_units ?? []).map((bu) => (
+          <li key={bu.booking_unit_id} className="flex items-center gap-2 pt-2 text-sm">
+            <CabinChip bookingUnit={bu} />
+            <span className="min-w-0 flex-1 truncate">{bu.unit?.unit_name ?? "Cabin"}</span>
+            <span className="text-muted-foreground tabular-nums">
+              {bu.assigned_guests ?? 0} guests
+            </span>
+          </li>
+        ))}
+      </ul>
+    </DenseCard>
+  );
+}
+
+function DenseGuest({ booking }: { booking: Booking }) {
+  return (
+    <DenseCard title="Guest" action={<SmallPencil booking={booking} section="guest" />}>
+      {readOnly(booking) ? (
+        <p className="text-muted-foreground text-sm">Personal details removed.</p>
+      ) : (
+        <>
+          {booking.contact_number && (
+            <ListCardRow
+              label="Phone"
+              value={
+                <a href={`tel:${booking.contact_number}`} className="text-primary">
+                  {formatPhoneNumber(booking.contact_number)}
+                </a>
+              }
+            />
+          )}
+          {booking.email && (
+            <ListCardRow
+              label="Email"
+              value={<span className="block truncate">{booking.email}</span>}
+            />
+          )}
+          {booking.airbnb_confirmation_code && (
+            <ListCardRow label="Airbnb code" value={booking.airbnb_confirmation_code} />
+          )}
+          {booking.guest_id && (
+            <ListCardRow
+              label="Guest record"
+              value={<RelatedEntityLink type="guest" id={booking.guest_id} label="Open" />}
+            />
+          )}
+        </>
+      )}
+    </DenseCard>
+  );
+}
+
+function DensePayments({ booking }: { booking: Booking }) {
+  const { received, outstanding } = money(booking);
+  return (
+    <DenseCard
+      title="Payments"
+      action={<StatusBadge {...statusBadgeProps(booking.payment_status, "Pending")} />}
+    >
+      <PaymentRows booking={booking} />
+      <div className="space-y-1 border-t pt-2">
+        <ListCardRow label="Total" value={formatCurrency(booking.total_amount)} />
+        <ListCardRow label="Received" value={formatCurrency(received)} />
+        <ListCardRow
+          label="Outstanding"
+          value={
+            <span className="font-semibold">
+              {outstanding > 0 ? formatCurrency(outstanding) : "Paid"}
+            </span>
+          }
+        />
+      </div>
+      {!readOnly(booking) && outstanding > 0 && (
+        <Button variant="outline" size="sm" className="w-full" onClick={actions.onRecordPayment}>
+          Record payment
+        </Button>
+      )}
+    </DenseCard>
+  );
+}
+
+function DenseNotes({ booking }: { booking: Booking }) {
+  const note = (label: string, text?: string | null) => (
+    <div className="space-y-0.5">
+      <p className="text-muted-foreground text-xs font-medium">{label}</p>
+      <p className="text-sm break-words whitespace-pre-wrap">
+        {text || <span className="text-muted-foreground">None</span>}
+      </p>
+    </div>
+  );
+  return (
+    <DenseCard title="Notes" action={<SmallPencil booking={booking} section="notes" />}>
+      {note("Special request", booking.special_requests)}
+      {note("Internal note", booking.internal_notes)}
+    </DenseCard>
+  );
+}
+
+/** D: dense. Tight cards of label-value rows, a one-line header, cabins as rows; two columns from expanded. */
+export function VariantD({ booking }: { booking: Booking }) {
+  const { outstanding } = money(booking);
+  return (
+    <div className="expanded:pb-0 space-y-4 pb-16">
+      <header className="expanded:flex-row expanded:items-start expanded:justify-between flex flex-col gap-3">
+        <div className="min-w-0 space-y-1">
+          <Link
+            to="/admin/bookings"
+            className="text-muted-foreground hover:text-foreground flex items-center gap-1 text-xs"
+          >
+            <ChevronLeft className="size-3" aria-hidden />
+            Bookings
+          </Link>
+          <h1 className="font-display text-xl font-semibold break-words">
+            {readOnly(booking) ? "Removed guest" : booking.guest_name}
+          </h1>
+          <div className="text-muted-foreground flex flex-wrap items-center gap-x-2 gap-y-1 text-xs tabular-nums">
+            <span>{booking.booking_reference}</span>
+            <StatusBadge size="compact" {...statusBadgeProps(booking.booking_status, "Pending")} />
+            <SourceBadge source={booking.booking_source} />
+            <NeedsActionLabel booking={booking} />
+            {outstanding > 0 && (
+              <span className="text-foreground font-medium">{formatCurrency(outstanding)} due</span>
+            )}
+          </div>
+        </div>
+        <Actions booking={booking} className="expanded:flex hidden w-72 shrink-0" />
+      </header>
+      <div className="expanded:grid-cols-2 grid grid-cols-1 items-start gap-4">
+        <div className="space-y-4">
+          <DenseStay booking={booking} />
+          <DenseGuest booking={booking} />
+          <DenseNotes booking={booking} />
+        </div>
+        <DensePayments booking={booking} />
+      </div>
+      <Audit booking={booking} />
       <StickyActionBar booking={booking} />
     </div>
   );

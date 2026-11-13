@@ -3,7 +3,12 @@ import { lazy, Suspense } from "react";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 
-import { VariantA, VariantB, VariantC } from "@/components/bookings/BookingDetail/prototype-450";
+import {
+  VariantA,
+  VariantB,
+  VariantC,
+  VariantD,
+} from "@/components/bookings/BookingDetail/prototype-450";
 import { DetailPageSkeleton } from "@/components/entity-detail/DetailPageSkeleton";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { Button } from "@/components/patterns";
@@ -16,6 +21,7 @@ const VARIANTS = [
   { key: "A", name: "Summary rail", Component: VariantA },
   { key: "B", name: "One column", Component: VariantB },
   { key: "C", name: "Hero + tabs", Component: VariantC },
+  { key: "D", name: "Dense", Component: VariantD },
 ];
 
 // Lazy load the detail page component
