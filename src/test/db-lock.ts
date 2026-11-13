@@ -1,3 +1,4 @@
+import { spawn } from "child_process";
 import { createHash } from "crypto";
 import { linkSync, readFileSync, rmSync, unlinkSync, writeFileSync } from "fs";
 import { tmpdir } from "os";
@@ -8,9 +9,16 @@ interface AcquireOptions {
   onWait?: (holderPid: number) => void;
 }
 
+function logWait(holderPid: number) {
+  // eslint-disable-next-line no-console
+  console.log(`⏳ Waiting for test run ${holderPid} to finish with the test database...`);
+}
+
 /** One lock per Supabase stack, shared by every checkout and worktree on the machine. */
 export function dbLockPath(supabaseUrl: string): string {
-  const urlHash = createHash("sha256").update(supabaseUrl).digest("hex").slice(0, 12);
+  const url = new URL(supabaseUrl);
+  if (url.hostname === "localhost") url.hostname = "127.0.0.1";
+  const urlHash = createHash("sha256").update(url.origin).digest("hex").slice(0, 12);
   return path.join(tmpdir(), `okaeri-vitest-db-${urlHash}.lock`);
 }
 
@@ -50,7 +58,7 @@ function tryCreateLock(lockPath: string): boolean {
 /** Waits for a cross-process lock file, and returns the function that releases it. */
 export async function acquireDbLock(
   lockPath: string,
-  { pollMs = 1000, onWait }: AcquireOptions = {}
+  { pollMs = 1000, onWait = logWait }: AcquireOptions = {}
 ): Promise<() => void> {
   let toldToWait = false;
 
@@ -63,7 +71,7 @@ export async function acquireDbLock(
       continue;
     }
     if (holderPid && !toldToWait) {
-      onWait?.(holderPid);
+      onWait(holderPid);
       toldToWait = true;
     }
     await new Promise((r) => setTimeout(r, pollMs));
@@ -75,4 +83,27 @@ export async function acquireDbLock(
   };
   process.on("exit", release);
   return release;
+}
+
+/** Runs a command while holding the lock, and resolves to its exit code. */
+export async function runHoldingLock(
+  lockPath: string,
+  command: string,
+  args: string[],
+  options?: AcquireOptions
+): Promise<number> {
+  const release = await acquireDbLock(lockPath, options);
+  // Ctrl-C reaches the child too: stay alive so the lock outlives the child's cleanup.
+  const ignoreInterrupt = () => {};
+  process.on("SIGINT", ignoreInterrupt);
+  try {
+    return await new Promise<number>((resolve, reject) => {
+      spawn(command, args, { stdio: "inherit" })
+        .on("error", reject)
+        .on("close", (code) => resolve(code ?? 1));
+    });
+  } finally {
+    process.off("SIGINT", ignoreInterrupt);
+    release();
+  }
 }

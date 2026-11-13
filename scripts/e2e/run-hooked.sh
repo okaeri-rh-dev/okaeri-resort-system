@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # CI E2E orchestrator (infra-health): preflight → seed → playwright → cleanup.
 # Cleanup runs unconditionally via trap on EXIT.
+# Run it via `npm run test:e2e:hooked`: that wrapper holds the machine-wide DB lock.
 set -euo pipefail
 
 trap 'npm run cleanup:e2e' EXIT

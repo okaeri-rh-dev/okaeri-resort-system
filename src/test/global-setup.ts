@@ -157,11 +157,7 @@ export default async function globalSetup() {
   if (process.env.SKIP_DB_SETUP === "1") return;
 
   // Other vitest runs share this stack, and their cleanup deletes this run's rows.
-  const releaseDbLock = await acquireDbLock(dbLockPath(TEST_SUPABASE_URL), {
-    onWait: (holderPid) =>
-      // eslint-disable-next-line no-console
-      console.log(`⏳ Waiting for vitest run ${holderPid} to finish with the test database...`),
-  });
+  const releaseDbLock = await acquireDbLock(dbLockPath(TEST_SUPABASE_URL));
 
   // eslint-disable-next-line no-console
   console.log("\n" + "=".repeat(80));

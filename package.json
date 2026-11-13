@@ -39,7 +39,7 @@
     "test:coverage": "vitest run --coverage",
     "test:db": "vitest run src/__tests__/database __tests__/database",
     "test:e2e": "playwright test",
-    "test:e2e:hooked": "bash scripts/e2e/run-hooked.sh",
+    "test:e2e:hooked": "tsx scripts/e2e/with-db-lock.ts bash scripts/e2e/run-hooked.sh",
     "test:integration": "vitest run __tests__/integration",
     "test:load": "k6 run load-testing/scenarios/mixed-workload.ts",
     "test:load:availability": "k6 run load-testing/scenarios/availability-check.ts",
