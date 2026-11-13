@@ -54,6 +54,14 @@ _Avoid_: Current booking, active booking
 A booking that waits for staff: a pending booking, a confirmed booking past its check-in day that has not checked in, or a checked-in booking past its check-out day. An outstanding balance alone does not make a booking need action.
 _Avoid_: Overdue booking, alert, task
 
+**Special request**:
+What the guest asked the resort for with a booking, such as an early check-in.
+_Avoid_: Note, comment
+
+**Internal note**:
+What staff write on a booking for other staff. Guests never see it.
+_Avoid_: Special request, comment, remark
+
 **Occupancy**:
 For one calendar month, the booked cabin nights of confirmed bookings divided by the number of units times the days in the month.
 _Avoid_: Utilisation, load
