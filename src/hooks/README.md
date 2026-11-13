@@ -1,6 +1,6 @@
 # Hooks
 
-React hooks shared across components. Entity client state (filters, drafts) lives in `src/stores/`; the hooks here cover bookings, guests, money (accounts, expenses, payments, transfers), settings, roles, multi-unit booking, pricing, realtime and UI helpers.
+React hooks shared across components. Entity client state (filters, drafts) lives in `src/stores/`; the hooks here cover bookings, guests, money (accounts, expenses, payments, transfers), settings, roles, multi-unit booking, pricing and UI helpers.
 
 ## Conventions
 
@@ -26,8 +26,6 @@ React hooks shared across components. Entity client state (filters, drafts) live
 | `useExpenseCategories.ts`       | category list, active list, create/update/archive/restore                                     |
 | `usePaymentMethods.ts`          | method list, active list, create/update/delete/reactivate, QR code upload/delete              |
 | `useMultiUnitBookingQueries.ts` | `useMultiUnitAvailability`, `useCreateMultiUnitBooking`                                       |
-| `useMultiUnitRealtime.ts`       | `useMultiUnitAvailabilitySubscription`: `afterWrite("availability_blackouts")` and `onChange` on block events |
-| `useAvailabilityRealtime.ts`    | `useAvailabilityRealtime`: availability changes that affect multi-unit bookings               |
 | `useAvailabilityTimeline.ts`    | `useAvailabilityTimeline`, `blocksInNightsQuery`: stays and blocks for the availability timeline |
 | `useContactChannels.ts`         | `useContactChannels`, `useActiveContactChannels`, create/update/set-active/reorder mutations |
 | `useDocuments.ts`               | `useLetterhead`, `useSaveLetterhead`, `useAllocateDocumentNumber`                            |

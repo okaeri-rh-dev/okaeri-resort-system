@@ -1,7 +1,7 @@
 // src/__tests__/architecture/pricing-parity.test.ts
 /**
  * The same stay must cost the same on every live pricing path:
- * - the staff booking form (useMultiUnitBookingStore.calculateUnitPricing),
+ * - the staff booking stepper (priceCabin with cabinRates, as NewBookingFlow calls it),
  * - booking creation, which stores the price (functions/lib/unit-pricing.ts),
  * - the quote / guest-booking calculator (functions/lib/pricing.ts).
  *
@@ -11,9 +11,8 @@
 
 import { describe, expect, it } from "vitest";
 
+import { cabinRates, priceCabin } from "@/lib/pricing/cabin-pricing";
 import { isWeekendNight } from "@/lib/pricing/weekend-night";
-import { useMultiUnitBookingStore } from "@/stores/useMultiUnitBookingStore";
-import type { BookingUnit } from "@/types/multi-unit-booking";
 
 import { calculateBookingPrice } from "../../../functions/lib/pricing";
 import { calculateUnitPricing as calculateStoredUnitPricing } from "../../../functions/lib/unit-pricing";
@@ -41,22 +40,6 @@ const STAYS = [
 ];
 
 const GUEST_COUNTS = [2, 4];
-
-function formUnit(): BookingUnit {
-  return {
-    unit_id: "unit-1",
-    unit_name: "Cabin 1",
-    unit_code: "C1",
-    unit_type: "cabin",
-    max_occupancy: 6,
-    base_occupancy: PRICING_CONFIG.base_occupancy,
-    base_rate: PRICING_CONFIG.base_rate,
-    weekend_rate: PRICING_CONFIG.weekend_rate,
-    extra_person_rate: PRICING_CONFIG.extra_person_rate,
-    pricing: { nights: 0, base_total: 0, weekend_surcharge: 0, extra_person_fee: 0, unit_total: 0 },
-    availability: { is_available: true, checking: false },
-  };
-}
 
 function expectedTotal(stay: (typeof STAYS)[number], guests: number): number {
   const nights = (Date.parse(stay.checkOut) - Date.parse(stay.checkIn)) / 86_400_000;
@@ -96,9 +79,12 @@ describe("pricing parity", () => {
   for (const stay of STAYS) {
     for (const guests of GUEST_COUNTS) {
       it(`${stay.label}, ${guests} guests: form, stored and quote totals agree`, async () => {
-        const formTotal = useMultiUnitBookingStore
-          .getState()
-          .calculateUnitPricing(formUnit(), stay.checkIn, stay.checkOut, guests).unit_total;
+        const formTotal = priceCabin(
+          cabinRates({ base_rate: 0, base_occupancy: 0 }, PRICING_CONFIG),
+          stay.checkIn,
+          stay.checkOut,
+          guests
+        ).unit_total;
 
         const storedTotal = calculateStoredUnitPricing(
           {

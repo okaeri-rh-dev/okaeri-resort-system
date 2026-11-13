@@ -148,38 +148,3 @@ export interface AdminMultiUnitBookingCreate {
   source?: string;
   idempotency_key?: string;
 }
-
-// ============================================
-// STORE STATE TYPES
-// ============================================
-
-export interface MultiUnitBookingState {
-  // Draft booking state (during creation)
-  draftBooking: Partial<MultiUnitBooking> | null;
-  selectedUnits: BookingUnit[];
-  error: Error | null;
-}
-
-// ============================================
-// STORE ACTION TYPES
-// ============================================
-
-export interface MultiUnitBookingActions {
-  addUnit: (unit: BookingUnit, checkIn?: string | Date, checkOut?: string | Date) => void;
-  removeUnit: (unitId: string) => void;
-  assignGuestsToUnit: (unitId: string, guestIds: string[], numGuests: number) => void;
-  calculateUnitPricing: (
-    unit: BookingUnit,
-    checkIn: string,
-    checkOut: string,
-    numGuests: number
-  ) => BookingUnit["pricing"];
-  setDraftBooking: (booking: Partial<MultiUnitBooking> | null) => void;
-  clearDraftBooking: () => void;
-}
-
-// ============================================
-// COMBINED STORE TYPE
-// ============================================
-
-export type MultiUnitBookingStore = MultiUnitBookingState & MultiUnitBookingActions;
