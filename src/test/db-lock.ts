@@ -1,3 +1,4 @@
+import { spawn } from "child_process";
 import { createHash } from "crypto";
 import { linkSync, readFileSync, rmSync, unlinkSync, writeFileSync } from "fs";
 import { tmpdir } from "os";
@@ -75,4 +76,27 @@ export async function acquireDbLock(
   };
   process.on("exit", release);
   return release;
+}
+
+/** Runs a command while holding the lock, and resolves to its exit code. */
+export async function runHoldingLock(
+  lockPath: string,
+  command: string,
+  args: string[],
+  options?: AcquireOptions
+): Promise<number> {
+  const release = await acquireDbLock(lockPath, options);
+  // Ctrl-C reaches the child too: stay alive so the lock outlives the child's cleanup.
+  const ignoreInterrupt = () => {};
+  process.on("SIGINT", ignoreInterrupt);
+  try {
+    return await new Promise<number>((resolve, reject) => {
+      spawn(command, args, { stdio: "inherit" })
+        .on("error", reject)
+        .on("close", (code) => resolve(code ?? 1));
+    });
+  } finally {
+    process.off("SIGINT", ignoreInterrupt);
+    release();
+  }
 }

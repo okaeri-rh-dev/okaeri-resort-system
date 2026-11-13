@@ -1,12 +1,12 @@
 // @vitest-environment node
 import { spawnSync } from "child_process";
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "fs";
+import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "fs";
 import { tmpdir } from "os";
 import path from "path";
 
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
-import { acquireDbLock } from "./db-lock";
+import { acquireDbLock, runHoldingLock } from "./db-lock";
 
 describe("acquireDbLock", () => {
   let dir: string;
@@ -55,5 +55,34 @@ describe("acquireDbLock", () => {
     expect(waitedFor).toEqual([]);
     expect(readFileSync(lockPath, "utf8")).toBe(String(process.pid));
     release();
+  });
+});
+
+describe("runHoldingLock", () => {
+  let dir: string;
+  let lockPath: string;
+
+  beforeEach(() => {
+    dir = mkdtempSync(path.join(tmpdir(), "db-lock-test-"));
+    lockPath = path.join(dir, "db.lock");
+  });
+
+  afterEach(() => rmSync(dir, { recursive: true, force: true }));
+
+  it("holds the lock while the command runs, and releases it after", async () => {
+    const exitCode = await runHoldingLock(lockPath, process.execPath, [
+      "-e",
+      "process.exit(require('fs').existsSync(process.argv[1]) ? 0 : 9)",
+      lockPath,
+    ]);
+
+    expect(exitCode).toBe(0);
+    expect(existsSync(lockPath)).toBe(false);
+  });
+
+  it("resolves to the command's exit code", async () => {
+    const exitCode = await runHoldingLock(lockPath, process.execPath, ["-e", "process.exit(3)"]);
+
+    expect(exitCode).toBe(3);
   });
 });

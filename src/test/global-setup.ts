@@ -160,7 +160,7 @@ export default async function globalSetup() {
   const releaseDbLock = await acquireDbLock(dbLockPath(TEST_SUPABASE_URL), {
     onWait: (holderPid) =>
       // eslint-disable-next-line no-console
-      console.log(`⏳ Waiting for vitest run ${holderPid} to finish with the test database...`),
+      console.log(`⏳ Waiting for test run ${holderPid} to finish with the test database...`),
   });
 
   // eslint-disable-next-line no-console
