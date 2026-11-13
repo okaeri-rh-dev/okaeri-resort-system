@@ -8,6 +8,7 @@ import "./styles/print.css";
 
 import { logger } from "@/lib/logger";
 import { registerSwReload } from "@/lib/pwa-reload";
+import { registerStaleChunkReload } from "@/lib/stale-chunk-reload";
 import { useInstallPromptStore } from "@/stores/useInstallPromptStore";
 
 // PWA install-prompt wiring + safe-point reload on SW updates
@@ -28,6 +29,7 @@ if (typeof window !== "undefined") {
 
   // Reloads onto a new SW build at a safe point, never mid-form (see pwa-reload).
   registerSwReload();
+  registerStaleChunkReload();
 }
 
 // Performance monitoring for production

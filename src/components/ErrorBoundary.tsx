@@ -16,6 +16,13 @@ interface State {
   errorInfo?: ErrorInfo;
 }
 
+// Chrome / Firefox / Safari wording for a failed dynamic import.
+const STALE_CHUNK_PATTERN = /dynamically imported module|Importing a module script failed/i;
+
+function isStaleChunkError(error: Error | undefined): boolean {
+  return !!error && STALE_CHUNK_PATTERN.test(error.message);
+}
+
 export class ErrorBoundary extends Component<Props, State> {
   constructor(props: Props) {
     super(props);
@@ -42,6 +49,11 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   handleRetry = () => {
+    // React.lazy keeps a rejected import, and the old chunk is gone after a deploy: only a reload loads the new build.
+    if (isStaleChunkError(this.state.error)) {
+      window.location.reload();
+      return;
+    }
     this.setState({ hasError: false, error: undefined, errorInfo: undefined });
   };
 
