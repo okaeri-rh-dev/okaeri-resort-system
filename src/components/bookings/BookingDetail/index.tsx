@@ -23,7 +23,7 @@ export function BookingDetailPage({ booking, bookingId }: BookingDetailPageProps
 
   return (
     // The bottom padding keeps the compact action bar off the last card
-    <div data-testid="booking-detail" className="expanded:pb-0 space-y-4 pb-24">
+    <div data-testid="booking-detail" className="expanded:pb-0 space-y-6 pb-24">
       <header className="expanded:flex-row expanded:items-start expanded:justify-between flex flex-col gap-3">
         <div className="min-w-0 space-y-1">
           <Link
@@ -33,7 +33,7 @@ export function BookingDetailPage({ booking, bookingId }: BookingDetailPageProps
             <ChevronLeft className="size-3" aria-hidden />
             Bookings
           </Link>
-          <h1 className="font-display text-xl font-semibold break-words">{booking.guest_name}</h1>
+          <h1 className="font-display text-2xl font-semibold break-words">{booking.guest_name}</h1>
           <BookingHeaderLine booking={booking} />
         </div>
         <BookingActionBar
