@@ -29,7 +29,9 @@ async function openBookingDetail(page: Page, bookingReference: string) {
     .first()
     .click();
   await page.getByRole("dialog").getByRole("link", { name: "Open full page" }).click();
-  await expect(page.getByRole("heading", { name: `Booking #${bookingReference}` })).toBeVisible();
+  await expect(page.getByTestId("booking-detail").locator("header")).toContainText(
+    bookingReference
+  );
 }
 
 test.describe("Dark mode bookings and guests", () => {
@@ -40,10 +42,11 @@ test.describe("Dark mode bookings and guests", () => {
     test(`booking detail and edit read in dark on ${name}`, async ({ page }) => {
       await loginInDark(page, viewport);
       await openBookingDetail(page, E2E_REF.CONF_PAID);
-      await expect(page.getByRole("heading", { name: "Cabin Information" })).toBeVisible();
+      await expect(page.getByRole("region", { name: "Stay" })).toBeVisible();
       await expectReadable(page);
 
-      await page.getByRole("link", { name: "Edit" }).click();
+      await page.getByRole("button", { name: `Actions for ${E2E_REF.CONF_PAID}` }).click();
+      await page.getByRole("menuitem", { name: "Edit" }).click();
       await expect(page.getByLabel("Guest Name")).toHaveValue(E2E_GUEST.guest_name);
       await expectReadable(page);
     });
@@ -52,7 +55,7 @@ test.describe("Dark mode bookings and guests", () => {
   test("unassigned multi-cabin booking detail reads in dark", async ({ page }) => {
     await loginInDark(page, EXPANDED);
     await page.goto(`/admin/bookings/${E2E_ASSIGN_PAID_BOOKING_ID}`);
-    await expect(page.getByText("No units assigned")).toBeVisible();
+    await expect(page.getByText("No cabins assigned")).toBeVisible();
     await expectReadable(page);
   });
 

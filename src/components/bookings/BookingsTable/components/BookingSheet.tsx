@@ -4,6 +4,11 @@ import { Link, useNavigate, useSearch } from "@tanstack/react-router";
 import { FileText } from "lucide-react";
 
 import { LazyPaymentProofView } from "@/components/admin/LazyPaymentProofView";
+import { BookingOverflowMenu } from "@/components/bookings/BookingSections/BookingOverflowMenu";
+import { CabinChip } from "@/components/bookings/BookingSections/CabinChip";
+import { MainActionButton } from "@/components/bookings/BookingSections/MainActionButton";
+import { NeedsActionLabel } from "@/components/bookings/BookingSections/NeedsActionLabel";
+import { SourceBadge } from "@/components/bookings/BookingSections/SourceBadge";
 import { formatPhoneNumber, formatTableDate, RelatedEntityLink } from "@/components/entity-detail";
 import {
   Button,
@@ -26,11 +31,6 @@ import { statusBadgeProps } from "@/lib/status-tone";
 import type { Booking } from "@/types";
 
 import type { BookingCardProps } from "../types";
-import { BookingOverflowMenu } from "./BookingOverflowMenu";
-import { CabinChip } from "./CabinChip";
-import { MainActionButton } from "./MainActionButton";
-import { NeedsActionLabel } from "./NeedsActionLabel";
-import { SourceBadge } from "./SourceBadge";
 
 interface BookingActions {
   updateBookingStatus: BookingCardProps["updateBookingStatus"];

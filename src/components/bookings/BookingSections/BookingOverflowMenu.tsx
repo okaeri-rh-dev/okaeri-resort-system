@@ -18,11 +18,11 @@ import { useUserRole } from "@/hooks";
 import { overflowActionsFor, UNDO_STATUS, type OverflowAction } from "@/lib/bookings";
 import type { Booking } from "@/types";
 
-import type { BookingCardProps } from "../types";
+import type { UpdateBookingStatus } from "./types";
 
 interface BookingOverflowMenuProps {
   booking: Booking;
-  updateBookingStatus: BookingCardProps["updateBookingStatus"];
+  updateBookingStatus: UpdateBookingStatus;
   onRecordPayment: () => void;
   onCancel: () => void;
 }

@@ -1,7 +1,6 @@
+import { BookingOverflowMenu } from "@/components/bookings/BookingSections/BookingOverflowMenu";
+import { MainActionButton } from "@/components/bookings/BookingSections/MainActionButton";
 import type { Booking, BookingStatus } from "@/types";
-
-import { BookingOverflowMenu } from "./BookingOverflowMenu";
-import { MainActionButton } from "./MainActionButton";
 
 // Type for TanStack Query mutation objects (simplified from UseMutationResult)
 interface MutationObject<TVariables = unknown> {

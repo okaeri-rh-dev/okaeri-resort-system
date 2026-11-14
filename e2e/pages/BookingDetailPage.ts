@@ -95,9 +95,7 @@ export class BookingDetailPage {
     this.bookingReference = page.locator(
       '[data-testid="booking-reference"], [class*="booking-ref"], h1:has-text("OKR-")'
     );
-    this.bookingStatus = page.locator(
-      '[data-testid="booking-status"], [class*="booking-status"] [class*="badge"]'
-    );
+    this.bookingStatus = this.container.locator("header");
     this.paymentStatus = page.locator(
       '[data-testid="payment-status"], [class*="payment-status"] [class*="badge"]'
     );
@@ -143,11 +141,11 @@ export class BookingDetailPage {
     this.adminNotes = page.locator('[data-testid="admin-notes"], [class*="admin-notes"]');
 
     // Action buttons
-    this.editButton = page.getByRole("link", { name: "Edit", exact: true });
+    this.editButton = page.getByRole("menuitem", { name: "Edit", exact: true });
     this.cancelButton = page.getByRole("button", { name: /cancel.*booking/i });
     this.checkInButton = page.getByRole("button", { name: /check.?in/i });
     this.checkOutButton = page.getByRole("button", { name: /check.?out/i });
-    this.actionsMenu = page.getByRole("button", { name: /actions|more/i });
+    this.actionsMenu = page.getByRole("button", { name: /^Actions for/ });
 
     // Status update
     this.statusDropdown = page.getByLabel(/status/i);
@@ -226,7 +224,7 @@ export class BookingDetailPage {
    * Get the total amount
    */
   async getTotalAmount(): Promise<number> {
-    const text = await this.fieldValue("Total Amount").textContent();
+    const text = await this.fieldValue("Total").textContent();
     const cleaned = text?.replace(/[^\d.-]/g, "") || "0";
     return parseFloat(cleaned);
   }
@@ -246,14 +244,14 @@ export class BookingDetailPage {
    * Get check-in date
    */
   async getCheckInDate(): Promise<string> {
-    return (await this.fieldValue("Check-in Date").textContent())?.trim() || "";
+    return (await this.fieldValue("Check-in").textContent())?.trim() || "";
   }
 
   /**
    * Get check-out date
    */
   async getCheckOutDate(): Promise<string> {
-    return (await this.fieldValue("Check-out Date").textContent())?.trim() || "";
+    return (await this.fieldValue("Check-out").textContent())?.trim() || "";
   }
 
   /**
@@ -269,18 +267,20 @@ export class BookingDetailPage {
    * Get assigned units list
    */
   async getAssignedUnits(): Promise<string[]> {
-    return this.fieldValue(/^Cabins?$/)
-      .getByRole("link")
-      .allTextContents();
+    return this.cabinList.getByRole("listitem").allTextContents();
+  }
+
+  private get cabinList(): Locator {
+    return this.container.getByRole("list", { name: "Cabins" });
   }
 
   /**
-   * Value element of a DetailField, located by its label
+   * Value element of a ListCardRow, located by its label
    */
   private fieldValue(label: string | RegExp): Locator {
     return this.container
       .getByText(label, { exact: true })
-      .locator("xpath=../following-sibling::div[1]");
+      .locator("xpath=following-sibling::*[1]");
   }
 
   // ================== Actions ==================
@@ -289,6 +289,7 @@ export class BookingDetailPage {
    * Edit the booking
    */
   async editBooking(): Promise<void> {
+    await this.actionsMenu.click();
     await this.editButton.click();
     await this.page.waitForURL(/\/edit$/);
   }
@@ -401,6 +402,7 @@ export class BookingDetailPage {
    * Verify edit button is visible
    */
   async expectEditButtonVisible(): Promise<void> {
+    await this.actionsMenu.click();
     await expect(this.editButton).toBeVisible();
   }
 
@@ -430,7 +432,7 @@ export class BookingDetailPage {
    * Verify specific unit is assigned
    */
   async expectUnitAssigned(unitName: string): Promise<void> {
-    await expect(this.fieldValue(/^Cabins?$/)).toContainText(unitName);
+    await expect(this.cabinList).toContainText(unitName);
   }
 
   /**

@@ -80,7 +80,7 @@ test.describe("Mobile booking card", () => {
     // Detail page must actually render — guard against the loader silently throwing
     // (e.g. a future schema mismatch like the payments.status filter we just removed).
     await expect(
-      page.getByRole("navigation", { name: "Breadcrumb" }).getByText(E2E_REF.CONFIRMED)
+      page.getByTestId("booking-detail").locator("header").getByText(E2E_REF.CONFIRMED)
     ).toBeVisible();
   });
 });
