@@ -9,7 +9,7 @@ import {
   PaymentSummaryCard,
   StayCard,
 } from "@/components/bookings/BookingSections/sections";
-import { useBookingActions } from "@/components/bookings/BookingsTable/hooks/useBookingActions";
+import { useBookingActions } from "@/components/bookings/BookingSections/useBookingActions";
 import { DetailAuditSection } from "@/components/entity-detail";
 import type { Booking } from "@/types";
 

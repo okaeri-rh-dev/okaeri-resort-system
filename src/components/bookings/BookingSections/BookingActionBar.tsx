@@ -1,14 +1,15 @@
-import { BookingOverflowMenu } from "@/components/bookings/BookingsTable/components/BookingOverflowMenu";
-import { MainActionButton } from "@/components/bookings/BookingsTable/components/MainActionButton";
-import type { BookingCardProps } from "@/components/bookings/BookingsTable/types";
 import { useUserRole } from "@/hooks";
 import { mainActionFor, manilaDayOf, overflowActionsFor } from "@/lib/bookings";
 import { cn } from "@/lib/utils";
 import type { Booking } from "@/types";
 
+import { BookingOverflowMenu } from "./BookingOverflowMenu";
+import { MainActionButton } from "./MainActionButton";
+import type { UpdateBookingStatus } from "./types";
+
 interface BookingActionBarProps {
   booking: Booking;
-  updateBookingStatus: BookingCardProps["updateBookingStatus"];
+  updateBookingStatus: UpdateBookingStatus;
   onRecordPayment: () => void;
   onCancel: () => void;
   /** Where the bar sits from expanded, where it stops being a fixed bottom bar. */

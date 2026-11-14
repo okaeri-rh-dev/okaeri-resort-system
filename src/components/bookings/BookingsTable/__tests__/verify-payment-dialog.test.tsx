@@ -3,9 +3,8 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { VerifyPaymentDialog } from "@/components/bookings/BookingSections/VerifyPaymentDialog";
 import type { Booking } from "@/types";
-
-import { VerifyPaymentDialog } from "../components/VerifyPaymentDialog";
 
 const { verifyMock, freeUnitIds } = vi.hoisted(() => ({
   verifyMock: vi.fn(),

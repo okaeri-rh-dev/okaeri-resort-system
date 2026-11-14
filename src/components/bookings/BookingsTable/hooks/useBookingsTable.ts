@@ -8,10 +8,10 @@ import {
   type VisibilityState,
 } from "@tanstack/react-table";
 
+import { useBookingActions } from "@/components/bookings/BookingSections/useBookingActions";
 import { hasBookingFilters, parseBookingsSearch } from "@/lib/bookings";
 
 import { useBookingColumns } from "../components/BookingColumns";
-import { useBookingActions } from "./useBookingActions";
 import { useSelectedBookings } from "./useSelectedBookings";
 
 export const useBookingsTable = () => {

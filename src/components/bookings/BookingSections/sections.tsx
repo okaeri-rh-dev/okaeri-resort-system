@@ -2,7 +2,6 @@ import { useId, type ReactNode } from "react";
 
 import { Pencil } from "lucide-react";
 
-import { CabinChip } from "@/components/bookings/BookingsTable/components/CabinChip";
 import { formatPhoneNumber, RelatedEntityLink } from "@/components/entity-detail";
 import { Button, ListCard, ListCardRow, StatusBadge } from "@/components/patterns";
 import { manilaDayOf, nightsBetween } from "@/lib/bookings";
@@ -11,6 +10,8 @@ import { formatCurrency } from "@/lib/formatters";
 import { statusBadgeProps } from "@/lib/status-tone";
 import { formatPhilippineDate } from "@/lib/timezone";
 import type { Booking } from "@/types";
+
+import { CabinChip } from "./CabinChip";
 
 interface SectionProps {
   booking: Booking;

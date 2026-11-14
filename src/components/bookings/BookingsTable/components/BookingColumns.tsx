@@ -3,6 +3,9 @@ import { useMemo } from "react";
 import { Link } from "@tanstack/react-router";
 import { createColumnHelper } from "@tanstack/react-table";
 
+import { CabinChip } from "@/components/bookings/BookingSections/CabinChip";
+import { NeedsActionLabel } from "@/components/bookings/BookingSections/NeedsActionLabel";
+import { SourceBadge } from "@/components/bookings/BookingSections/SourceBadge";
 import { StatusBadge } from "@/components/patterns";
 import { formatCurrency, formatPhoneNumber } from "@/lib/formatters";
 import { statusBadgeProps } from "@/lib/status-tone";
@@ -11,9 +14,6 @@ import type { Booking, BookingStatus } from "@/types";
 import { formatStayRange, getNights } from "../utils/stay";
 import { BalanceLabel } from "./BalanceLabel";
 import { BookingActionsCell } from "./BookingActionsCell";
-import { CabinChip } from "./CabinChip";
-import { NeedsActionLabel } from "./NeedsActionLabel";
-import { SourceBadge } from "./SourceBadge";
 
 const columnHelper = createColumnHelper<Booking>();
 

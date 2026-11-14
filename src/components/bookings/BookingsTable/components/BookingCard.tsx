@@ -2,6 +2,11 @@ import React, { useCallback } from "react";
 
 import { useNavigate } from "@tanstack/react-router";
 
+import { BookingOverflowMenu } from "@/components/bookings/BookingSections/BookingOverflowMenu";
+import { CabinChip } from "@/components/bookings/BookingSections/CabinChip";
+import { MainActionButton } from "@/components/bookings/BookingSections/MainActionButton";
+import { NeedsActionLabel } from "@/components/bookings/BookingSections/NeedsActionLabel";
+import { SourceBadge } from "@/components/bookings/BookingSections/SourceBadge";
 import { ListCard, StatusBadge } from "@/components/patterns";
 import { formatCurrency } from "@/lib/formatters";
 import { statusBadgeProps } from "@/lib/status-tone";
@@ -10,11 +15,6 @@ import { cn } from "@/lib/utils";
 import type { BookingCardProps } from "../types";
 import { formatStayRange, getNights } from "../utils/stay";
 import { BalanceLabel } from "./BalanceLabel";
-import { BookingOverflowMenu } from "./BookingOverflowMenu";
-import { CabinChip } from "./CabinChip";
-import { MainActionButton } from "./MainActionButton";
-import { NeedsActionLabel } from "./NeedsActionLabel";
-import { SourceBadge } from "./SourceBadge";
 
 const PAYMENT_DOT: Record<string, { color: string; label: string }> = {
   Completed: { color: "bg-success-foreground", label: "Paid" },

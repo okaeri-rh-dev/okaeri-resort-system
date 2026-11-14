@@ -17,7 +17,7 @@ import { outstandingBalance } from "@/lib/dashboard";
 import { formatCurrency } from "@/lib/formatters";
 import type { Booking, BookingStatus } from "@/types";
 
-import type { BookingCardProps } from "../types";
+import type { UpdateBookingStatus } from "./types";
 import { VerifyPaymentDialog } from "./VerifyPaymentDialog";
 
 const NEXT_STATUS: Record<Exclude<MainAction, "Verify payment">, BookingStatus> = {
@@ -37,7 +37,7 @@ const undoOffer = (action: MainAction, booking: Booking): { undo?: UndoAction } 
 
 interface MainActionButtonProps {
   booking: Booking;
-  updateBookingStatus: BookingCardProps["updateBookingStatus"];
+  updateBookingStatus: UpdateBookingStatus;
   onRecordPayment: () => void;
   className?: string;
   /** Shown when the booking has no main action for this user. */

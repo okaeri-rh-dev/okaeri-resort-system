@@ -1,10 +1,11 @@
-import { NeedsActionLabel } from "@/components/bookings/BookingsTable/components/NeedsActionLabel";
-import { SourceBadge } from "@/components/bookings/BookingsTable/components/SourceBadge";
 import { StatusBadge } from "@/components/patterns";
 import { outstandingBalance } from "@/lib/dashboard";
 import { formatCurrency } from "@/lib/formatters";
 import { statusBadgeProps } from "@/lib/status-tone";
 import type { Booking } from "@/types";
+
+import { NeedsActionLabel } from "./NeedsActionLabel";
+import { SourceBadge } from "./SourceBadge";
 
 /** Reference, status, source, needs-action, anonymized and the amount due, on one wrapping line. */
 export function BookingHeaderLine({ booking }: { booking: Booking }) {
