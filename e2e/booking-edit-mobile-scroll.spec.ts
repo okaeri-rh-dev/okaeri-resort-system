@@ -23,7 +23,8 @@ test("booking edit on a phone has one scroller and shows the form actions at its
     .first()
     .click();
   await page.getByRole("dialog").getByRole("link", { name: "Open full page" }).click();
-  await page.getByRole("link", { name: "Edit" }).click();
+  await page.getByRole("button", { name: `Actions for ${E2E_REF.CONF_PAID}` }).click();
+  await page.getByRole("menuitem", { name: "Edit" }).click();
   const saveButton = page.getByRole("button", { name: /save changes/i });
   await expect(saveButton).toBeVisible();
 

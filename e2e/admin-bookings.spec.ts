@@ -238,7 +238,7 @@ test.describe("Admin Bookings Management", () => {
       await sheet.getByRole("link", { name: "Open full page" }).click();
       await expect(page).toHaveURL(/\/admin\/bookings\/[0-9a-f-]{36}/);
       await expect(
-        page.getByRole("navigation", { name: "Breadcrumb" }).getByText(E2E_REF.CONFIRMED)
+        page.getByTestId("booking-detail").locator("header").getByText(E2E_REF.CONFIRMED)
       ).toBeVisible();
 
       await page.goBack();
