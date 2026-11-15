@@ -1,29 +1,19 @@
-import { useEffect, useState, type MouseEvent } from "react";
+import { useEffect, type MouseEvent } from "react";
 
 import { Link, useNavigate, useSearch } from "@tanstack/react-router";
-import { FileText, Maximize2 } from "lucide-react";
+import { Maximize2 } from "lucide-react";
 
-import { LazyPaymentProofView } from "@/components/admin/LazyPaymentProofView";
 import { BookingActionBar } from "@/components/bookings/BookingSections/BookingActionBar";
 import { BookingHeaderLine } from "@/components/bookings/BookingSections/BookingHeaderLine";
+import { GuestPaymentChoice } from "@/components/bookings/BookingSections/PaymentRows";
 import {
   GuestCard,
   NotesCard,
   PaymentSummaryCard,
   StayCard,
 } from "@/components/bookings/BookingSections/sections";
-import {
-  Button,
-  Dialog,
-  DialogContent,
-  DialogTitle,
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetTitle,
-} from "@/components/patterns";
+import { Button, Sheet, SheetContent, SheetDescription, SheetTitle } from "@/components/patterns";
 import { useAllBookings } from "@/hooks/useBookings";
-import { paymentProofKind, usePaymentProofUrl } from "@/hooks/usePaymentProofUrl";
 import { isPlainClick } from "@/lib/utils";
 import type { Booking } from "@/types";
 
@@ -123,50 +113,9 @@ function BookingSheetBody({
       <StayCard booking={booking} />
       <GuestCard booking={booking} />
       <PaymentSummaryCard booking={booking}>
-        {booking.booking_status === "Pending" && booking.payment_method && (
-          <p className="text-muted-foreground text-sm">Guest chose {booking.payment_method}</p>
-        )}
-        {booking.payment_proof_url && <PaymentProofThumbnail path={booking.payment_proof_url} />}
+        <GuestPaymentChoice booking={booking} />
       </PaymentSummaryCard>
       {hasNotes && <NotesCard booking={booking} />}
     </div>
-  );
-}
-
-function PaymentProofThumbnail({ path }: { path: string }) {
-  const [open, setOpen] = useState(false);
-  const { data: url, isError } = usePaymentProofUrl(path);
-  const kind = paymentProofKind(path);
-
-  if (isError) return <p className="text-muted-foreground text-sm">Payment proof unavailable</p>;
-
-  return (
-    <>
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        disabled={!url}
-        aria-label="View payment proof"
-        className="bg-muted focus-visible:ring-ring flex h-32 w-full items-center justify-center overflow-hidden rounded-md border focus-visible:ring-2 focus-visible:outline-none"
-      >
-        {url && kind === "image" ? (
-          <img src={url} alt="" width={448} height={128} className="h-full w-full object-cover" />
-        ) : (
-          <span className="text-muted-foreground flex items-center gap-2 text-sm">
-            <FileText className="h-4 w-4" aria-hidden />
-            Payment proof (PDF)
-          </span>
-        )}
-      </button>
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent
-          className="max-h-[90dvh] max-w-4xl overflow-y-auto"
-          aria-describedby={undefined}
-        >
-          <DialogTitle>Payment proof</DialogTitle>
-          {url && <LazyPaymentProofView url={url} kind={kind} />}
-        </DialogContent>
-      </Dialog>
-    </>
   );
 }

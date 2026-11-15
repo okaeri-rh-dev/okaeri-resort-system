@@ -3,6 +3,7 @@ import { ChevronLeft } from "lucide-react";
 
 import { BookingActionBar } from "@/components/bookings/BookingSections/BookingActionBar";
 import { BookingHeaderLine } from "@/components/bookings/BookingSections/BookingHeaderLine";
+import { GuestPaymentChoice, PaymentRows } from "@/components/bookings/BookingSections/PaymentRows";
 import {
   GuestCard,
   NotesCard,
@@ -13,6 +14,7 @@ import { useBookingActions } from "@/components/bookings/BookingSections/useBook
 import { DetailAuditSection } from "@/components/entity-detail";
 import { isPlainClick } from "@/lib/utils";
 import type { Booking } from "@/types";
+import type { Payment as PaymentRow } from "@/types/entity-detail.types";
 
 interface BookingDetailPageProps {
   booking: Booking;
@@ -61,7 +63,19 @@ export function BookingDetailPage({ booking, bookingId }: BookingDetailPageProps
           <GuestCard booking={booking} />
           <NotesCard booking={booking} />
         </div>
-        <PaymentSummaryCard booking={booking} />
+        <PaymentSummaryCard
+          booking={booking}
+          // The detail query loads whole payment rows
+          rows={
+            <PaymentRows
+              payments={(booking.payments ?? []) as PaymentRow[]}
+              readOnly={!!booking.anonymized_at}
+            />
+          }
+          onRecordPayment={booking.anonymized_at ? undefined : () => handleUploadPayment(booking)}
+        >
+          {booking.booking_status === "Pending" && <GuestPaymentChoice booking={booking} />}
+        </PaymentSummaryCard>
       </div>
 
       <DetailAuditSection entityType="booking" entityId={bookingId} />
