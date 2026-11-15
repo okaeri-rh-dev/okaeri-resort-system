@@ -46,8 +46,7 @@ export const ALL_AUDIT_TABLES = [...PHYSICAL_AUDIT_TABLES, ...AUDIT_PSEUDO_TABLE
  * Type-safe table name (physical + pseudo)
  */
 export type AuditTableName =
-  | (typeof PHYSICAL_AUDIT_TABLES)[number]
-  | (typeof AUDIT_PSEUDO_TABLES)[number];
+  (typeof PHYSICAL_AUDIT_TABLES)[number] | (typeof AUDIT_PSEUDO_TABLES)[number];
 
 // ============================================
 // DISPLAY NAMES FOR UI

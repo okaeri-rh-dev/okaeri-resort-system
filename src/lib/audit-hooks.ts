@@ -31,6 +31,24 @@ export const recentRecordAuditLogsQuery = (tableName: string, recordId: string) 
     staleTime: 60000,
   });
 
+export const BOOKING_HISTORY_LIMIT = 50;
+
+/** A booking's History: its own audit rows and its cabins' rows, the newest first. */
+export const bookingHistoryQuery = (bookingId: string) =>
+  queryOptions({
+    queryKey: auditKeys.bookingHistory(bookingId),
+    queryFn: async () => {
+      const [bookingRows, cabinRows] = await Promise.all([
+        db.auditLogs.recentByRecord("bookings", bookingId, BOOKING_HISTORY_LIMIT),
+        db.auditLogs.recentForBookingCabins(bookingId, BOOKING_HISTORY_LIMIT),
+      ]);
+      return [...bookingRows, ...cabinRows]
+        .sort((a, b) => (b.created_at ?? "").localeCompare(a.created_at ?? ""))
+        .slice(0, BOOKING_HISTORY_LIMIT);
+    },
+    staleTime: 60000,
+  });
+
 // ============================================
 // QUERY HOOKS
 // ============================================

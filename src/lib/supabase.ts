@@ -607,6 +607,20 @@ export const db = {
       return data || [];
     },
 
+    /** Audit rows of a booking's cabins (booking_units), matched by the booking_id in the row values. */
+    recentForBookingCabins: async (bookingId: string, limit: number) => {
+      const { data, error } = await supabase
+        .from("audit_logs")
+        .select("*")
+        .eq("table_name", "booking_units")
+        .or(`new_data->>booking_id.eq.${bookingId},old_data->>booking_id.eq.${bookingId}`)
+        .order("created_at", { ascending: false })
+        .limit(limit);
+
+      if (error) throw error;
+      return data || [];
+    },
+
     byRecord: async (tableName: string, recordId: string) => {
       const { data, error } = await supabase
         .from("audit_logs")
