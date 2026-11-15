@@ -13,7 +13,8 @@ import {
 import { useBookingActions } from "@/components/bookings/BookingSections/useBookingActions";
 import { DetailAuditSection } from "@/components/entity-detail";
 import { isPlainClick } from "@/lib/utils";
-import type { Booking, PaymentRow } from "@/types";
+import type { Booking } from "@/types";
+import type { Payment as PaymentRow } from "@/types/entity-detail.types";
 
 interface BookingDetailPageProps {
   booking: Booking;

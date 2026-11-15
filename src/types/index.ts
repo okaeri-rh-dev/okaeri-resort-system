@@ -3,7 +3,7 @@
 import type { BookingSource } from "@/lib/bookings/source";
 
 import type { BookingStatus } from "./booking-status";
-import type { Database } from "./database.types";
+import type { Payment as PaymentRow } from "./entity-detail.types";
 
 // ============================================
 // UNIT TYPES
@@ -63,8 +63,6 @@ export {
 } from "./booking-status";
 export { APP_ROLE_NAMES } from "./app-role";
 export type PaymentMethod = "Cash" | "GCash" | "BankTransfer" | "Card" | "Airbnb payout" | "Other";
-export type PaymentRow = Database["public"]["Tables"]["payments"]["Row"];
-
 export type PaymentRecordStatus = "Active" | "Deleted" | "Refunded";
 
 // Database booking unit junction table record

@@ -266,6 +266,10 @@ describe("BookingDetailPage", () => {
     await userEvent.click(screen.getByRole("button", { name: "Actions for payment ₱3,000.00" }));
     expect(screen.getByRole("menuitem", { name: "View proof" })).toBeInTheDocument();
     expect(screen.getByRole("menuitem", { name: "Edit" })).toBeInTheDocument();
+    // A removed payment with no proof leaves nothing to do
+    expect(
+      screen.queryByRole("button", { name: "Actions for payment ₱1,000.00" })
+    ).not.toBeInTheDocument();
     await userEvent.click(screen.getByRole("menuitem", { name: "Remove" }));
 
     expect(softDeletePayment.mutate).not.toHaveBeenCalled();

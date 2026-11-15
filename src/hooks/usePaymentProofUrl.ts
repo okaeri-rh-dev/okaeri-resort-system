@@ -8,9 +8,10 @@ const RENEW_EVERY_MS = 4 * 60 * 1000;
 
 // A manual payment stores the proof's public URL, an online booking its storage path
 const proofStoragePath = (proof: string) =>
-  proof
-    .split("?")[0]
-    .replace(/^.*\/storage\/v1\/object\/(public|sign|authenticated)\/payment-proofs\//, "");
+  decodeURIComponent(proof.split("?")[0]).replace(
+    /^.*\/storage\/v1\/object\/(public|sign|authenticated)\/payment-proofs\//,
+    ""
+  );
 
 /** A short-lived signed URL for a payment proof, renewed before it expires. */
 export const usePaymentProofUrl = (path: string | null | undefined) =>

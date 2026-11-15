@@ -25,15 +25,17 @@ import { useUserRole } from "@/hooks";
 import { paymentProofKind, usePaymentProofUrl } from "@/hooks/usePaymentProofUrl";
 import { useSoftDeletePayment } from "@/hooks/usePayments";
 import { formatCurrency } from "@/lib/formatters";
+import { statusTone } from "@/lib/status-tone";
 import { formatPhilippineDate } from "@/lib/timezone";
 import { cn } from "@/lib/utils";
-import type { Booking, PaymentRow } from "@/types";
+import type { Booking, PaymentRecordStatus } from "@/types";
+import type { Payment as PaymentRow } from "@/types/entity-detail.types";
 
 const paidAt = (payment: PaymentRow) => payment.payment_date ?? payment.created_at;
 
-const UNCOUNTED_BADGE: Record<string, { tone: "neutral" | "danger"; label: string }> = {
-  Deleted: { tone: "neutral", label: "Removed" },
-  Refunded: { tone: "danger", label: "Refunded" },
+const UNCOUNTED_LABEL: Partial<Record<PaymentRecordStatus, string>> = {
+  Deleted: "Removed",
+  Refunded: "Refunded",
 };
 
 /** Every payment on the booking in date order; removed and refunded ones stay, muted. */
@@ -119,7 +121,7 @@ function PaymentRowItem({
 }) {
   const navigate = useNavigate();
   const { canEdit, canSoftDelete } = useUserRole();
-  const uncounted = UNCOUNTED_BADGE[payment.status];
+  const uncounted = UNCOUNTED_LABEL[payment.status as PaymentRecordStatus];
   const amount = formatCurrency(payment.amount);
   const paymentId = payment.payment_id;
 
@@ -141,9 +143,10 @@ function PaymentRowItem({
       : []),
   ];
 
+  const date = paidAt(payment);
   const details = [
     payment.payment_method,
-    paidAt(payment) && formatPhilippineDate(new Date(paidAt(payment) as string), "MMM d, yyyy"),
+    date && formatPhilippineDate(new Date(date), "MMM d, yyyy"),
     payment.kind === "online_downpayment" ? "Online downpayment" : "Payment",
   ]
     .filter(Boolean)
@@ -161,8 +164,8 @@ function PaymentRowItem({
             {amount}
           </span>
           {uncounted && (
-            <StatusBadge tone={uncounted.tone} size="compact">
-              {uncounted.label}
+            <StatusBadge tone={statusTone(payment.status)} size="compact">
+              {uncounted}
             </StatusBadge>
           )}
           {payment.proof_url && (
