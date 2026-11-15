@@ -11,6 +11,7 @@ import {
 } from "@/components/bookings/BookingSections/sections";
 import { useBookingActions } from "@/components/bookings/BookingSections/useBookingActions";
 import { DetailAuditSection } from "@/components/entity-detail";
+import { isPlainClick } from "@/lib/utils";
 import type { Booking } from "@/types";
 
 interface BookingDetailPageProps {
@@ -33,8 +34,7 @@ export function BookingDetailPage({ booking, bookingId }: BookingDetailPageProps
             to="/admin/bookings"
             // Back keeps the list's filters; a direct visit gets the list with none
             onClick={(event) => {
-              const plainClick = !(event.metaKey || event.ctrlKey || event.shiftKey);
-              if (!fromBookingsList || !plainClick || event.button !== 0) return;
+              if (!fromBookingsList || !isPlainClick(event)) return;
               event.preventDefault();
               router.history.back();
             }}
@@ -51,7 +51,7 @@ export function BookingDetailPage({ booking, bookingId }: BookingDetailPageProps
           updateBookingStatus={updateBookingStatus}
           onRecordPayment={() => handleUploadPayment(booking)}
           onCancel={() => cancelBooking.mutate(booking.booking_id)}
-          className="expanded:static expanded:w-72 expanded:shrink-0 expanded:border-0 expanded:bg-transparent expanded:p-0 expanded:shadow-none"
+          placement="page"
         />
       </header>
 

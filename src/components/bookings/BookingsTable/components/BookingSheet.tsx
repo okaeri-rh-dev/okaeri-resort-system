@@ -24,6 +24,7 @@ import {
 } from "@/components/patterns";
 import { useAllBookings } from "@/hooks/useBookings";
 import { paymentProofKind, usePaymentProofUrl } from "@/hooks/usePaymentProofUrl";
+import { isPlainClick } from "@/lib/utils";
 import type { Booking } from "@/types";
 
 import type { BookingCardProps } from "../types";
@@ -71,7 +72,7 @@ function BookingSheetBody({
 
   // The list entry loses its ?booking first, so back from the page returns to the list, not the sheet
   const openFullPage = async (event: MouseEvent<HTMLElement>) => {
-    if (event.metaKey || event.ctrlKey || event.shiftKey || event.button !== 0) return;
+    if (!isPlainClick(event)) return;
     event.preventDefault();
     await navigate({ search: (prev) => ({ ...prev, booking: undefined }), replace: true });
     await navigate({
@@ -111,13 +112,12 @@ function BookingSheetBody({
         </SheetDescription>
       </div>
 
-      {/* Last in the sheet and stuck to its bottom on a phone, under the header from expanded */}
       <BookingActionBar
         booking={booking}
         updateBookingStatus={updateBookingStatus}
         onRecordPayment={() => onRecordPayment(booking)}
         onCancel={() => onCancel(booking)}
-        className="expanded:static expanded:order-none expanded:m-0 expanded:border-0 expanded:bg-transparent expanded:p-0 expanded:shadow-none medium:left-0 medium:-bottom-6 sticky -bottom-6 order-last -mx-6 -mb-6 pb-[calc(0.5rem+env(safe-area-inset-bottom,0px))]"
+        placement="sheet"
       />
 
       <StayCard booking={booking} />

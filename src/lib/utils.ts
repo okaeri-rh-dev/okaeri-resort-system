@@ -1,9 +1,15 @@
+import type { MouseEvent } from "react";
+
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
+
+/** A left click with no modifier key, so taking it over leaves open-in-new-tab alone. */
+export const isPlainClick = (event: MouseEvent) =>
+  event.button === 0 && !(event.metaKey || event.ctrlKey || event.shiftKey || event.altKey);
 
 // ============================================
 // Re-export Common Formatters
