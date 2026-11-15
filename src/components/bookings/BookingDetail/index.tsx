@@ -33,7 +33,8 @@ export function BookingDetailPage({ booking, bookingId }: BookingDetailPageProps
             to="/admin/bookings"
             // Back keeps the list's filters; a direct visit gets the list with none
             onClick={(event) => {
-              if (!fromBookingsList) return;
+              const plainClick = !(event.metaKey || event.ctrlKey || event.shiftKey);
+              if (!fromBookingsList || !plainClick || event.button !== 0) return;
               event.preventDefault();
               router.history.back();
             }}

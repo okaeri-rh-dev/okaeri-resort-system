@@ -86,11 +86,11 @@ describe("BookingSheet", () => {
   });
 
   it("opens the full page from the top bar, closing the sheet first", async () => {
-    router.search = { booking: "booking-1" };
-    list.data = [pending];
-    renderSheet();
+    openSheet();
 
-    await userEvent.click(screen.getByRole("link", { name: "Open full page" }));
+    const fullPage = screen.getByRole("link", { name: "Open full page" });
+    expect(fullPage).toHaveTextContent("Full page");
+    await userEvent.click(fullPage);
 
     expect(router.navigate).toHaveBeenNthCalledWith(1, expect.objectContaining({ replace: true }));
     expect(router.navigate).toHaveBeenNthCalledWith(2, {

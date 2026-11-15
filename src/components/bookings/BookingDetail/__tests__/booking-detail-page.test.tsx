@@ -3,7 +3,7 @@
  */
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -107,6 +107,17 @@ describe("BookingDetailPage", () => {
     await userEvent.click(screen.getByRole("link", { name: "Bookings" }));
 
     expect(history.back).toHaveBeenCalledOnce();
+  });
+
+  it("leaves a Cmd-click on the back link to the browser", () => {
+    history.state = { fromBookingsList: true };
+    renderPage();
+
+    const back = screen.getByRole("link", { name: "Bookings" });
+    back.addEventListener("click", (event) => event.preventDefault());
+    fireEvent.click(back, { metaKey: true });
+
+    expect(history.back).not.toHaveBeenCalled();
   });
 
   it("lets the back link go to the unfiltered list after a direct visit", async () => {

@@ -53,7 +53,8 @@ export function BookingSheet(actions: BookingActions) {
 
   return (
     <Sheet open={!!booking} onOpenChange={(open) => !open && close()}>
-      <SheetContent className="medium:max-w-md w-full overflow-y-auto">
+      {/* The scroll padding keeps a focused element clear of the phone's sticky action bar */}
+      <SheetContent className="medium:max-w-md expanded:scroll-pb-0 w-full scroll-pb-20 overflow-y-auto">
         {booking && <BookingSheetBody booking={booking} {...actions} />}
       </SheetContent>
     </Sheet>
@@ -69,7 +70,7 @@ function BookingSheetBody({
   const navigate = useNavigate({ from: "/admin/bookings" });
 
   // The list entry loses its ?booking first, so back from the page returns to the list, not the sheet
-  const openFullPage = async (event: MouseEvent<HTMLButtonElement>) => {
+  const openFullPage = async (event: MouseEvent<HTMLElement>) => {
     if (event.metaKey || event.ctrlKey || event.shiftKey || event.button !== 0) return;
     event.preventDefault();
     await navigate({ search: (prev) => ({ ...prev, booking: undefined }), replace: true });
@@ -116,7 +117,7 @@ function BookingSheetBody({
         updateBookingStatus={updateBookingStatus}
         onRecordPayment={() => onRecordPayment(booking)}
         onCancel={() => onCancel(booking)}
-        className="expanded:static expanded:order-none expanded:m-0 expanded:border-0 expanded:bg-transparent expanded:p-0 expanded:shadow-none medium:left-0 sticky -bottom-6 order-last -mx-6 -mb-6 pb-[calc(0.5rem+env(safe-area-inset-bottom,0px))]"
+        className="expanded:static expanded:order-none expanded:m-0 expanded:border-0 expanded:bg-transparent expanded:p-0 expanded:shadow-none medium:left-0 medium:-bottom-6 sticky -bottom-6 order-last -mx-6 -mb-6 pb-[calc(0.5rem+env(safe-area-inset-bottom,0px))]"
       />
 
       <StayCard booking={booking} />
