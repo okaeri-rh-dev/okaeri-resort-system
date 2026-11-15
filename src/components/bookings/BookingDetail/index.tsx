@@ -1,3 +1,5 @@
+import { useState } from "react";
+
 import { Link, useLocation, useRouter } from "@tanstack/react-router";
 import { ChevronLeft } from "lucide-react";
 
@@ -12,11 +14,13 @@ import {
 } from "@/components/bookings/BookingSections/sections";
 import { useBookingActions } from "@/components/bookings/BookingSections/useBookingActions";
 import { useUserRole } from "@/hooks";
+import { canEditSection, type EditableSection } from "@/lib/bookings";
 import { isPlainClick } from "@/lib/utils";
 import type { Booking } from "@/types";
 import type { Payment as PaymentRow } from "@/types/entity-detail.types";
 
 import { BookingHistoryCard } from "./BookingHistoryCard";
+import { GuestEditSheet, NotesEditSheet } from "./EditSheets";
 
 interface BookingDetailPageProps {
   booking: Booking;
@@ -28,6 +32,10 @@ export function BookingDetailPage({ booking, bookingId }: BookingDetailPageProps
   const router = useRouter();
   const { isManager } = useUserRole();
   const fromBookingsList = useLocation({ select: (location) => location.state.fromBookingsList });
+  const [editing, setEditing] = useState<EditableSection | null>(null);
+  const editHandler = (section: EditableSection) =>
+    canEditSection(booking, section) ? () => setEditing(section) : undefined;
+  const closeSheet = () => setEditing(null);
 
   return (
     // The bottom padding keeps the compact action bar off the last card
@@ -63,8 +71,8 @@ export function BookingDetailPage({ booking, bookingId }: BookingDetailPageProps
       <div className="expanded:grid-cols-2 grid grid-cols-1 items-start gap-4">
         <div className="space-y-4">
           <StayCard booking={booking} />
-          <GuestCard booking={booking} />
-          <NotesCard booking={booking} />
+          <GuestCard booking={booking} onEdit={editHandler("guest")} />
+          <NotesCard booking={booking} onEdit={editHandler("notes")} />
         </div>
         <PaymentSummaryCard
           booking={booking}
@@ -81,6 +89,9 @@ export function BookingDetailPage({ booking, bookingId }: BookingDetailPageProps
         </PaymentSummaryCard>
         {isManager && <BookingHistoryCard bookingId={bookingId} />}
       </div>
+
+      <GuestEditSheet booking={booking} open={editing === "guest"} onClose={closeSheet} />
+      <NotesEditSheet booking={booking} open={editing === "notes"} onClose={closeSheet} />
     </div>
   );
 }

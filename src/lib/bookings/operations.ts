@@ -19,6 +19,7 @@ export type BookingChanges = Partial<{
   num_guests: number;
   payment_method: string | null;
   special_requests: string | null;
+  internal_notes: string | null;
   booking_source: BookingSource;
   airbnb_confirmation_code: string | null;
   /** Manager and above only; split across the cabins by the database. */
@@ -82,6 +83,18 @@ const STATUS_TRANSITIONS: Record<BookingStatus, BookingStatus[]> = {
 
 export const canTransitionStatus = (current: BookingStatus, next: BookingStatus) =>
   STATUS_TRANSITIONS[current]?.includes(next) ?? false;
+
+export type EditableSection = "guest" | "notes";
+
+/** The sections a booking's status leaves editable; the database enforces the same table (docs/adr/0007). */
+export function canEditSection(
+  booking: { booking_status: BookingStatus | null; anonymized_at?: string | null },
+  section: EditableSection
+) {
+  if (booking.anonymized_at) return false;
+  // A Cancelled booking keeps only its internal note editable, in the Notes section
+  return booking.booking_status !== "Cancelled" || section === "notes";
+}
 
 export async function setBookingStatus(
   client: Client,
