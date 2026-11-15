@@ -1,19 +1,19 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type MouseEvent } from "react";
 
 import { Link, useNavigate, useSearch } from "@tanstack/react-router";
-import { FileText } from "lucide-react";
+import { FileText, Maximize2 } from "lucide-react";
 
 import { LazyPaymentProofView } from "@/components/admin/LazyPaymentProofView";
-import { BookingOverflowMenu } from "@/components/bookings/BookingSections/BookingOverflowMenu";
-import { CabinChip } from "@/components/bookings/BookingSections/CabinChip";
-import { MainActionButton } from "@/components/bookings/BookingSections/MainActionButton";
-import { NeedsActionLabel } from "@/components/bookings/BookingSections/NeedsActionLabel";
-import { SourceBadge } from "@/components/bookings/BookingSections/SourceBadge";
-import { formatPhoneNumber, formatTableDate, RelatedEntityLink } from "@/components/entity-detail";
+import { BookingActionBar } from "@/components/bookings/BookingSections/BookingActionBar";
+import { BookingHeaderLine } from "@/components/bookings/BookingSections/BookingHeaderLine";
+import {
+  GuestCard,
+  NotesCard,
+  PaymentSummaryCard,
+  StayCard,
+} from "@/components/bookings/BookingSections/sections";
 import {
   Button,
-  DetailField,
-  DetailSection,
   Dialog,
   DialogContent,
   DialogTitle,
@@ -21,13 +21,10 @@ import {
   SheetContent,
   SheetDescription,
   SheetTitle,
-  StatusBadge,
 } from "@/components/patterns";
 import { useAllBookings } from "@/hooks/useBookings";
 import { paymentProofKind, usePaymentProofUrl } from "@/hooks/usePaymentProofUrl";
-import { outstandingBalance } from "@/lib/dashboard";
-import { formatCurrency } from "@/lib/formatters";
-import { statusBadgeProps } from "@/lib/status-tone";
+import { isPlainClick } from "@/lib/utils";
 import type { Booking } from "@/types";
 
 import type { BookingCardProps } from "../types";
@@ -57,7 +54,8 @@ export function BookingSheet(actions: BookingActions) {
 
   return (
     <Sheet open={!!booking} onOpenChange={(open) => !open && close()}>
-      <SheetContent className="medium:max-w-md w-full overflow-y-auto">
+      {/* The scroll padding keeps a focused element clear of the phone's sticky action bar */}
+      <SheetContent className="medium:max-w-md expanded:scroll-pb-0 w-full scroll-pb-20 overflow-y-auto">
         {booking && <BookingSheetBody booking={booking} {...actions} />}
       </SheetContent>
     </Sheet>
@@ -70,101 +68,67 @@ function BookingSheetBody({
   onRecordPayment,
   onCancel,
 }: BookingActions & { booking: Booking }) {
-  const balance = outstandingBalance(booking);
+  const navigate = useNavigate({ from: "/admin/bookings" });
+
+  // The list entry loses its ?booking first, so back from the page returns to the list, not the sheet
+  const openFullPage = async (event: MouseEvent<HTMLElement>) => {
+    if (!isPlainClick(event)) return;
+    event.preventDefault();
+    await navigate({ search: (prev) => ({ ...prev, booking: undefined }), replace: true });
+    await navigate({
+      to: "/admin/bookings/$bookingId",
+      params: { bookingId: booking.booking_id },
+      state: { fromBookingsList: true },
+    });
+  };
+
+  const hasNotes = !!(booking.special_requests || booking.internal_notes);
 
   return (
-    <div className="space-y-6">
-      <div className="space-y-1 pr-10">
+    <div className="flex flex-col gap-4">
+      <Button
+        asChild
+        variant="ghost"
+        onClick={openFullPage}
+        className="expanded:w-auto expanded:px-3 absolute top-0.5 right-12 h-11 w-11 p-0"
+      >
+        <Link
+          to="/admin/bookings/$bookingId"
+          params={{ bookingId: booking.booking_id }}
+          aria-label="Open full page"
+        >
+          <Maximize2 className="size-4" aria-hidden />
+          <span className="expanded:inline hidden">Full page</span>
+        </Link>
+      </Button>
+
+      <div className="expanded:pr-36 space-y-1 pr-24">
         <SheetTitle className="font-display text-xl break-words">{booking.guest_name}</SheetTitle>
-        {/* A div, since the badges are divs and a p cannot hold them */}
-        <SheetDescription asChild className="flex flex-wrap items-center gap-2 tabular-nums">
+        {/* A div, since the header line is a div and a p cannot hold it */}
+        <SheetDescription asChild>
           <div>
-            {booking.booking_reference}
-            <StatusBadge {...statusBadgeProps(booking.booking_status, "Pending")} />
-            <SourceBadge source={booking.booking_source} />
-            <NeedsActionLabel booking={booking} />
+            <BookingHeaderLine booking={booking} />
           </div>
         </SheetDescription>
       </div>
 
-      <div className="flex items-center gap-2">
-        <MainActionButton
-          booking={booking}
-          updateBookingStatus={updateBookingStatus}
-          onRecordPayment={() => onRecordPayment(booking)}
-          className="flex-1"
-        />
-        <BookingOverflowMenu
-          booking={booking}
-          updateBookingStatus={updateBookingStatus}
-          onRecordPayment={() => onRecordPayment(booking)}
-          onCancel={() => onCancel(booking)}
-        />
-      </div>
+      <BookingActionBar
+        booking={booking}
+        updateBookingStatus={updateBookingStatus}
+        onRecordPayment={() => onRecordPayment(booking)}
+        onCancel={() => onCancel(booking)}
+        placement="sheet"
+      />
 
-      <Button asChild variant="outline" className="w-full">
-        <Link to="/admin/bookings/$bookingId" params={{ bookingId: booking.booking_id }}>
-          Open full page
-        </Link>
-      </Button>
-
-      <DetailSection title="Stay">
-        <div className="grid grid-cols-2 gap-4">
-          <DetailField label="Check-in" value={formatTableDate(booking.check_in)} />
-          <DetailField label="Check-out" value={formatTableDate(booking.check_out)} />
-          <DetailField label="Guests" value={booking.num_guests} />
-          <DetailField
-            label="Cabins"
-            value={
-              <span className="flex flex-wrap gap-1">
-                {(booking.booking_units ?? []).map((bu) => (
-                  <CabinChip key={bu.booking_unit_id} bookingUnit={bu} />
-                ))}
-              </span>
-            }
-          />
-        </div>
-      </DetailSection>
-
-      <DetailSection title="Guest">
-        <div className="grid grid-cols-1 gap-4">
-          <DetailField
-            label="Name"
-            value={
-              booking.guest_id ? (
-                <RelatedEntityLink type="guest" id={booking.guest_id} label={booking.guest_name} />
-              ) : (
-                booking.guest_name
-              )
-            }
-          />
-          {booking.contact_number && (
-            <DetailField label="Phone" value={formatPhoneNumber(booking.contact_number)} />
-          )}
-          {booking.email && <DetailField label="Email" value={booking.email} />}
-        </div>
-      </DetailSection>
-
-      <DetailSection title="Payment">
-        <div className="grid grid-cols-2 gap-4">
-          <DetailField
-            label="Total"
-            value={formatCurrency(booking.total_amount)}
-            emphasis="figure"
-          />
-          <DetailField
-            label="Balance"
-            value={balance > 0 ? `${formatCurrency(balance)} due` : "Paid"}
-            emphasis="figure"
-          />
-          <DetailField
-            label="Status"
-            value={<StatusBadge {...statusBadgeProps(booking.payment_status, "Pending")} />}
-          />
-          <DetailField label="Method" value={booking.payment_method || "Not specified"} />
-        </div>
+      <StayCard booking={booking} />
+      <GuestCard booking={booking} />
+      <PaymentSummaryCard booking={booking}>
+        {booking.booking_status === "Pending" && booking.payment_method && (
+          <p className="text-muted-foreground text-sm">Guest chose {booking.payment_method}</p>
+        )}
         {booking.payment_proof_url && <PaymentProofThumbnail path={booking.payment_proof_url} />}
-      </DetailSection>
+      </PaymentSummaryCard>
+      {hasNotes && <NotesCard booking={booking} />}
     </div>
   );
 }
@@ -174,8 +138,7 @@ function PaymentProofThumbnail({ path }: { path: string }) {
   const { data: url, isError } = usePaymentProofUrl(path);
   const kind = paymentProofKind(path);
 
-  if (isError)
-    return <p className="text-muted-foreground mt-4 text-sm">Payment proof unavailable</p>;
+  if (isError) return <p className="text-muted-foreground text-sm">Payment proof unavailable</p>;
 
   return (
     <>
@@ -184,7 +147,7 @@ function PaymentProofThumbnail({ path }: { path: string }) {
         onClick={() => setOpen(true)}
         disabled={!url}
         aria-label="View payment proof"
-        className="bg-muted focus-visible:ring-ring mt-4 flex h-32 w-full items-center justify-center overflow-hidden rounded-md border focus-visible:ring-2 focus-visible:outline-none"
+        className="bg-muted focus-visible:ring-ring flex h-32 w-full items-center justify-center overflow-hidden rounded-md border focus-visible:ring-2 focus-visible:outline-none"
       >
         {url && kind === "image" ? (
           <img src={url} alt="" width={448} height={128} className="h-full w-full object-cover" />

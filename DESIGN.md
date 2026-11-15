@@ -38,6 +38,7 @@ Rationale: [Component layer boundaries](https://github.com/okaeri-rh-dev/okaeri-
 Breakpoints use the window size class names (`medium:`, `expanded:`, `large:`, `xlarge:`), with compact as the unprefixed base ([ADR 0004](docs/adr/0004-m3-named-breakpoints.md)). Admin supports compact to xlarge. Guest and public pages support compact to expanded, then stay centred at their max width.
 
 - **Window queries live in shells.** Breakpoint prefixes set nav form, pane count and margins. Inside a pane, adapt with `@container`.
+- **A sheet is a shell.** Its form (full screen on compact, side panel from medium) is a window query, so what depends on its form, such as where its action bar sits, may use window prefixes.
 - **`DataTable` owns table ↔ card.** It switches to cards when its pane is narrower than ~600px. Product code passes a card renderer and never branches on width. In table form, columns with `meta: { priority: "low" }` all hide together while the full table is wider than its pane, so a pinned column never covers data; product code only sets the flag. A long list sets `virtualize`: it renders only the rows near the view, with no pages, and its header sticks to the top of `<main>`. A virtualized table cannot scroll sideways, so it is denser (cells 8px a side, `StatusBadge size="compact"`), needs `priority: "low"` columns to fit slim panes, and shows cards when even the slim table does not fit.
 
 Navigation per class:

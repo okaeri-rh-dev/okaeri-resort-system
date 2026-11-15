@@ -155,7 +155,14 @@ export function NotesCard({ booking, onEdit }: SectionProps) {
   );
 }
 
-export function PaymentSummaryCard({ booking }: { booking: Booking }) {
+export function PaymentSummaryCard({
+  booking,
+  children,
+}: {
+  booking: Booking;
+  /** Extra lines under the totals, such as the sheet's proof thumbnail. */
+  children?: ReactNode;
+}) {
   const outstanding = outstandingBalance(booking);
   return (
     <SectionCard
@@ -172,6 +179,7 @@ export function PaymentSummaryCard({ booking }: { booking: Booking }) {
           </span>
         }
       />
+      {children}
     </SectionCard>
   );
 }

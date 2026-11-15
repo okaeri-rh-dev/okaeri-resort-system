@@ -3,7 +3,8 @@
  */
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { Booking } from "@/types";
@@ -11,10 +12,14 @@ import type { Booking } from "@/types";
 import { BookingDetailPage } from "..";
 
 const user = vi.hoisted(() => ({ role: "manager" as string, userId: "user-1" }));
+const history = vi.hoisted(() => ({ state: {} as { fromBookingsList?: boolean }, back: vi.fn() }));
 
 vi.mock("@tanstack/react-router", async () => ({
   Link: (await import("@/test/router-link-stub")).RouterLinkStub,
   useNavigate: () => vi.fn(),
+  useLocation: ({ select }: { select: (location: { state: object }) => unknown }) =>
+    select({ state: history.state }),
+  useRouter: () => ({ history: { back: history.back } }),
 }));
 
 vi.mock("@/hooks", () => ({ useUserRole: () => user }));
@@ -78,6 +83,7 @@ const card = (title: string) => within(screen.getByRole("region", { name: title 
 describe("BookingDetailPage", () => {
   beforeEach(() => {
     user.role = "manager";
+    history.back.mockClear();
   });
 
   it("shows the guest name once and the booking line with the amount due", () => {
@@ -92,6 +98,38 @@ describe("BookingDetailPage", () => {
     expect(screen.getByText("OKR-1")).toBeInTheDocument();
     expect(screen.getByText("Walk-in")).toBeInTheDocument();
     expect(screen.getByText("₱6,000.00 due")).toBeInTheDocument();
+  });
+
+  it("goes back in history when the page was opened from the bookings list", async () => {
+    history.state = { fromBookingsList: true };
+    renderPage();
+
+    await userEvent.click(screen.getByRole("link", { name: "Bookings" }));
+
+    expect(history.back).toHaveBeenCalledOnce();
+  });
+
+  it("leaves a Cmd-click on the back link to the browser", () => {
+    history.state = { fromBookingsList: true };
+    renderPage();
+
+    const back = screen.getByRole("link", { name: "Bookings" });
+    back.addEventListener("click", (event) => event.preventDefault());
+    fireEvent.click(back, { metaKey: true });
+
+    expect(history.back).not.toHaveBeenCalled();
+  });
+
+  it("lets the back link go to the unfiltered list after a direct visit", async () => {
+    history.state = {};
+    renderPage();
+
+    const back = screen.getByRole("link", { name: "Bookings" });
+    back.addEventListener("click", (event) => event.preventDefault());
+    await userEvent.click(back);
+
+    expect(back).toHaveAttribute("href", "/admin/bookings");
+    expect(history.back).not.toHaveBeenCalled();
   });
 
   it("shows the stay with weekdays, its length and one row for each cabin", () => {

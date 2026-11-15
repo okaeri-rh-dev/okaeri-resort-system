@@ -1,4 +1,4 @@
-import { Link } from "@tanstack/react-router";
+import { Link, useLocation, useRouter } from "@tanstack/react-router";
 import { ChevronLeft } from "lucide-react";
 
 import { BookingActionBar } from "@/components/bookings/BookingSections/BookingActionBar";
@@ -11,6 +11,7 @@ import {
 } from "@/components/bookings/BookingSections/sections";
 import { useBookingActions } from "@/components/bookings/BookingSections/useBookingActions";
 import { DetailAuditSection } from "@/components/entity-detail";
+import { isPlainClick } from "@/lib/utils";
 import type { Booking } from "@/types";
 
 interface BookingDetailPageProps {
@@ -20,14 +21,23 @@ interface BookingDetailPageProps {
 
 export function BookingDetailPage({ booking, bookingId }: BookingDetailPageProps) {
   const { updateBookingStatus, cancelBooking, handleUploadPayment } = useBookingActions();
+  const router = useRouter();
+  const fromBookingsList = useLocation({ select: (location) => location.state.fromBookingsList });
 
   return (
     // The bottom padding keeps the compact action bar off the last card
     <div data-testid="booking-detail" className="expanded:pb-0 space-y-6 pb-24">
       <header className="expanded:flex-row expanded:items-start expanded:justify-between flex flex-col gap-3">
         <div className="min-w-0 space-y-1">
+          {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions -- Link renders an a with an href */}
           <Link
             to="/admin/bookings"
+            // Back keeps the list's filters; a direct visit gets the list with none
+            onClick={(event) => {
+              if (!fromBookingsList || !isPlainClick(event)) return;
+              event.preventDefault();
+              router.history.back();
+            }}
             className="text-muted-foreground hover:text-foreground flex w-fit items-center gap-1 text-xs"
           >
             <ChevronLeft className="size-3" aria-hidden />
@@ -41,7 +51,7 @@ export function BookingDetailPage({ booking, bookingId }: BookingDetailPageProps
           updateBookingStatus={updateBookingStatus}
           onRecordPayment={() => handleUploadPayment(booking)}
           onCancel={() => cancelBooking.mutate(booking.booking_id)}
-          className="expanded:static expanded:w-72 expanded:shrink-0 expanded:border-0 expanded:bg-transparent expanded:p-0 expanded:shadow-none"
+          placement="page"
         />
       </header>
 

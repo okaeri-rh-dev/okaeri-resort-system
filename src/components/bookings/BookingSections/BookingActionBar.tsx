@@ -12,17 +12,25 @@ interface BookingActionBarProps {
   updateBookingStatus: UpdateBookingStatus;
   onRecordPayment: () => void;
   onCancel: () => void;
-  /** Where the bar sits from expanded, where it stops being a fixed bottom bar. */
-  className?: string;
+  placement: keyof typeof PLACEMENT_CLASSES;
 }
 
-/** The main action and overflow menu, fixed above the compact bottom nav. Anonymized bookings have none. */
+const PLACEMENT_CLASSES = {
+  // Fixed above the compact bottom nav, then at the top right of the page header from expanded
+  page: "fixed inset-x-0 bottom-(--admin-bottom-bar-height) medium:bottom-0 medium:left-20 medium:pb-[calc(0.5rem+env(safe-area-inset-bottom,0px))] expanded:static expanded:w-72 expanded:shrink-0",
+  // Last in the sheet and stuck to its bottom, then under the sheet header from expanded.
+  // The negative offsets cancel SheetContent's p-6.
+  sheet:
+    "sticky -bottom-6 order-last -mx-6 -mb-6 pb-[calc(0.5rem+env(safe-area-inset-bottom,0px))] expanded:static expanded:order-none expanded:m-0",
+};
+
+/** The main action and overflow menu: a bottom bar until expanded, then beside or under the header. Anonymized bookings have none. */
 export function BookingActionBar({
   booking,
   updateBookingStatus,
   onRecordPayment,
   onCancel,
-  className,
+  placement,
 }: BookingActionBarProps) {
   const { role, userId } = useUserRole();
   const now = new Date();
@@ -34,8 +42,8 @@ export function BookingActionBar({
   return (
     <div
       className={cn(
-        "bg-card shadow-popover medium:bottom-0 medium:left-20 medium:pb-[calc(0.5rem+env(safe-area-inset-bottom,0px))] fixed inset-x-0 bottom-(--admin-bottom-bar-height) z-30 flex items-center gap-2 border-t px-4 py-2",
-        className
+        "bg-card shadow-popover expanded:border-0 expanded:bg-transparent expanded:p-0 expanded:shadow-none z-30 flex items-center gap-2 border-t px-4 py-2",
+        PLACEMENT_CLASSES[placement]
       )}
     >
       <MainActionButton
