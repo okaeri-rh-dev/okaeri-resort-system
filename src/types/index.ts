@@ -3,6 +3,7 @@
 import type { BookingSource } from "@/lib/bookings/source";
 
 import type { BookingStatus } from "./booking-status";
+import type { Database } from "./database.types";
 
 // ============================================
 // UNIT TYPES
@@ -62,6 +63,8 @@ export {
 } from "./booking-status";
 export { APP_ROLE_NAMES } from "./app-role";
 export type PaymentMethod = "Cash" | "GCash" | "BankTransfer" | "Card" | "Airbnb payout" | "Other";
+export type PaymentRow = Database["public"]["Tables"]["payments"]["Row"];
+
 export type PaymentRecordStatus = "Active" | "Deleted" | "Refunded";
 
 // Database booking unit junction table record
@@ -130,8 +133,8 @@ export interface Booking {
   // Relations (NEW: junction table pattern)
   booking_units?: BookingUnitRecord[];
   guest?: Guest | null;
-  /** Only amount and status: what the outstanding balance needs */
-  payments?: { amount: number; status: string }[];
+  /** The list loads only amount and status (what the outstanding balance needs); the booking detail query loads whole rows */
+  payments?: (Pick<PaymentRow, "amount" | "status"> & Partial<PaymentRow>)[];
   // Deprecated: Direct unit relation removed (use booking_units instead)
   // unit?: Unit;
 }

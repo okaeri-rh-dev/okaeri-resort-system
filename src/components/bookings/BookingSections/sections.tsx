@@ -1,10 +1,10 @@
 import { useId, type ReactNode } from "react";
 
-import { Pencil } from "lucide-react";
+import { Pencil, Plus } from "lucide-react";
 
 import { formatPhoneNumber, RelatedEntityLink } from "@/components/entity-detail";
 import { Button, ListCard, ListCardRow, StatusBadge } from "@/components/patterns";
-import { manilaDayOf, nightsBetween } from "@/lib/bookings";
+import { canRecordPayment, manilaDayOf, nightsBetween } from "@/lib/bookings";
 import { outstandingBalance, receivedAmount } from "@/lib/dashboard";
 import { formatCurrency } from "@/lib/formatters";
 import { statusBadgeProps } from "@/lib/status-tone";
@@ -157,9 +157,15 @@ export function NotesCard({ booking, onEdit }: SectionProps) {
 
 export function PaymentSummaryCard({
   booking,
+  rows,
+  onRecordPayment,
   children,
 }: {
   booking: Booking;
+  /** The payment rows, above the totals. */
+  rows?: ReactNode;
+  /** Shows Record payment while a balance is due; left out where it is not offered. */
+  onRecordPayment?: () => void;
   /** Extra lines under the totals, such as the sheet's proof thumbnail. */
   children?: ReactNode;
 }) {
@@ -169,6 +175,7 @@ export function PaymentSummaryCard({
       title="Payments"
       action={<StatusBadge {...statusBadgeProps(booking.payment_status, "Pending")} />}
     >
+      {rows}
       <ListCardRow label="Total" value={formatCurrency(booking.total_amount)} />
       <ListCardRow label="Received" value={formatCurrency(receivedAmount(booking))} />
       <ListCardRow
@@ -180,6 +187,12 @@ export function PaymentSummaryCard({
         }
       />
       {children}
+      {onRecordPayment && canRecordPayment(booking) && (
+        <Button variant="outline" size="sm" className="w-full" onClick={onRecordPayment}>
+          <Plus className="size-4" aria-hidden />
+          Record payment
+        </Button>
+      )}
     </SectionCard>
   );
 }

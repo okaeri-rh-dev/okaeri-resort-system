@@ -5,7 +5,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { Booking } from "@/types";
 
@@ -22,12 +22,26 @@ vi.mock("@tanstack/react-router", async () => ({
   useRouter: () => ({ history: { back: history.back } }),
 }));
 
-vi.mock("@/hooks", () => ({ useUserRole: () => user }));
+vi.mock("@/hooks", () => ({
+  useUserRole: () => ({
+    ...user,
+    canEdit: user.role !== "staff",
+    canSoftDelete: user.role !== "staff",
+  }),
+}));
 
 vi.mock("@/hooks/useBookings", () => ({
   useUpdateBookingStatus: () => ({ mutate: vi.fn() }),
   useCancelBooking: () => ({ mutate: vi.fn() }),
   useUploadPaymentProof: () => ({ mutate: vi.fn() }),
+}));
+
+const softDeletePayment = vi.hoisted(() => ({ mutate: vi.fn() }));
+vi.mock("@/hooks/usePayments", () => ({ useSoftDeletePayment: () => softDeletePayment }));
+
+vi.mock("@/hooks/usePaymentProofUrl", async (importOriginal) => ({
+  ...(await importOriginal<object>()),
+  usePaymentProofUrl: () => ({ data: "https://storage.test/proof.jpg", isError: false }),
 }));
 
 vi.mock("@/components/entity-detail", async (importOriginal) => ({
@@ -52,8 +66,26 @@ const booking = {
   special_requests: "Late arrival",
   internal_notes: null,
   payments: [
-    { amount: 3000, status: "Active" },
-    { amount: 1000, status: "Deleted" },
+    {
+      payment_id: "pay-2",
+      amount: 1000,
+      status: "Deleted",
+      kind: "manual",
+      payment_method: "Cash",
+      payment_date: "2026-11-12T02:00:00Z",
+      proof_url: null,
+      notes: null,
+    },
+    {
+      payment_id: "pay-1",
+      amount: 3000,
+      status: "Active",
+      kind: "online_downpayment",
+      payment_method: "GCash",
+      payment_date: "2026-11-10T02:00:00Z",
+      proof_url: "bookings/booking-1/proof.jpg",
+      notes: "Ref 12345",
+    },
   ],
   booking_units: [
     {
@@ -81,9 +113,19 @@ const renderPage = (overrides: Partial<Booking> = {}) =>
 const card = (title: string) => within(screen.getByRole("region", { name: title }));
 
 describe("BookingDetailPage", () => {
+  beforeAll(() => {
+    // The payment row menu measures itself; setup.ts's stub returns no methods after a mock reset
+    global.ResizeObserver = class {
+      observe() {}
+      unobserve() {}
+      disconnect() {}
+    };
+  });
+
   beforeEach(() => {
     user.role = "manager";
     history.back.mockClear();
+    softDeletePayment.mutate.mockClear();
   });
 
   it("shows the guest name once and the booking line with the amount due", () => {
@@ -168,7 +210,7 @@ describe("BookingDetailPage", () => {
     const { unmount } = renderPage();
     let payments = card("Payments");
     expect(payments.getByText("Partial")).toBeInTheDocument();
-    expect(payments.getByText("₱3,000.00")).toBeInTheDocument();
+    expect(payments.getByText("Received").nextSibling).toHaveTextContent("₱3,000.00");
     expect(payments.getByText("₱6,000.00")).toBeInTheDocument();
     unmount();
 
@@ -176,6 +218,111 @@ describe("BookingDetailPage", () => {
     payments = card("Payments");
     expect(payments.getByText("Paid")).toBeInTheDocument();
     expect(screen.queryByText(/due$/)).not.toBeInTheDocument();
+  });
+
+  it("lists every payment in date order with its method, date, kind, proof and notes", () => {
+    renderPage();
+    const rows = within(card("Payments").getByRole("list", { name: "Payments" })).getAllByRole(
+      "listitem"
+    );
+
+    expect(rows).toHaveLength(2);
+    const first = within(rows[0]);
+    expect(first.getByText("₱3,000.00")).toBeInTheDocument();
+    expect(first.getByText("GCash · Nov 10, 2026 · Online downpayment")).toBeInTheDocument();
+    expect(first.getByLabelText("Has payment proof")).toBeInTheDocument();
+    expect(first.getByText("Ref 12345")).toBeInTheDocument();
+    expect(first.getByRole("link", { name: /₱3,000.00/ })).toHaveAttribute(
+      "href",
+      "/admin/payments/pay-1"
+    );
+    expect(within(rows[1]).getByText("Cash · Nov 12, 2026 · Payment")).toBeInTheDocument();
+    expect(within(rows[1]).queryByLabelText("Has payment proof")).not.toBeInTheDocument();
+  });
+
+  it("mutes a removed or refunded payment and leaves it out of Received", () => {
+    renderPage({
+      payments: [
+        { payment_id: "pay-1", amount: 3000, status: "Active", payment_date: "2026-11-10" },
+        { payment_id: "pay-2", amount: 1000, status: "Deleted", payment_date: "2026-11-11" },
+        { payment_id: "pay-3", amount: 500, status: "Refunded", payment_date: "2026-11-12" },
+      ],
+    } as Partial<Booking>);
+    const rows = within(card("Payments").getByRole("list", { name: "Payments" })).getAllByRole(
+      "listitem"
+    );
+
+    expect(within(rows[1]).getByText("Removed")).toBeInTheDocument();
+    expect(within(rows[1]).getByText("₱1,000.00")).toHaveClass("line-through");
+    expect(within(rows[2]).getByText("Refunded")).toBeInTheDocument();
+    expect(within(rows[2]).getByText("₱500.00")).toHaveClass("line-through");
+    expect(within(rows[0]).getByText("₱3,000.00")).not.toHaveClass("line-through");
+    expect(card("Payments").getByText("₱6,000.00")).toBeInTheDocument();
+  });
+
+  it("gives a manager View proof, Edit and Remove, and Remove asks first", async () => {
+    renderPage();
+
+    await userEvent.click(screen.getByRole("button", { name: "Actions for payment ₱3,000.00" }));
+    expect(screen.getByRole("menuitem", { name: "View proof" })).toBeInTheDocument();
+    expect(screen.getByRole("menuitem", { name: "Edit" })).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("menuitem", { name: "Remove" }));
+
+    expect(softDeletePayment.mutate).not.toHaveBeenCalled();
+    await userEvent.click(
+      within(screen.getByRole("alertdialog")).getByRole("button", { name: "Remove" })
+    );
+    expect(softDeletePayment.mutate).toHaveBeenCalledWith("pay-1", expect.anything());
+  });
+
+  it("gives staff only View proof in the payment menu", async () => {
+    user.role = "staff";
+    renderPage();
+
+    await userEvent.click(screen.getByRole("button", { name: "Actions for payment ₱3,000.00" }));
+    expect(screen.getByRole("menuitem", { name: "View proof" })).toBeInTheDocument();
+    expect(screen.queryByRole("menuitem", { name: "Edit" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("menuitem", { name: "Remove" })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Actions for payment ₱1,000.00" })
+    ).not.toBeInTheDocument();
+  });
+
+  it("opens the payment proof in a modal from the row menu", async () => {
+    renderPage();
+
+    await userEvent.click(screen.getByRole("button", { name: "Actions for payment ₱3,000.00" }));
+    await userEvent.click(screen.getByRole("menuitem", { name: "View proof" }));
+
+    expect(screen.getByRole("dialog", { name: "Payment proof" })).toBeInTheDocument();
+  });
+
+  it("shows Record payment in the card only while a balance is due", async () => {
+    const { unmount } = renderPage();
+    const openFilePicker = vi
+      .spyOn(HTMLInputElement.prototype, "click")
+      .mockImplementation(() => {});
+    await userEvent.click(card("Payments").getByRole("button", { name: "Record payment" }));
+    expect(openFilePicker).toHaveBeenCalledOnce();
+    openFilePicker.mockRestore();
+    unmount();
+
+    renderPage({ payments: [{ amount: 9000, status: "Active" }] });
+    expect(
+      card("Payments").queryByRole("button", { name: "Record payment" })
+    ).not.toBeInTheDocument();
+  });
+
+  it("shows the guest's chosen method and proof on a Pending online booking", () => {
+    renderPage({
+      payments: [],
+      payment_method: "GCash",
+      payment_proof_url: "booking-1/proof.jpg",
+    });
+    const payments = card("Payments");
+
+    expect(payments.getByText("Guest chose GCash")).toBeInTheDocument();
+    expect(payments.getByRole("button", { name: "View payment proof" })).toBeInTheDocument();
   });
 
   it("gives a manager the list's main action and overflow menu", () => {
@@ -221,6 +368,9 @@ describe("BookingDetailPage", () => {
     expect(screen.queryByRole("button", { name: /Actions for/ })).not.toBeInTheDocument();
     expect(card("Guest").getByText("Personal details removed.")).toBeInTheDocument();
     expect(card("Notes").getByText("Personal details removed.")).toBeInTheDocument();
+    expect(
+      card("Payments").queryByRole("button", { name: "Record payment" })
+    ).not.toBeInTheDocument();
   });
 
   it("shows no Edit buttons yet", () => {

@@ -159,6 +159,9 @@ export const undoActionFor = (
 
 export type OverflowAction = "Record payment" | "Edit" | UndoAction | "Cancel";
 
+export const canRecordPayment = (booking: Booking) =>
+  booking.booking_status !== "Cancelled" && outstandingBalance(booking) > 0;
+
 /** The menu items beside the main action, in a fixed order; the database judges undo again (docs/adr/0007). */
 export const overflowActionsFor = (
   booking: Booking,
@@ -171,7 +174,7 @@ export const overflowActionsFor = (
   const undo = undoActionFor(booking, role, actorId, now);
 
   const items: OverflowAction[] = [];
-  if (status !== "Cancelled" && outstandingBalance(booking) > 0) items.push("Record payment");
+  if (canRecordPayment(booking)) items.push("Record payment");
   if (status === "Pending" || status === "Confirmed" || status === "CheckedIn") items.push("Edit");
   if (undo) items.push(undo);
   if (isManagerRole(role) && (status === "Pending" || status === "Confirmed")) items.push("Cancel");

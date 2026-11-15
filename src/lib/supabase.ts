@@ -175,7 +175,7 @@ export const db = {
         unit:units(*)
       ),
       guest:guests(*),
-      payments(amount, status)
+      payments(*)
     `
         )
         .eq("booking_id", id)
