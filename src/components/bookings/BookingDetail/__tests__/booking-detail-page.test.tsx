@@ -31,7 +31,9 @@ vi.mock("@/hooks", () => ({
   }),
 }));
 
+const updateBooking = vi.hoisted(() => ({ mutateAsync: vi.fn(), isPending: false }));
 vi.mock("@/hooks/useBookings", () => ({
+  useUpdateBooking: () => updateBooking,
   useUpdateBookingStatus: () => ({ mutate: vi.fn() }),
   useCancelBooking: () => ({ mutate: vi.fn() }),
   useUploadPaymentProof: () => ({ mutate: vi.fn() }),
@@ -168,6 +170,7 @@ describe("BookingDetailPage", () => {
     user.role = "manager";
     history.back.mockClear();
     softDeletePayment.mutate.mockClear();
+    updateBooking.mutateAsync.mockReset();
     fetchHistory.mockReset();
     historyRows.value = [
       auditRow({
@@ -444,10 +447,111 @@ describe("BookingDetailPage", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("shows no Edit buttons yet", () => {
+  const editButtons = () =>
+    screen.queryAllByRole("button", { name: /^Edit / }).map((button) => button.ariaLabel);
+
+  it.each([
+    ["Pending", "staff", ["Edit guest", "Edit notes"]],
+    ["Confirmed", "staff", ["Edit guest", "Edit notes"]],
+    ["CheckedIn", "staff", ["Edit guest", "Edit notes"]],
+    ["CheckedOut", "staff", ["Edit guest", "Edit notes"]],
+    ["Cancelled", "staff", ["Edit notes"]],
+    ["CheckedOut", "manager", ["Edit guest", "Edit notes"]],
+    ["Cancelled", "manager", ["Edit notes"]],
+  ] as const)("shows a %s booking's %s these Edit buttons: %j", (status, role, expected) => {
+    user.role = role;
+    renderPage({ booking_status: status });
+
+    expect(editButtons()).toEqual(expected);
+  });
+
+  it("shows no Edit buttons on an anonymized booking", () => {
+    renderPage({ anonymized_at: "2026-11-01T00:00:00Z" });
+
+    expect(editButtons()).toEqual([]);
+  });
+
+  it("edits the guest details in a sheet and saves only those fields", async () => {
+    updateBooking.mutateAsync.mockResolvedValue({});
     renderPage();
 
-    expect(screen.queryByRole("button", { name: /^Edit/ })).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Edit guest" }));
+    const sheet = within(screen.getByRole("dialog", { name: "Edit guest" }));
+    expect(sheet.getByRole("combobox", { name: "Booking source" })).toBeEnabled();
+    const name = sheet.getByLabelText("Guest name");
+    await userEvent.clear(name);
+    await userEvent.type(name, "Maria Cruz");
+    await userEvent.clear(sheet.getByLabelText("Contact number (optional)"));
+    await userEvent.click(sheet.getByRole("button", { name: "Save changes" }));
+
+    expect(updateBooking.mutateAsync).toHaveBeenCalledWith({
+      bookingId: "booking-1",
+      changes: {
+        guest_name: "Maria Cruz",
+        email: "maria@example.com",
+        contact_number: null,
+        booking_source: "Walk-in",
+        airbnb_confirmation_code: null,
+      },
+    });
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
+  it("keeps the booking source of a Website booking", async () => {
+    renderPage({ booking_source: "Website" });
+
+    await userEvent.click(screen.getByRole("button", { name: "Edit guest" }));
+
+    expect(screen.getByRole("combobox", { name: "Booking source" })).toBeDisabled();
+  });
+
+  it("edits both notes in a sheet and saves only those fields", async () => {
+    updateBooking.mutateAsync.mockResolvedValue({});
+    user.role = "staff";
+    renderPage({ booking_status: "CheckedIn" });
+
+    await userEvent.click(screen.getByRole("button", { name: "Edit notes" }));
+    const sheet = within(screen.getByRole("dialog", { name: "Edit notes" }));
+    expect(sheet.getByLabelText("Special request")).toHaveValue("Late arrival");
+    await userEvent.type(sheet.getByLabelText("Internal note"), "Paid the rest in cash");
+    await userEvent.click(sheet.getByRole("button", { name: "Save changes" }));
+
+    expect(updateBooking.mutateAsync).toHaveBeenCalledWith({
+      bookingId: "booking-1",
+      changes: { special_requests: "Late arrival", internal_notes: "Paid the rest in cash" },
+    });
+  });
+
+  it("offers only the internal note on a Cancelled booking", async () => {
+    updateBooking.mutateAsync.mockResolvedValue({});
+    renderPage({ booking_status: "Cancelled" });
+
+    await userEvent.click(screen.getByRole("button", { name: "Edit notes" }));
+    const sheet = within(screen.getByRole("dialog", { name: "Edit notes" }));
+    expect(sheet.queryByLabelText("Special request")).not.toBeInTheDocument();
+    await userEvent.type(sheet.getByLabelText("Internal note"), "Guest cancelled by phone");
+    await userEvent.click(sheet.getByRole("button", { name: "Save changes" }));
+
+    expect(updateBooking.mutateAsync).toHaveBeenCalledWith({
+      bookingId: "booking-1",
+      changes: { internal_notes: "Guest cancelled by phone" },
+    });
+  });
+
+  it("shows a database refusal in the sheet and keeps it open", async () => {
+    updateBooking.mutateAsync.mockRejectedValue(
+      new Error("A cancelled booking allows only its internal note to change")
+    );
+    renderPage();
+
+    await userEvent.click(screen.getByRole("button", { name: "Edit notes" }));
+    await userEvent.click(screen.getByRole("button", { name: "Save changes" }));
+
+    const sheet = within(screen.getByRole("dialog", { name: "Edit notes" }));
+    expect(sheet.getByText("Nothing was saved")).toBeInTheDocument();
+    expect(
+      sheet.getByText("A cancelled booking allows only its internal note to change")
+    ).toBeInTheDocument();
   });
 
   it("folds a manager's History card, newest first, with named cabins", async () => {
