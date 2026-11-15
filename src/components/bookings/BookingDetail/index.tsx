@@ -11,10 +11,12 @@ import {
   StayCard,
 } from "@/components/bookings/BookingSections/sections";
 import { useBookingActions } from "@/components/bookings/BookingSections/useBookingActions";
-import { DetailAuditSection } from "@/components/entity-detail";
+import { useUserRole } from "@/hooks";
 import { isPlainClick } from "@/lib/utils";
 import type { Booking } from "@/types";
 import type { Payment as PaymentRow } from "@/types/entity-detail.types";
+
+import { BookingHistoryCard } from "./BookingHistoryCard";
 
 interface BookingDetailPageProps {
   booking: Booking;
@@ -24,6 +26,7 @@ interface BookingDetailPageProps {
 export function BookingDetailPage({ booking, bookingId }: BookingDetailPageProps) {
   const { updateBookingStatus, cancelBooking, handleUploadPayment } = useBookingActions();
   const router = useRouter();
+  const { isManager } = useUserRole();
   const fromBookingsList = useLocation({ select: (location) => location.state.fromBookingsList });
 
   return (
@@ -76,9 +79,8 @@ export function BookingDetailPage({ booking, bookingId }: BookingDetailPageProps
         >
           {booking.booking_status === "Pending" && <GuestPaymentChoice booking={booking} />}
         </PaymentSummaryCard>
+        {isManager && <BookingHistoryCard bookingId={bookingId} />}
       </div>
-
-      <DetailAuditSection entityType="booking" entityId={bookingId} />
     </div>
   );
 }

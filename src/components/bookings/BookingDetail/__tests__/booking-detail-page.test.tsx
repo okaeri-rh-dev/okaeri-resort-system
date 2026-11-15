@@ -25,6 +25,7 @@ vi.mock("@tanstack/react-router", async () => ({
 vi.mock("@/hooks", () => ({
   useUserRole: () => ({
     ...user,
+    isManager: user.role !== "staff",
     canEdit: user.role !== "staff",
     canSoftDelete: user.role !== "staff",
   }),
@@ -44,9 +45,48 @@ vi.mock("@/hooks/usePaymentProofUrl", async (importOriginal) => ({
   usePaymentProofUrl: () => ({ data: "https://storage.test/proof.jpg", isError: false }),
 }));
 
-vi.mock("@/components/entity-detail", async (importOriginal) => ({
-  ...(await importOriginal<object>()),
-  DetailAuditSection: () => <section>Audit trail</section>,
+const auditRow = (overrides: object) => ({
+  audit_id: "audit",
+  source: "db",
+  description: null,
+  changed_fields: null,
+  metadata: null,
+  user_id: "user-1",
+  user_email: "manager@example.com",
+  old_data: null,
+  new_data: null,
+  ...overrides,
+});
+const historyRows = vi.hoisted(() => ({ value: [] as object[] }));
+const fetchHistory = vi.hoisted(() => vi.fn());
+vi.mock("@/lib/supabase", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/supabase")>();
+  const rowsOf = (table: string) => {
+    fetchHistory();
+    return Promise.resolve(
+      historyRows.value.filter((row) => (row as { table_name: string }).table_name === table)
+    );
+  };
+  return {
+    ...actual,
+    db: {
+      ...actual.db,
+      auditLogs: {
+        ...actual.db.auditLogs,
+        recentByRecord: () => rowsOf("bookings"),
+        recentForBookingCabins: () => rowsOf("booking_units"),
+      },
+    },
+  };
+});
+vi.mock("@/hooks/useUnits", () => ({
+  allUnitsQuery: () => ({
+    queryKey: ["units"],
+    queryFn: () => [
+      { unit_id: "unit-1", unit_name: "Cabin 1" },
+      { unit_id: "unit-3", unit_name: "Cabin 3" },
+    ],
+  }),
 }));
 
 const booking = {
@@ -105,7 +145,9 @@ const booking = {
 
 const renderPage = (overrides: Partial<Booking> = {}) =>
   render(
-    <QueryClientProvider client={new QueryClient()}>
+    <QueryClientProvider
+      client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
+    >
       <BookingDetailPage booking={{ ...booking, ...overrides }} bookingId="booking-1" />
     </QueryClientProvider>
   );
@@ -126,6 +168,31 @@ describe("BookingDetailPage", () => {
     user.role = "manager";
     history.back.mockClear();
     softDeletePayment.mutate.mockClear();
+    fetchHistory.mockReset();
+    historyRows.value = [
+      auditRow({
+        audit_id: "a-1",
+        table_name: "bookings",
+        action: "UPDATE",
+        changed_fields: ["check_out", "num_guests"],
+        created_at: "2026-11-10T02:00:00Z",
+      }),
+      auditRow({
+        audit_id: "a-3",
+        table_name: "booking_units",
+        action: "INSERT",
+        new_data: { booking_id: "booking-1", unit_id: "unit-3" },
+        created_at: "2026-11-12T02:00:00Z",
+      }),
+      auditRow({
+        audit_id: "a-2",
+        table_name: "booking_units",
+        action: "DELETE",
+        user_email: null,
+        old_data: { booking_id: "booking-1", unit_id: "unit-1" },
+        created_at: "2026-11-11T02:00:00Z",
+      }),
+    ];
   });
 
   it("shows the guest name once and the booking line with the amount due", () => {
@@ -381,5 +448,67 @@ describe("BookingDetailPage", () => {
     renderPage();
 
     expect(screen.queryByRole("button", { name: /^Edit/ })).not.toBeInTheDocument();
+  });
+
+  it("folds a manager's History card, newest first, with named cabins", async () => {
+    renderPage();
+
+    const toggle = await screen.findByRole("button", { name: "History 3" });
+    expect(screen.queryByText("Cabin 3 added")).not.toBeInTheDocument();
+    await userEvent.click(toggle);
+
+    const entries = within(screen.getByRole("list", { name: "History" })).getAllByRole("listitem");
+    expect(entries.map((entry) => entry.textContent)).toEqual([
+      expect.stringContaining("Cabin 3 added"),
+      expect.stringContaining("Cabin 1 removed"),
+      expect.stringContaining("Changed check out, num guests"),
+    ]);
+    expect(within(entries[0]).getByText("Created")).toBeInTheDocument();
+    expect(entries[0]).toHaveTextContent("manager@example.com · Nov 12, 2026 10:00 AM");
+    expect(entries[1]).toHaveTextContent("System · Nov 11, 2026 10:00 AM");
+    expect(screen.queryByText("Showing the 50 newest changes.")).not.toBeInTheDocument();
+  });
+
+  it("says when History shows only the 50 newest changes", async () => {
+    historyRows.value = Array.from({ length: 50 }, (_, index) =>
+      auditRow({
+        audit_id: `a-${index}`,
+        table_name: "bookings",
+        action: "UPDATE",
+        changed_fields: ["internal_notes"],
+        created_at: "2026-11-10T02:00:00Z",
+      })
+    );
+    renderPage();
+
+    await userEvent.click(await screen.findByRole("button", { name: "History 50" }));
+
+    expect(screen.getByText("Showing the 50 newest changes.")).toBeInTheDocument();
+  });
+
+  it.each(["owner", "admin"])("gives an %s the History card", async (role) => {
+    user.role = role;
+    renderPage();
+
+    expect(await screen.findByRole("button", { name: "History 3" })).toBeInTheDocument();
+  });
+
+  it("says when History fails to load instead of showing it empty", async () => {
+    fetchHistory.mockImplementation(() => {
+      throw new Error("offline");
+    });
+    renderPage();
+
+    await userEvent.click(await screen.findByRole("button", { name: "History" }));
+
+    expect(await screen.findByText("Couldn't load the history.")).toBeInTheDocument();
+  });
+
+  it("gives staff no History card and no history fetch", () => {
+    user.role = "staff";
+    renderPage();
+
+    expect(screen.queryByRole("button", { name: /^History/ })).not.toBeInTheDocument();
+    expect(fetchHistory).not.toHaveBeenCalled();
   });
 });

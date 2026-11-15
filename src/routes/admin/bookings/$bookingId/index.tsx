@@ -7,7 +7,8 @@ import { DetailPageSkeleton } from "@/components/entity-detail/DetailPageSkeleto
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { Button } from "@/components/patterns";
 import { bookingDetailQuery } from "@/hooks/useBookings";
-import { recentRecordAuditLogsQuery } from "@/lib/audit-hooks";
+import { allUnitsQuery } from "@/hooks/useUnits";
+import { bookingHistoryQuery } from "@/lib/audit-hooks";
 import { AuditRole, hasAuditRole } from "@/lib/audit-roles";
 
 // Lazy load the detail page component
@@ -28,18 +29,12 @@ export const Route = createFileRoute("/admin/bookings/$bookingId/")({
     // Check if user has permission to view audit logs
     const canViewAudit = await hasAuditRole(AuditRole.MANAGER);
 
-    // Prefetch audit logs only if user has permission
-    const auditLogsPromise = canViewAudit
-      ? queryClient.ensureQueryData(recentRecordAuditLogsQuery("bookings", bookingId))
-      : Promise.resolve([]);
-
-    // Wait for all data to be loaded
-    const [, auditLogs] = await Promise.all([bookingPromise, auditLogsPromise]);
-
-    return {
-      auditLogs,
-      canViewAudit,
-    };
+    // prefetchQuery never throws: a failed history fetch shows in the card, not as an error page
+    await Promise.all([
+      bookingPromise,
+      canViewAudit && queryClient.prefetchQuery(bookingHistoryQuery(bookingId)),
+      canViewAudit && queryClient.prefetchQuery(allUnitsQuery()),
+    ]);
   },
 
   // Error component for failed data loading

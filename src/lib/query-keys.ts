@@ -182,6 +182,8 @@ export const auditKeys = {
     [...auditKeys.all, "record", tableName, recordId] as const,
   recentForRecord: (tableName: string, recordId: string) =>
     [...auditKeys.record(tableName, recordId), "recent"] as const,
+  bookingHistory: (bookingId: string) =>
+    [...auditKeys.record("bookings", bookingId), "history"] as const,
   stats: (filters?: AuditLogFilters) => [...auditKeys.all, "stats", filters] as const,
   user: (email: string) => [...auditKeys.all, "user", email] as const,
 };
