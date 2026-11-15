@@ -151,6 +151,23 @@ describe("update_booking_stay", () => {
     expect(await stayOf(bookingId)).toEqual(before);
   });
 
+  it("refuses a cabin with no guest count", async () => {
+    if (!shouldRun) return;
+    const { bookingId, unitId } = await bookingIn("Pending", "2034-03-20", "2034-03-22");
+    const before = await stayOf(bookingId);
+
+    const stay = toStayInstants("2034-03-20", "2034-03-22");
+    const { error } = await roleClients.byRole.staff.rpc("update_booking_stay", {
+      p_booking_id: bookingId,
+      p_check_in: stay.check_in,
+      p_check_out: stay.check_out,
+      p_units: [{ unit_id: unitId }],
+    });
+
+    expect(error?.code).toBe("22023");
+    expect(await stayOf(bookingId)).toEqual(before);
+  });
+
   it("refuses a cabin another confirmed booking holds on those nights", async () => {
     if (!shouldRun) return;
     const { unitId: takenUnit } = await bookingIn("Confirmed", "2034-04-10", "2034-04-12");

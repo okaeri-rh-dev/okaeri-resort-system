@@ -258,6 +258,13 @@ BEGIN
         RAISE EXCEPTION 'A booking needs at least one cabin' USING ERRCODE = '22023';
     END IF;
 
+    IF EXISTS (
+        SELECT 1 FROM jsonb_array_elements(p_units) u
+        WHERE COALESCE((u->>'assigned_guests')::integer, 0) < 1
+    ) THEN
+        RAISE EXCEPTION 'Each cabin needs at least one guest' USING ERRCODE = '22023';
+    END IF;
+
     IF (SELECT count(DISTINCT u->>'unit_id') FROM jsonb_array_elements(p_units) u)
            <> jsonb_array_length(p_units) THEN
         RAISE EXCEPTION 'A cabin is listed more than once' USING ERRCODE = '22023';

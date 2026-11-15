@@ -40,6 +40,8 @@ export function BookingDetailPage({
   const fromBookingsList = useLocation({ select: (location) => location.state.fromBookingsList });
   const editHandler = (section: EditableSection) =>
     canEditSection(booking, section, role) ? () => onEditingChange(section) : undefined;
+  const isOpen = (section: EditableSection) =>
+    editing === section && canEditSection(booking, section, role);
   const closeSheet = () => onEditingChange(undefined);
 
   return (
@@ -95,9 +97,9 @@ export function BookingDetailPage({
         {isManager && <BookingHistoryCard bookingId={bookingId} />}
       </div>
 
-      <StayEditSheet booking={booking} open={editing === "stay"} onClose={closeSheet} />
-      <GuestEditSheet booking={booking} open={editing === "guest"} onClose={closeSheet} />
-      <NotesEditSheet booking={booking} open={editing === "notes"} onClose={closeSheet} />
+      <StayEditSheet booking={booking} open={isOpen("stay")} onClose={closeSheet} />
+      <GuestEditSheet booking={booking} open={isOpen("guest")} onClose={closeSheet} />
+      <NotesEditSheet booking={booking} open={isOpen("notes")} onClose={closeSheet} />
     </div>
   );
 }

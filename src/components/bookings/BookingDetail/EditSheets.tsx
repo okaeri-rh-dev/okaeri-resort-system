@@ -69,7 +69,7 @@ function EditForm<TValues extends FieldValues>({
 }: Omit<EditSheetProps, "open"> & {
   title: string;
   form: UseFormReturn<TValues>;
-  save: { mutate: (values: TValues) => Promise<unknown>; isPending: boolean };
+  save: { submit: (values: TValues) => Promise<unknown>; isPending: boolean };
   /** False while the form already shows why it cannot save */
   canSave?: boolean;
   children: ReactNode;
@@ -79,7 +79,7 @@ function EditForm<TValues extends FieldValues>({
   const onSubmit = async (values: TValues) => {
     setRefusal(null);
     try {
-      await save.mutate(values);
+      await save.submit(values);
       onClose();
     } catch (error) {
       setRefusal(error instanceof Error ? error.message : "The booking could not be saved.");
@@ -137,7 +137,7 @@ export const GuestEditSheet = (props: EditSheetProps) => (
 function useSaveChanges<TValues>(booking: Booking, toChanges: (values: TValues) => BookingChanges) {
   const updateBooking = useUpdateBooking();
   return {
-    mutate: (values: TValues) =>
+    submit: (values: TValues) =>
       updateBooking.mutateAsync({ bookingId: booking.booking_id, changes: toChanges(values) }),
     isPending: updateBooking.isPending,
   };
@@ -293,7 +293,7 @@ function StayForm(props: Omit<EditSheetProps, "open">) {
       title="Edit stay"
       form={form}
       save={{
-        mutate: (values: StayValues) =>
+        submit: (values: StayValues) =>
           updateStay.mutateAsync({
             bookingId: booking.booking_id,
             stay: { check_in: values.check_in, check_out: values.check_out },

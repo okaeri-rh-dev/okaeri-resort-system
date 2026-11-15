@@ -162,8 +162,14 @@ const booking = {
 } as unknown as Booking;
 
 // The route keeps the open edit sheet in ?edit=
-function PageWithSearch({ overrides }: { overrides: Partial<Booking> }) {
-  const [editing, setEditing] = useState<EditableSection>();
+function PageWithSearch({
+  overrides,
+  edit,
+}: {
+  overrides: Partial<Booking>;
+  edit?: EditableSection;
+}) {
+  const [editing, setEditing] = useState(edit);
   return (
     <BookingDetailPage
       booking={{ ...booking, ...overrides }}
@@ -174,12 +180,12 @@ function PageWithSearch({ overrides }: { overrides: Partial<Booking> }) {
   );
 }
 
-const renderPage = (overrides: Partial<Booking> = {}) =>
+const renderPage = (overrides: Partial<Booking> = {}, edit?: EditableSection) =>
   render(
     <QueryClientProvider
       client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
     >
-      <PageWithSearch overrides={overrides} />
+      <PageWithSearch overrides={overrides} edit={edit} />
     </QueryClientProvider>
   );
 
@@ -634,6 +640,15 @@ describe("BookingDetailPage", () => {
         { unit_id: "unit-4", assigned_guests: 3 },
       ],
     });
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
+  it("opens the edit sheet named in the URL only where the section is editable", () => {
+    const { unmount } = renderPage({}, "stay");
+    expect(screen.getByRole("dialog", { name: "Edit stay" })).toBeInTheDocument();
+    unmount();
+
+    renderPage({ booking_status: "CheckedOut" }, "stay");
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 
