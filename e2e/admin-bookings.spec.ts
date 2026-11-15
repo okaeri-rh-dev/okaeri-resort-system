@@ -222,7 +222,7 @@ test.describe("Admin Bookings Management", () => {
   });
 
   test.describe("Booking sheet", () => {
-    test("a booking opens in a sheet, links to its full page, and Back closes it", async ({
+    test("a booking opens in a sheet, links to its full page, and the page's back link returns to the filtered list", async ({
       page,
     }) => {
       const bookingsTable = new BookingsTablePage(page);
@@ -241,13 +241,10 @@ test.describe("Admin Bookings Management", () => {
         page.getByTestId("booking-detail").locator("header").getByText(E2E_REF.CONFIRMED)
       ).toBeVisible();
 
-      await page.goBack();
-      await expect(page).toHaveURL(/[?&]booking=/);
-      await expect(sheet).toBeVisible();
-
-      await page.goBack();
+      await page.getByTestId("booking-detail").getByRole("link", { name: "Bookings" }).click();
       await expect(page).not.toHaveURL(/[?&]booking=/);
       await expect(sheet).toBeHidden();
+      await expect(bookingsTable.searchInput).toHaveValue(E2E_REF.CONFIRMED);
     });
 
     test("the payment proof thumbnail opens the proof viewer", async ({ page }) => {

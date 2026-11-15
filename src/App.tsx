@@ -31,6 +31,10 @@ declare module "@tanstack/react-router" {
   interface Register {
     router: typeof router;
   }
+  interface HistoryState {
+    /** Set when the booking page was opened from the bookings list, so its back link can go back. */
+    fromBookingsList?: boolean;
+  }
 }
 
 function App() {
