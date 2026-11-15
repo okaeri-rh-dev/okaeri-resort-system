@@ -31,15 +31,23 @@ interface EditSheetProps {
   onClose: () => void;
 }
 
-function EditSheet<TValues extends FieldValues>({
+// SheetContent mounts the form only while open, so a closed sheet drops unsaved changes
+const EditSheet = ({ open, onClose, children }: EditSheetProps & { children: ReactNode }) => (
+  <Sheet open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
+    <SheetContent className="medium:max-w-md flex w-full flex-col gap-0 overflow-y-auto p-0">
+      {children}
+    </SheetContent>
+  </Sheet>
+);
+
+function EditForm<TValues extends FieldValues>({
   booking,
-  open,
   onClose,
   title,
   form,
   toChanges,
   children,
-}: EditSheetProps & {
+}: Omit<EditSheetProps, "open"> & {
   title: string;
   form: UseFormReturn<TValues>;
   toChanges: (values: TValues) => BookingChanges;
@@ -62,44 +70,40 @@ function EditSheet<TValues extends FieldValues>({
   };
 
   return (
-    <Sheet open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
-      <SheetContent className="medium:max-w-md flex w-full flex-col gap-0 overflow-y-auto p-0">
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-1 flex-col" noValidate>
-            <SheetHeader className="border-b p-4">
-              <SheetTitle>{title}</SheetTitle>
-              <SheetDescription>{booking.booking_reference}</SheetDescription>
-            </SheetHeader>
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-1 flex-col" noValidate>
+        <SheetHeader className="border-b p-4">
+          <SheetTitle>{title}</SheetTitle>
+          <SheetDescription>{booking.booking_reference}</SheetDescription>
+        </SheetHeader>
 
-            <div className="flex-1 space-y-4 p-4">
-              {children}
-              {refusal && (
-                <Callout tone="danger" title="Nothing was saved">
-                  {refusal}
-                </Callout>
-              )}
-            </div>
+        <div className="flex-1 space-y-4 p-4">
+          {children}
+          {refusal && (
+            <Callout tone="danger" title="Nothing was saved">
+              {refusal}
+            </Callout>
+          )}
+        </div>
 
-            <div className="medium:flex-row medium:justify-end flex flex-col-reverse gap-2 border-t p-4">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={onClose}
-                disabled={updateBooking.isPending}
-              >
-                Close
-              </Button>
-              <Button type="submit" disabled={updateBooking.isPending}>
-                {updateBooking.isPending && (
-                  <Loader2 className="size-4 animate-spin" aria-hidden="true" />
-                )}
-                Save changes
-              </Button>
-            </div>
-          </form>
-        </Form>
-      </SheetContent>
-    </Sheet>
+        <div className="medium:flex-row medium:justify-end flex flex-col-reverse gap-2 border-t p-4">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onClose}
+            disabled={updateBooking.isPending}
+          >
+            Close
+          </Button>
+          <Button type="submit" disabled={updateBooking.isPending}>
+            {updateBooking.isPending && (
+              <Loader2 className="size-4 animate-spin" aria-hidden="true" />
+            )}
+            Save changes
+          </Button>
+        </div>
+      </form>
+    </Form>
   );
 }
 
@@ -113,7 +117,13 @@ const guestSchema = z.object({
 
 type GuestValues = z.infer<typeof guestSchema>;
 
-export function GuestEditSheet(props: EditSheetProps) {
+export const GuestEditSheet = (props: EditSheetProps) => (
+  <EditSheet {...props}>
+    <GuestForm {...props} />
+  </EditSheet>
+);
+
+function GuestForm(props: Omit<EditSheetProps, "open">) {
   const { booking } = props;
   const form = useForm<GuestValues>({
     resolver: zodResolver(guestSchema),
@@ -127,7 +137,7 @@ export function GuestEditSheet(props: EditSheetProps) {
   });
 
   return (
-    <EditSheet
+    <EditForm
       {...props}
       title="Edit guest"
       form={form}
@@ -152,7 +162,7 @@ export function GuestEditSheet(props: EditSheetProps) {
       {form.watch("booking_source") === "Airbnb" && (
         <ConfirmationCodeField control={form.control} />
       )}
-    </EditSheet>
+    </EditForm>
   );
 }
 
@@ -160,7 +170,13 @@ const notesSchema = z.object({ special_requests: z.string(), internal_notes: z.s
 
 type NotesValues = z.infer<typeof notesSchema>;
 
-export function NotesEditSheet(props: EditSheetProps) {
+export const NotesEditSheet = (props: EditSheetProps) => (
+  <EditSheet {...props}>
+    <NotesForm {...props} />
+  </EditSheet>
+);
+
+function NotesForm(props: Omit<EditSheetProps, "open">) {
   const { booking } = props;
   // A Cancelled booking allows only its internal note to change (docs/adr/0007)
   const internalOnly = booking.booking_status === "Cancelled";
@@ -173,7 +189,7 @@ export function NotesEditSheet(props: EditSheetProps) {
   });
 
   return (
-    <EditSheet
+    <EditForm
       {...props}
       title="Edit notes"
       form={form}
@@ -200,6 +216,6 @@ export function NotesEditSheet(props: EditSheetProps) {
       >
         {(field) => <Textarea rows={3} {...field} />}
       </FormField>
-    </EditSheet>
+    </EditForm>
   );
 }

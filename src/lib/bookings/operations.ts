@@ -88,7 +88,7 @@ export type EditableSection = "guest" | "notes";
 
 /** The sections a booking's status leaves editable; the database enforces the same table (docs/adr/0007). */
 export function canEditSection(
-  booking: { booking_status: string | null; anonymized_at?: string | null },
+  booking: { booking_status: BookingStatus | null; anonymized_at?: string | null },
   section: EditableSection
 ) {
   if (booking.anonymized_at) return false;

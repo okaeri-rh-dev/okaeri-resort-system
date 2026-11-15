@@ -538,6 +538,17 @@ describe("BookingDetailPage", () => {
     });
   });
 
+  it("drops unsaved changes when the sheet closes", async () => {
+    renderPage();
+
+    await userEvent.click(screen.getByRole("button", { name: "Edit notes" }));
+    await userEvent.type(screen.getByLabelText("Internal note"), "Draft");
+    await userEvent.keyboard("{Escape}");
+    await userEvent.click(screen.getByRole("button", { name: "Edit notes" }));
+
+    expect(screen.getByLabelText("Internal note")).toHaveValue("");
+  });
+
   it("shows a database refusal in the sheet and keeps it open", async () => {
     updateBooking.mutateAsync.mockRejectedValue(
       new Error("A cancelled booking allows only its internal note to change")

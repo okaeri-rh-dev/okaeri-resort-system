@@ -13,15 +13,8 @@ LANGUAGE plpgsql
 SET search_path = ''
 AS $$
 DECLARE
-    v_guest_changed boolean :=
-        (NEW.email, NEW.contact_number, NEW.booking_source, NEW.airbnb_confirmation_code)
-            IS DISTINCT FROM
-        (OLD.email, OLD.contact_number, OLD.booking_source, OLD.airbnb_confirmation_code)
-        -- sync_booking_guest_name copies a guest rename to every booking of the guest
-        OR (NEW.guest_name IS DISTINCT FROM OLD.guest_name
-            AND NEW.guest_name IS DISTINCT FROM
-                (SELECT g.guest_name FROM public.guests g WHERE g.guest_id = NEW.guest_id));
-    v_request_changed boolean := NEW.special_requests IS DISTINCT FROM OLD.special_requests;
+    v_guest_changed boolean;
+    v_note_changed boolean := NEW.special_requests IS DISTINCT FROM OLD.special_requests;
     v_internal_changed boolean := NEW.internal_notes IS DISTINCT FROM OLD.internal_notes;
     v_total_changed boolean := NEW.total_amount IS DISTINCT FROM OLD.total_amount;
 BEGIN
@@ -29,13 +22,24 @@ BEGIN
         RETURN NEW;
     END IF;
 
+    v_guest_changed :=
+        (NEW.guest_id, NEW.email, NEW.contact_number, NEW.booking_source,
+         NEW.airbnb_confirmation_code)
+            IS DISTINCT FROM
+        (OLD.guest_id, OLD.email, OLD.contact_number, OLD.booking_source,
+         OLD.airbnb_confirmation_code)
+        -- sync_booking_guest_name copies a rename of the booking's own guest
+        OR (NEW.guest_name IS DISTINCT FROM OLD.guest_name
+            AND NEW.guest_name IS DISTINCT FROM
+                (SELECT g.guest_name FROM public.guests g WHERE g.guest_id = OLD.guest_id));
+
     IF OLD.anonymized_at IS NOT NULL
-       AND (v_guest_changed OR v_request_changed OR v_internal_changed OR v_total_changed) THEN
+       AND (v_guest_changed OR v_note_changed OR v_internal_changed OR v_total_changed) THEN
         RAISE EXCEPTION 'An anonymized booking cannot be edited' USING ERRCODE = '42501';
     END IF;
 
     IF OLD.booking_status = 'Cancelled'
-       AND (v_guest_changed OR v_request_changed OR v_total_changed) THEN
+       AND (v_guest_changed OR v_note_changed OR v_total_changed) THEN
         RAISE EXCEPTION 'A cancelled booking allows only its internal note to change'
             USING ERRCODE = '42501';
     END IF;
@@ -46,7 +50,9 @@ $$;
 
 DROP TRIGGER IF EXISTS enforce_booking_edit_rules ON public.bookings;
 CREATE TRIGGER enforce_booking_edit_rules
-    BEFORE UPDATE ON public.bookings
+    BEFORE UPDATE OF guest_id, guest_name, email, contact_number, booking_source,
+        airbnb_confirmation_code, special_requests, internal_notes, total_amount
+    ON public.bookings
     FOR EACH ROW EXECUTE FUNCTION public.enforce_booking_edit_rules();
 
 -- The Notes sheet saves the internal note through the same path as the other edits

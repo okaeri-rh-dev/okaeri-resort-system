@@ -17,6 +17,7 @@ import { createRoleClients, type RoleClients } from "../setup/role-clients";
 import {
   cleanupTestData,
   createTestBooking,
+  createTestGuest,
   testSupabaseAdmin as service,
   shouldRunDatabaseTests,
 } from "../setup/test-db";
@@ -128,4 +129,20 @@ describe("booking edit rules", () => {
     expect(error).toBeNull();
     expect((await snapshot(booking.booking_id)).guest_name).toBe("Maria Renamed");
   });
+
+  it.each(["Cancelled", "Anonymized"] as const)(
+    "refuses to link a %s booking to another guest",
+    async (status) => {
+      if (!shouldRun) return;
+      const bookingId = await bookingIn(status);
+      const other = await createTestGuest();
+
+      const { error } = await roleClients.byRole.admin
+        .from("bookings")
+        .update({ guest_id: other.guest_id, guest_name: other.guest_name })
+        .eq("booking_id", bookingId);
+
+      expect(error?.code).toBe("42501");
+    }
+  );
 });
