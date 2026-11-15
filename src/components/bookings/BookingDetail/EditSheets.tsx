@@ -1,6 +1,7 @@
 import { useState, type ReactNode } from "react";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { format, parseISO } from "date-fns";
 import { Loader2 } from "lucide-react";
 import { useForm, type FieldValues, type UseFormReturn } from "react-hook-form";
 import { z } from "zod";
@@ -8,6 +9,8 @@ import { z } from "zod";
 import {
   Button,
   Callout,
+  DatePicker,
+  DateRangePicker,
   Form,
   FormField,
   Input,
@@ -18,12 +21,27 @@ import {
   SheetTitle,
   Textarea,
 } from "@/components/patterns";
-import { useUpdateBooking } from "@/hooks/useBookings";
-import { BOOKING_SOURCES, storedConfirmationCode, type BookingChanges } from "@/lib/bookings";
+import { useUserRole } from "@/hooks";
+import { useUpdateBooking, useUpdateBookingStay } from "@/hooks/useBookings";
+import { useMultiUnitAvailability } from "@/hooks/useMultiUnitBookingQueries";
+import { useUnits } from "@/hooks/useUnits";
+import {
+  BOOKING_SOURCES,
+  manilaDayOf,
+  manilaDaySchema,
+  nightsBetween,
+  pickedDay,
+  storedConfirmationCode,
+  unavailableReason,
+  withStayRules,
+  type BookingChanges,
+  type ManilaDay,
+} from "@/lib/bookings";
 import { confirmationCodeSchema } from "@/lib/validations";
 import type { Booking } from "@/types";
 
 import { BookingSourceField, ConfirmationCodeField } from "../form-fields";
+import { CabinPicker } from "../NewBookingFlow/StayStep";
 
 interface EditSheetProps {
   booking: Booking;
@@ -45,24 +63,23 @@ function EditForm<TValues extends FieldValues>({
   onClose,
   title,
   form,
-  toChanges,
+  save,
+  canSave = true,
   children,
 }: Omit<EditSheetProps, "open"> & {
   title: string;
   form: UseFormReturn<TValues>;
-  toChanges: (values: TValues) => BookingChanges;
+  save: { mutate: (values: TValues) => Promise<unknown>; isPending: boolean };
+  /** False while the form already shows why it cannot save */
+  canSave?: boolean;
   children: ReactNode;
 }) {
-  const updateBooking = useUpdateBooking();
   const [refusal, setRefusal] = useState<string | null>(null);
 
   const onSubmit = async (values: TValues) => {
     setRefusal(null);
     try {
-      await updateBooking.mutateAsync({
-        bookingId: booking.booking_id,
-        changes: toChanges(values),
-      });
+      await save.mutate(values);
       onClose();
     } catch (error) {
       setRefusal(error instanceof Error ? error.message : "The booking could not be saved.");
@@ -87,18 +104,11 @@ function EditForm<TValues extends FieldValues>({
         </div>
 
         <div className="medium:flex-row medium:justify-end flex flex-col-reverse gap-2 border-t p-4">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={onClose}
-            disabled={updateBooking.isPending}
-          >
+          <Button type="button" variant="outline" onClick={onClose} disabled={save.isPending}>
             Close
           </Button>
-          <Button type="submit" disabled={updateBooking.isPending}>
-            {updateBooking.isPending && (
-              <Loader2 className="size-4 animate-spin" aria-hidden="true" />
-            )}
+          <Button type="submit" disabled={save.isPending || !canSave}>
+            {save.isPending && <Loader2 className="size-4 animate-spin" aria-hidden="true" />}
             Save changes
           </Button>
         </div>
@@ -123,8 +133,25 @@ export const GuestEditSheet = (props: EditSheetProps) => (
   </EditSheet>
 );
 
+/** Saves a form's changes through the shared booking update path */
+function useSaveChanges<TValues>(booking: Booking, toChanges: (values: TValues) => BookingChanges) {
+  const updateBooking = useUpdateBooking();
+  return {
+    mutate: (values: TValues) =>
+      updateBooking.mutateAsync({ bookingId: booking.booking_id, changes: toChanges(values) }),
+    isPending: updateBooking.isPending,
+  };
+}
+
 function GuestForm(props: Omit<EditSheetProps, "open">) {
   const { booking } = props;
+  const save = useSaveChanges(booking, (values: GuestValues) => ({
+    guest_name: values.guest_name,
+    email: values.email || null,
+    contact_number: values.contact_number || null,
+    booking_source: values.booking_source,
+    airbnb_confirmation_code: storedConfirmationCode(values),
+  }));
   const form = useForm<GuestValues>({
     resolver: zodResolver(guestSchema),
     defaultValues: {
@@ -137,18 +164,7 @@ function GuestForm(props: Omit<EditSheetProps, "open">) {
   });
 
   return (
-    <EditForm
-      {...props}
-      title="Edit guest"
-      form={form}
-      toChanges={(values) => ({
-        guest_name: values.guest_name,
-        email: values.email || null,
-        contact_number: values.contact_number || null,
-        booking_source: values.booking_source,
-        airbnb_confirmation_code: storedConfirmationCode(values),
-      })}
-    >
+    <EditForm {...props} title="Edit guest" form={form} save={save}>
       <FormField control={form.control} name="guest_name" label="Guest name">
         {(field) => <Input autoComplete="off" {...field} />}
       </FormField>
@@ -180,6 +196,10 @@ function NotesForm(props: Omit<EditSheetProps, "open">) {
   const { booking } = props;
   // A Cancelled booking allows only its internal note to change (docs/adr/0007)
   const internalOnly = booking.booking_status === "Cancelled";
+  const save = useSaveChanges(booking, (values: NotesValues) => ({
+    ...(!internalOnly && { special_requests: values.special_requests.trim() || null }),
+    internal_notes: values.internal_notes.trim() || null,
+  }));
   const form = useForm<NotesValues>({
     resolver: zodResolver(notesSchema),
     defaultValues: {
@@ -189,15 +209,7 @@ function NotesForm(props: Omit<EditSheetProps, "open">) {
   });
 
   return (
-    <EditForm
-      {...props}
-      title="Edit notes"
-      form={form}
-      toChanges={(values) => ({
-        ...(!internalOnly && { special_requests: values.special_requests.trim() || null }),
-        internal_notes: values.internal_notes.trim() || null,
-      })}
-    >
+    <EditForm {...props} title="Edit notes" form={form} save={save}>
       {!internalOnly && (
         <FormField
           control={form.control}
@@ -216,6 +228,147 @@ function NotesForm(props: Omit<EditSheetProps, "open">) {
       >
         {(field) => <Textarea rows={3} {...field} />}
       </FormField>
+    </EditForm>
+  );
+}
+
+const staySchema = withStayRules(
+  z.object({
+    check_in: manilaDaySchema,
+    check_out: manilaDaySchema,
+    cabins: z.array(z.object({ unitId: z.string(), guests: z.number().int().min(1) })),
+  })
+);
+
+type StayValues = z.infer<typeof staySchema>;
+
+export const StayEditSheet = (props: EditSheetProps) => (
+  <EditSheet {...props}>
+    <StayForm {...props} />
+  </EditSheet>
+);
+
+const dayLabel = (day: ManilaDay) => format(parseISO(day), "EEE, MMM d");
+
+function StayForm(props: Omit<EditSheetProps, "open">) {
+  const { booking } = props;
+  const { isManager } = useUserRole();
+  const { data: units = [] } = useUnits();
+  const updateStay = useUpdateBookingStay();
+  const form = useForm<StayValues>({
+    resolver: zodResolver(staySchema),
+    defaultValues: {
+      check_in: manilaDayOf(booking.check_in),
+      check_out: manilaDayOf(booking.check_out),
+      cabins: (booking.booking_units ?? []).map((bookingUnit) => ({
+        unitId: bookingUnit.unit_id,
+        guests: bookingUnit.assigned_guests ?? 1,
+      })),
+    },
+  });
+  const [checkIn, checkOut, cabins] = form.watch(["check_in", "check_out", "cabins"]);
+  const nights = checkIn && checkOut ? nightsBetween(checkIn, checkOut) : 0;
+
+  const { data: availability, isFetching } = useMultiUnitAvailability(
+    units.map((unit) => unit.unit_id),
+    checkIn ?? "",
+    checkOut ?? "",
+    { enabled: nights > 0, excludeBookingId: booking.booking_id }
+  );
+  const notFree = (unitId: string) => (nights > 0 ? unavailableReason(availability, unitId) : null);
+  const pickedNotFree = cabins.some((cabin) => notFree(cabin.unitId));
+
+  // Same table as enforce_booking_edit_rules: staff keep Confirmed dates, and a stay in progress keeps its check-in day
+  const datesLocked = booking.booking_status === "Confirmed" && !isManager;
+  const checkInLocked = booking.booking_status === "CheckedIn";
+
+  const setDays = (days: { check_in?: ManilaDay; check_out?: ManilaDay }) => {
+    if (days.check_in) form.setValue("check_in", days.check_in);
+    form.setValue("check_out", days.check_out ?? "", { shouldValidate: !!days.check_out });
+  };
+
+  return (
+    <EditForm
+      {...props}
+      title="Edit stay"
+      form={form}
+      save={{
+        mutate: (values: StayValues) =>
+          updateStay.mutateAsync({
+            bookingId: booking.booking_id,
+            stay: { check_in: values.check_in, check_out: values.check_out },
+            cabins: values.cabins.map((cabin) => ({
+              unit_id: cabin.unitId,
+              assigned_guests: cabin.guests,
+            })),
+          }),
+        isPending: updateStay.isPending,
+      }}
+      canSave={cabins.length > 0 && !pickedNotFree && !isFetching}
+    >
+      <div className="space-y-2">
+        <p className="text-sm font-medium">Stay dates</p>
+        {datesLocked ? (
+          <>
+            <p className="text-sm">
+              {dayLabel(checkIn)} → {dayLabel(checkOut)}
+            </p>
+            <p className="text-muted-foreground text-xs">
+              Only a manager can change the dates of a confirmed booking.
+            </p>
+          </>
+        ) : checkInLocked ? (
+          <>
+            <p className="text-sm">Check-in {dayLabel(checkIn)}</p>
+            <DatePicker
+              aria-label="Check-out day"
+              placeholder="Check-out day"
+              value={checkOut ? parseISO(checkOut) : undefined}
+              isDateDisabled={(date) => pickedDay(date) <= checkIn}
+              onChange={(date) => setDays({ check_out: date && pickedDay(date) })}
+              className="w-full"
+            />
+            <p className="text-muted-foreground text-xs">
+              The guest has checked in, so the check-in day stays.
+            </p>
+          </>
+        ) : (
+          <DateRangePicker
+            aria-label="Stay dates"
+            placeholder="Check-in → check-out"
+            value={{ from: parseISO(checkIn), to: checkOut ? parseISO(checkOut) : undefined }}
+            numberOfMonths={2}
+            startHint="Select check-in day"
+            endHint="Select check-out day"
+            allowSameDay={false}
+            onChange={(range) =>
+              setDays({
+                check_in: range?.from && pickedDay(range.from),
+                check_out: range?.to && pickedDay(range.to),
+              })
+            }
+            className="w-full"
+          />
+        )}
+        {form.formState.errors.check_out && (
+          <p className="text-destructive text-xs">{form.formState.errors.check_out.message}</p>
+        )}
+      </div>
+
+      <CabinPicker
+        units={units}
+        cabins={cabins}
+        onChange={(next) => form.setValue("cabins", next)}
+        hasDates={nights > 0}
+        isChecking={isFetching}
+        notFree={notFree}
+      />
+      {cabins.length === 0 && <p className="text-destructive text-sm">Add at least one cabin.</p>}
+      {pickedNotFree && (
+        <p className="text-destructive text-sm">
+          A picked cabin is not free on these dates. Remove it or pick other dates.
+        </p>
+      )}
     </EditForm>
   );
 }

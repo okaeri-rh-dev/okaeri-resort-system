@@ -40,8 +40,8 @@ export function StayStep({
       <StayDates draft={draft} nights={nights} update={update} />
       <CabinPicker
         units={units}
-        draft={draft}
-        update={update}
+        cabins={draft.cabins}
+        onChange={(cabins) => update({ cabins })}
         hasDates={nights > 0}
         isChecking={isChecking}
         notFree={notFree}
@@ -168,23 +168,23 @@ function GuestCount({
 }
 
 /** Every cabin with its availability for the picked dates; all cabins share the dates. */
-function CabinPicker({
+export function CabinPicker({
   units,
-  draft,
-  update,
+  cabins,
+  onChange,
   hasDates,
   isChecking,
   notFree,
 }: {
   units: Unit[];
-  draft: Draft;
-  update: Update;
+  cabins: Draft["cabins"];
+  onChange: (cabins: Draft["cabins"]) => void;
   hasDates: boolean;
   isChecking: boolean;
   notFree: (unitId: string) => string | null;
 }) {
   const setGuests = (unitId: string, guests: number) =>
-    update({ cabins: draft.cabins.map((c) => (c.unitId === unitId ? { ...c, guests } : c)) });
+    onChange(cabins.map((c) => (c.unitId === unitId ? { ...c, guests } : c)));
 
   return (
     <fieldset className="space-y-2">
@@ -194,7 +194,7 @@ function CabinPicker({
       )}
       <ul className="space-y-2">
         {units.map((unit) => {
-          const picked = draft.cabins.find((c) => c.unitId === unit.unit_id);
+          const picked = cabins.find((c) => c.unitId === unit.unit_id);
           const reason = notFree(unit.unit_id);
           const canAdd = hasDates && !isChecking && !reason;
           return (
@@ -229,9 +229,7 @@ function CabinPicker({
                     variant="ghost"
                     className="coarse:min-w-11 size-8"
                     aria-label={`Remove ${unit.unit_name}`}
-                    onClick={() =>
-                      update({ cabins: draft.cabins.filter((c) => c.unitId !== unit.unit_id) })
-                    }
+                    onClick={() => onChange(cabins.filter((c) => c.unitId !== unit.unit_id))}
                   >
                     <X aria-hidden="true" />
                   </Button>
@@ -244,12 +242,10 @@ function CabinPicker({
                   disabled={!canAdd}
                   aria-label={`Add ${unit.unit_name}`}
                   onClick={() =>
-                    update({
-                      cabins: [
-                        ...draft.cabins,
-                        { unitId: unit.unit_id, guests: Math.min(2, unit.max_occupancy) },
-                      ],
-                    })
+                    onChange([
+                      ...cabins,
+                      { unitId: unit.unit_id, guests: Math.min(2, unit.max_occupancy) },
+                    ])
                   }
                 >
                   <Plus aria-hidden="true" />

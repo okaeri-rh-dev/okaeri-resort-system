@@ -2,11 +2,14 @@
  * @vitest-environment jsdom
  */
 
+import { useState } from "react";
+
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
+import type { EditableSection } from "@/lib/bookings";
 import type { Booking } from "@/types";
 
 import { BookingDetailPage } from "..";
@@ -32,8 +35,10 @@ vi.mock("@/hooks", () => ({
 }));
 
 const updateBooking = vi.hoisted(() => ({ mutateAsync: vi.fn(), isPending: false }));
+const updateStay = vi.hoisted(() => ({ mutateAsync: vi.fn(), isPending: false }));
 vi.mock("@/hooks/useBookings", () => ({
   useUpdateBooking: () => updateBooking,
+  useUpdateBookingStay: () => updateStay,
   useUpdateBookingStatus: () => ({ mutate: vi.fn() }),
   useCancelBooking: () => ({ mutate: vi.fn() }),
   useUploadPaymentProof: () => ({ mutate: vi.fn() }),
@@ -81,7 +86,18 @@ vi.mock("@/lib/supabase", async (importOriginal) => {
     },
   };
 });
+const units = [
+  { unit_id: "unit-1", unit_name: "Cabin 1", max_occupancy: 6 },
+  { unit_id: "unit-2", unit_name: "Cabin 2", max_occupancy: 4 },
+  { unit_id: "unit-3", unit_name: "Cabin 3", max_occupancy: 4 },
+  { unit_id: "unit-4", unit_name: "Cabin 4", max_occupancy: 4 },
+];
+const availability = vi.hoisted(() => vi.fn());
+vi.mock("@/hooks/useMultiUnitBookingQueries", () => ({
+  useMultiUnitAvailability: availability,
+}));
 vi.mock("@/hooks/useUnits", () => ({
+  useUnits: () => ({ data: units }),
   allUnitsQuery: () => ({
     queryKey: ["units"],
     queryFn: () => [
@@ -145,12 +161,25 @@ const booking = {
   ],
 } as unknown as Booking;
 
+// The route keeps the open edit sheet in ?edit=
+function PageWithSearch({ overrides }: { overrides: Partial<Booking> }) {
+  const [editing, setEditing] = useState<EditableSection>();
+  return (
+    <BookingDetailPage
+      booking={{ ...booking, ...overrides }}
+      bookingId="booking-1"
+      editing={editing}
+      onEditingChange={setEditing}
+    />
+  );
+}
+
 const renderPage = (overrides: Partial<Booking> = {}) =>
   render(
     <QueryClientProvider
       client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
     >
-      <BookingDetailPage booking={{ ...booking, ...overrides }} bookingId="booking-1" />
+      <PageWithSearch overrides={overrides} />
     </QueryClientProvider>
   );
 
@@ -171,6 +200,17 @@ describe("BookingDetailPage", () => {
     history.back.mockClear();
     softDeletePayment.mutate.mockClear();
     updateBooking.mutateAsync.mockReset();
+    updateStay.mutateAsync.mockReset();
+    availability.mockReset();
+    availability.mockReturnValue({
+      data: units.map((unit) => ({
+        unit_id: unit.unit_id,
+        is_available: unit.unit_id !== "unit-3",
+        reason: unit.unit_id === "unit-3" ? "Booked" : null,
+        next_available_date: null,
+      })),
+      isFetching: false,
+    });
     fetchHistory.mockReset();
     historyRows.value = [
       auditRow({
@@ -451,9 +491,10 @@ describe("BookingDetailPage", () => {
     screen.queryAllByRole("button", { name: /^Edit / }).map((button) => button.ariaLabel);
 
   it.each([
-    ["Pending", "staff", ["Edit guest", "Edit notes"]],
-    ["Confirmed", "staff", ["Edit guest", "Edit notes"]],
+    ["Pending", "staff", ["Edit stay", "Edit guest", "Edit notes"]],
+    ["Confirmed", "staff", ["Edit stay", "Edit guest", "Edit notes"]],
     ["CheckedIn", "staff", ["Edit guest", "Edit notes"]],
+    ["CheckedIn", "manager", ["Edit stay", "Edit guest", "Edit notes"]],
     ["CheckedOut", "staff", ["Edit guest", "Edit notes"]],
     ["Cancelled", "staff", ["Edit notes"]],
     ["CheckedOut", "manager", ["Edit guest", "Edit notes"]],
@@ -562,6 +603,90 @@ describe("BookingDetailPage", () => {
     expect(sheet.getByText("Nothing was saved")).toBeInTheDocument();
     expect(
       sheet.getByText("A cancelled booking allows only its internal note to change")
+    ).toBeInTheDocument();
+  });
+
+  it("edits the dates and cabins in a sheet, with taken cabins disabled", async () => {
+    updateStay.mutateAsync.mockResolvedValue({});
+    renderPage();
+
+    await userEvent.click(screen.getByRole("button", { name: "Edit stay" }));
+    const sheet = within(screen.getByRole("dialog", { name: "Edit stay" }));
+    expect(sheet.getByRole("button", { name: "Stay dates" })).toBeEnabled();
+    expect(availability).toHaveBeenLastCalledWith(
+      units.map((unit) => unit.unit_id),
+      "2026-11-13",
+      "2026-11-16",
+      expect.objectContaining({ excludeBookingId: "booking-1" })
+    );
+    expect(sheet.getByRole("button", { name: "Add Cabin 3" })).toBeDisabled();
+    expect(sheet.getByText("Booked")).toBeInTheDocument();
+    await userEvent.click(sheet.getByRole("button", { name: "Remove Cabin 2" }));
+    await userEvent.click(sheet.getByRole("button", { name: "Add Cabin 4" }));
+    await userEvent.click(sheet.getByRole("button", { name: "One guest more in Cabin 4" }));
+    await userEvent.click(sheet.getByRole("button", { name: "Save changes" }));
+
+    expect(updateStay.mutateAsync).toHaveBeenCalledWith({
+      bookingId: "booking-1",
+      stay: { check_in: "2026-11-13", check_out: "2026-11-16" },
+      cabins: [
+        { unit_id: "unit-1", assigned_guests: 4 },
+        { unit_id: "unit-4", assigned_guests: 3 },
+      ],
+    });
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
+  it("keeps at least one cabin in the stay", async () => {
+    renderPage();
+
+    await userEvent.click(screen.getByRole("button", { name: "Edit stay" }));
+    const sheet = within(screen.getByRole("dialog", { name: "Edit stay" }));
+    await userEvent.click(sheet.getByRole("button", { name: "Remove Cabin 1" }));
+    await userEvent.click(sheet.getByRole("button", { name: "Remove Cabin 2" }));
+
+    expect(sheet.getByText("Add at least one cabin.")).toBeInTheDocument();
+    expect(sheet.getByRole("button", { name: "Save changes" })).toBeDisabled();
+  });
+
+  it("lets staff change the cabins of a Confirmed booking but not its dates", async () => {
+    user.role = "staff";
+    renderPage({ booking_status: "Confirmed" });
+
+    await userEvent.click(screen.getByRole("button", { name: "Edit stay" }));
+    const sheet = within(screen.getByRole("dialog", { name: "Edit stay" }));
+
+    expect(sheet.queryByRole("button", { name: "Stay dates" })).not.toBeInTheDocument();
+    expect(
+      sheet.getByText("Only a manager can change the dates of a confirmed booking.")
+    ).toBeInTheDocument();
+    expect(sheet.getByRole("button", { name: "Add Cabin 4" })).toBeEnabled();
+  });
+
+  it("locks the check-in day of a checked-in stay", async () => {
+    renderPage({ booking_status: "CheckedIn" });
+
+    await userEvent.click(screen.getByRole("button", { name: "Edit stay" }));
+    const sheet = within(screen.getByRole("dialog", { name: "Edit stay" }));
+
+    expect(sheet.queryByRole("button", { name: "Stay dates" })).not.toBeInTheDocument();
+    expect(sheet.getByRole("button", { name: "Check-out day" })).toBeEnabled();
+    expect(sheet.getByText("Check-in Fri, Nov 13")).toBeInTheDocument();
+  });
+
+  it("shows a taken cabin refusal in the stay sheet", async () => {
+    updateStay.mutateAsync.mockRejectedValue(
+      new Error("This unit is already booked for some of these days")
+    );
+    renderPage();
+
+    await userEvent.click(screen.getByRole("button", { name: "Edit stay" }));
+    await userEvent.click(screen.getByRole("button", { name: "Save changes" }));
+
+    const sheet = within(screen.getByRole("dialog", { name: "Edit stay" }));
+    expect(sheet.getByText("Nothing was saved")).toBeInTheDocument();
+    expect(
+      sheet.getByText("This unit is already booked for some of these days")
     ).toBeInTheDocument();
   });
 

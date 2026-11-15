@@ -1,6 +1,8 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import type { TableName } from "@/lib/after-write";
+import { AuditRole } from "@/lib/audit-roles";
+import { hasRoleLevel } from "@/lib/route-guards";
 import type { BookingStatus } from "@/types/booking-status";
 import type { Database, Tables, TablesUpdate } from "@/types/database.types";
 
@@ -84,16 +86,51 @@ const STATUS_TRANSITIONS: Record<BookingStatus, BookingStatus[]> = {
 export const canTransitionStatus = (current: BookingStatus, next: BookingStatus) =>
   STATUS_TRANSITIONS[current]?.includes(next) ?? false;
 
-export type EditableSection = "guest" | "notes";
+export const EDITABLE_SECTIONS = ["guest", "stay", "notes"] as const;
+export type EditableSection = (typeof EDITABLE_SECTIONS)[number];
 
-/** The sections a booking's status leaves editable; the database enforces the same table (docs/adr/0007). */
+/** The sections a booking's status and the role leave editable; the database enforces the same table (docs/adr/0007). */
 export function canEditSection(
   booking: { booking_status: BookingStatus | null; anonymized_at?: string | null },
-  section: EditableSection
+  section: EditableSection,
+  role: AuditRole | null | undefined
 ) {
   if (booking.anonymized_at) return false;
-  // A Cancelled booking keeps only its internal note editable, in the Notes section
-  return booking.booking_status !== "Cancelled" || section === "notes";
+  switch (booking.booking_status) {
+    case "Cancelled":
+      return section === "notes";
+    case "CheckedOut":
+      return section !== "stay";
+    case "CheckedIn":
+      return section !== "stay" || hasRoleLevel(role ?? null, AuditRole.MANAGER);
+    default:
+      return true;
+  }
+}
+
+export type StayCabin = { unit_id: string; assigned_guests: number };
+
+export const UPDATE_STAY_WRITES = [
+  "bookings",
+  "booking_units",
+  "booking_unit_availability",
+] as const satisfies readonly TableName[];
+
+/** Saves the dates and replaces the cabins in one transaction; the total stays as it is. */
+export async function updateBookingStay(
+  client: Client,
+  bookingId: string,
+  stay: { check_in: ManilaDay; check_out: ManilaDay },
+  cabins: StayCabin[]
+) {
+  const instants = toStayInstants(stay.check_in, stay.check_out);
+  const { error } = await client.rpc("update_booking_stay", {
+    p_booking_id: bookingId,
+    p_check_in: instants.check_in,
+    p_check_out: instants.check_out,
+    p_units: cabins,
+  });
+  throwIfError(error);
 }
 
 export async function setBookingStatus(
