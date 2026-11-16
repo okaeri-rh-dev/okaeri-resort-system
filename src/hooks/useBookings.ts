@@ -7,9 +7,13 @@ import {
   setBookingStatus,
   UNDO_STATUS,
   UPDATE_BOOKING_WRITES,
+  UPDATE_STAY_WRITES,
   updateBooking,
+  updateBookingStay,
   type BookingChanges,
   type StatusChange,
+  type StayCabin,
+  type StayDays,
 } from "@/lib/bookings";
 import { adaptBookingFromDB } from "@/lib/database-adapters";
 import { throwDetailLoadError } from "@/lib/detail-load-error";
@@ -124,6 +128,24 @@ export const useCancelBooking = () =>
       toast.error("Failed to cancel the booking", { description: error.message });
     },
     onSettled: () => afterWrite("bookings"),
+  });
+
+// The Stay sheet shows a refusal itself, so a failure has no toast
+export const useUpdateBookingStay = () =>
+  useMutation({
+    mutationFn: ({
+      bookingId,
+      stay,
+      cabins,
+    }: {
+      bookingId: string;
+      stay: StayDays;
+      cabins: StayCabin[];
+    }) => updateBookingStay(supabase, bookingId, stay, cabins),
+    onSuccess: () => {
+      toast.success("Booking updated");
+    },
+    onSettled: () => afterWrite(...UPDATE_STAY_WRITES),
   });
 
 export const useUpdateBooking = () =>

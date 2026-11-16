@@ -1,5 +1,3 @@
-import { useState } from "react";
-
 import { Link, useLocation, useRouter } from "@tanstack/react-router";
 import { ChevronLeft } from "lucide-react";
 
@@ -20,22 +18,31 @@ import type { Booking } from "@/types";
 import type { Payment as PaymentRow } from "@/types/entity-detail.types";
 
 import { BookingHistoryCard } from "./BookingHistoryCard";
-import { GuestEditSheet, NotesEditSheet } from "./EditSheets";
+import { GuestEditSheet, NotesEditSheet, StayEditSheet } from "./EditSheets";
 
 interface BookingDetailPageProps {
   booking: Booking;
   bookingId: string;
+  /** The open edit sheet, from the route's ?edit= */
+  editing: EditableSection | undefined;
+  onEditingChange: (section: EditableSection | undefined) => void;
 }
 
-export function BookingDetailPage({ booking, bookingId }: BookingDetailPageProps) {
+export function BookingDetailPage({
+  booking,
+  bookingId,
+  editing,
+  onEditingChange,
+}: BookingDetailPageProps) {
   const { updateBookingStatus, cancelBooking, handleUploadPayment } = useBookingActions();
   const router = useRouter();
-  const { isManager } = useUserRole();
+  const { role, isManager } = useUserRole();
   const fromBookingsList = useLocation({ select: (location) => location.state.fromBookingsList });
-  const [editing, setEditing] = useState<EditableSection | null>(null);
   const editHandler = (section: EditableSection) =>
-    canEditSection(booking, section) ? () => setEditing(section) : undefined;
-  const closeSheet = () => setEditing(null);
+    canEditSection(booking, section, role) ? () => onEditingChange(section) : undefined;
+  const isOpen = (section: EditableSection) =>
+    editing === section && canEditSection(booking, section, role);
+  const closeSheet = () => onEditingChange(undefined);
 
   return (
     // The bottom padding keeps the compact action bar off the last card
@@ -70,7 +77,7 @@ export function BookingDetailPage({ booking, bookingId }: BookingDetailPageProps
 
       <div className="expanded:grid-cols-2 grid grid-cols-1 items-start gap-4">
         <div className="space-y-4">
-          <StayCard booking={booking} />
+          <StayCard booking={booking} onEdit={editHandler("stay")} />
           <GuestCard booking={booking} onEdit={editHandler("guest")} />
           <NotesCard booking={booking} onEdit={editHandler("notes")} />
         </div>
@@ -90,8 +97,9 @@ export function BookingDetailPage({ booking, bookingId }: BookingDetailPageProps
         {isManager && <BookingHistoryCard bookingId={bookingId} />}
       </div>
 
-      <GuestEditSheet booking={booking} open={editing === "guest"} onClose={closeSheet} />
-      <NotesEditSheet booking={booking} open={editing === "notes"} onClose={closeSheet} />
+      <StayEditSheet booking={booking} open={isOpen("stay")} onClose={closeSheet} />
+      <GuestEditSheet booking={booking} open={isOpen("guest")} onClose={closeSheet} />
+      <NotesEditSheet booking={booking} open={isOpen("notes")} onClose={closeSheet} />
     </div>
   );
 }

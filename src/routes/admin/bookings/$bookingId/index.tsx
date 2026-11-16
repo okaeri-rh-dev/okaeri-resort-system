@@ -2,6 +2,7 @@ import { lazy, Suspense } from "react";
 
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
+import { z } from "zod";
 
 import { DetailPageSkeleton } from "@/components/entity-detail/DetailPageSkeleton";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
@@ -10,6 +11,7 @@ import { bookingDetailQuery } from "@/hooks/useBookings";
 import { allUnitsQuery } from "@/hooks/useUnits";
 import { bookingHistoryQuery } from "@/lib/audit-hooks";
 import { AuditRole, hasAuditRole } from "@/lib/audit-roles";
+import { EDITABLE_SECTIONS } from "@/lib/bookings";
 
 // Lazy load the detail page component
 const BookingDetailPage = lazy(() =>
@@ -19,6 +21,8 @@ const BookingDetailPage = lazy(() =>
 );
 
 export const Route = createFileRoute("/admin/bookings/$bookingId/")({
+  // The open edit sheet (DESIGN.md rule 6)
+  validateSearch: z.object({ edit: z.enum(EDITABLE_SECTIONS).optional().catch(undefined) }),
   // Loader function to prefetch all necessary data
   loader: async ({ params, context }) => {
     const { bookingId } = params;
@@ -75,12 +79,22 @@ export const Route = createFileRoute("/admin/bookings/$bookingId/")({
 function BookingDetailComponent() {
   const { bookingId } = Route.useParams();
   const { data: booking } = useSuspenseQuery(bookingDetailQuery(bookingId));
+  const { edit } = Route.useSearch();
+  const navigate = Route.useNavigate();
 
   return (
     <ErrorBoundary level="page">
       <Suspense fallback={<DetailPageSkeleton />}>
-        {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-        <BookingDetailPage booking={booking as any} bookingId={bookingId} />
+        <BookingDetailPage
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          booking={booking as any}
+          bookingId={bookingId}
+          editing={edit}
+          // replace, and the kept state, leave the back link's history as it was
+          onEditingChange={(section) =>
+            void navigate({ search: { edit: section }, replace: true, state: (prev) => prev })
+          }
+        />
       </Suspense>
     </ErrorBoundary>
   );

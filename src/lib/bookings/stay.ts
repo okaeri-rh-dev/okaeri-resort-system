@@ -41,7 +41,7 @@ export const nightsBetween = (checkInDay: ManilaDay, checkOutDay: ManilaDay) =>
 
 export const MAX_STAY_NIGHTS = 60;
 
-type StayDays = { check_in: ManilaDay; check_out: ManilaDay };
+export type StayDays = { check_in: ManilaDay; check_out: ManilaDay };
 
 const isWithinMaxStay = (stay: StayDays) =>
   nightsBetween(stay.check_in, stay.check_out) <= MAX_STAY_NIGHTS;
