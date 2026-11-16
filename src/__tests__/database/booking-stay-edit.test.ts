@@ -2,7 +2,8 @@
  * update_booking_stay saves a booking's dates and cabins in one transaction, under
  * the stay rules of ADR 0007: Confirmed dates are manager-only, a CheckedIn stay is
  * manager-only with the check-in day locked, and CheckedOut, Cancelled and anonymized
- * bookings allow no stay change. The total never changes.
+ * bookings allow no stay change. The total changes only when a manager asks for a
+ * recompute, and never on an Airbnb booking (ADR 0006).
  *
  * @vitest-environment node
  */
@@ -300,4 +301,101 @@ describe("update_booking_stay", () => {
       expect(error?.code).toBe("42501");
     }
   );
+
+  describe("recompute of the total", () => {
+    const pricedCabin = (unit_id: string, subtotal: number) => ({
+      unit_id,
+      assigned_guests: 2,
+      unit_price: subtotal - 500,
+      weekend_surcharge: 500,
+      extra_person_charge: 0,
+      subtotal,
+    });
+
+    const recomputeAs = (role: AppRoleName, bookingId: string, cabins: Cabin[]) => {
+      const stay = toStayInstants("2034-09-10", "2034-09-13");
+      return roleClients.byRole[role].rpc("update_booking_stay", {
+        p_booking_id: bookingId,
+        p_check_in: stay.check_in,
+        p_check_out: stay.check_out,
+        p_units: cabins,
+        p_recompute: true,
+      });
+    };
+
+    it("keeps the total when the stay changes without a recompute", async () => {
+      if (!shouldRun) return;
+      const { bookingId, unitId } = await bookingIn("Pending", "2034-09-10", "2034-09-12");
+
+      const { error } = await saveStayAs("manager", bookingId, "2034-09-10", "2034-09-13", [
+        pricedCabin(unitId, 7500),
+      ]);
+
+      expect(error).toBeNull();
+      expect((await stayOf(bookingId)).total_amount).toBe(5000);
+    });
+
+    it("sets each cabin's price and the total when a manager asks", async () => {
+      if (!shouldRun) return;
+      const { bookingId, unitId } = await bookingIn("Pending", "2034-09-10", "2034-09-12");
+      const extra = await createTestUnit();
+
+      const { error } = await recomputeAs("manager", bookingId, [
+        pricedCabin(unitId, 7500),
+        pricedCabin(extra.unit_id, 6000),
+      ]);
+
+      expect(error).toBeNull();
+      expect((await stayOf(bookingId)).total_amount).toBe(13500);
+      const { data } = await service
+        .from("booking_units")
+        .select("unit_price, weekend_surcharge, subtotal")
+        .eq("booking_id", bookingId)
+        .order("subtotal");
+      expect(data).toEqual([
+        { unit_price: 5500, weekend_surcharge: 500, subtotal: 6000 },
+        { unit_price: 7000, weekend_surcharge: 500, subtotal: 7500 },
+      ]);
+    });
+
+    it("refuses a recompute from staff", async () => {
+      if (!shouldRun) return;
+      const { bookingId, unitId } = await bookingIn("Pending", "2034-09-10", "2034-09-12");
+      const before = await stayOf(bookingId);
+
+      const { error } = await recomputeAs("staff", bookingId, [pricedCabin(unitId, 7500)]);
+
+      expect(error?.code).toBe("42501");
+      expect(await stayOf(bookingId)).toEqual(before);
+    });
+
+    it("refuses a recompute on an Airbnb booking", async () => {
+      if (!shouldRun) return;
+      const { bookingId, unitId } = await bookingIn("Pending", "2034-09-10", "2034-09-12");
+      const { error: sourceError } = await service
+        .from("bookings")
+        .update({ booking_source: "Airbnb" })
+        .eq("booking_id", bookingId);
+      if (sourceError) throw sourceError;
+      const before = await stayOf(bookingId);
+
+      const { error } = await recomputeAs("manager", bookingId, [pricedCabin(unitId, 7500)]);
+
+      expect(error?.code).toBe("42501");
+      expect(await stayOf(bookingId)).toEqual(before);
+    });
+
+    it("refuses a recompute with a cabin that has no price", async () => {
+      if (!shouldRun) return;
+      const { bookingId, unitId } = await bookingIn("Pending", "2034-09-10", "2034-09-12");
+      const before = await stayOf(bookingId);
+
+      const { error } = await recomputeAs("manager", bookingId, [
+        { unit_id: unitId, assigned_guests: 2 },
+      ]);
+
+      expect(error?.code).toBe("22023");
+      expect(await stayOf(bookingId)).toEqual(before);
+    });
+  });
 });

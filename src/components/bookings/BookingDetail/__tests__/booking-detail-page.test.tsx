@@ -92,6 +92,11 @@ const units = [
   { unit_id: "unit-3", unit_name: "Cabin 3", max_occupancy: 4 },
   { unit_id: "unit-4", unit_name: "Cabin 4", max_occupancy: 4 },
 ];
+vi.mock("@/hooks/usePricingConfig", () => ({
+  usePricingConfig: () => ({
+    data: { base_rate: 1000, weekend_rate: 1000, extra_person_rate: 0, base_occupancy: 4 },
+  }),
+}));
 const availability = vi.hoisted(() => vi.fn());
 vi.mock("@/hooks/useMultiUnitBookingQueries", () => ({
   useMultiUnitAvailability: availability,
@@ -639,9 +644,77 @@ describe("BookingDetailPage", () => {
         { unit_id: "unit-1", assigned_guests: 4 },
         { unit_id: "unit-4", assigned_guests: 3 },
       ],
+      recompute: false,
     });
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
+
+  const swapCabin2ForCabin4 = async () => {
+    if (!screen.queryByRole("dialog")) {
+      await userEvent.click(screen.getByRole("button", { name: "Edit stay" }));
+    }
+    const sheet = within(screen.getByRole("dialog", { name: "Edit stay" }));
+    await userEvent.click(sheet.getByRole("button", { name: "Remove Cabin 2" }));
+    await userEvent.click(sheet.getByRole("button", { name: "Add Cabin 4" }));
+    return sheet;
+  };
+
+  it("lets a manager recompute the total from current rates after a stay change", async () => {
+    updateStay.mutateAsync.mockResolvedValue({});
+    renderPage();
+
+    await userEvent.click(screen.getByRole("button", { name: "Edit stay" }));
+    expect(screen.queryByRole("checkbox")).not.toBeInTheDocument();
+
+    const sheet = await swapCabin2ForCabin4();
+    const recompute = sheet.getByRole("checkbox", { name: "Recompute total from current rates" });
+    expect(recompute).not.toBeChecked();
+    expect(sheet.getByText("Total ₱9,000.00 → ₱6,000.00")).toBeInTheDocument();
+    await userEvent.click(recompute);
+    await userEvent.click(sheet.getByRole("button", { name: "Save changes" }));
+
+    // Three nights at ₱1,000, no weekend surcharge and no guest over the base occupancy
+    const priced = {
+      unit_price: 3000,
+      weekend_surcharge: 0,
+      extra_person_charge: 0,
+      subtotal: 3000,
+    };
+    expect(updateStay.mutateAsync).toHaveBeenCalledWith({
+      bookingId: "booking-1",
+      stay: { check_in: "2026-11-13", check_out: "2026-11-16" },
+      cabins: [
+        { unit_id: "unit-1", assigned_guests: 4, ...priced },
+        { unit_id: "unit-4", assigned_guests: 2, ...priced },
+      ],
+      recompute: true,
+    });
+  });
+
+  it("shows staff the new price only as a hint", async () => {
+    user.role = "staff";
+    renderPage();
+
+    const sheet = await swapCabin2ForCabin4();
+
+    expect(sheet.queryByRole("checkbox")).not.toBeInTheDocument();
+    expect(sheet.getByText("Total ₱9,000.00 → ₱6,000.00")).toBeInTheDocument();
+    expect(sheet.getByText("Ask a manager to update the total")).toBeInTheDocument();
+  });
+
+  it.each(["manager", "staff"])(
+    "shows an Airbnb booking's %s no recompute and no price hint",
+    async (role) => {
+      user.role = role;
+      renderPage({ booking_source: "Airbnb" });
+
+      const sheet = await swapCabin2ForCabin4();
+
+      expect(sheet.queryByRole("checkbox")).not.toBeInTheDocument();
+      expect(sheet.queryByText(/→ ₱/)).not.toBeInTheDocument();
+      expect(sheet.queryByText("Ask a manager to update the total")).not.toBeInTheDocument();
+    }
+  );
 
   it("opens the edit sheet named in the URL only where the section is editable", () => {
     const { unmount } = renderPage({}, "stay");

@@ -9,11 +9,13 @@ import { z } from "zod";
 import {
   Button,
   Callout,
+  Checkbox,
   DatePicker,
   DateRangePicker,
   Form,
   FormField,
   Input,
+  Label,
   Sheet,
   SheetContent,
   SheetDescription,
@@ -24,6 +26,7 @@ import {
 import { useUserRole } from "@/hooks";
 import { useUpdateBooking, useUpdateBookingStay } from "@/hooks/useBookings";
 import { useMultiUnitAvailability } from "@/hooks/useMultiUnitBookingQueries";
+import { usePricingConfig } from "@/hooks/usePricingConfig";
 import { useUnits } from "@/hooks/useUnits";
 import {
   BOOKING_SOURCES,
@@ -37,6 +40,8 @@ import {
   type BookingChanges,
   type ManilaDay,
 } from "@/lib/bookings";
+import { formatCurrency } from "@/lib/formatters";
+import { cabinRates, priceCabin } from "@/lib/pricing/cabin-pricing";
 import { confirmationCodeSchema } from "@/lib/validations";
 import type { Booking } from "@/types";
 
@@ -254,7 +259,9 @@ function StayForm(props: Omit<EditSheetProps, "open">) {
   const { booking } = props;
   const { isManager } = useUserRole();
   const { data: units = [] } = useUnits();
+  const { data: pricingConfig } = usePricingConfig();
   const updateStay = useUpdateBookingStay();
+  const [recompute, setRecompute] = useState(false);
   const form = useForm<StayValues>({
     resolver: zodResolver(staySchema),
     defaultValues: {
@@ -278,6 +285,35 @@ function StayForm(props: Omit<EditSheetProps, "open">) {
   const notFree = (unitId: string) => (nights > 0 ? unavailableReason(availability, unitId) : null);
   const pickedNotFree = cabins.some((cabin) => notFree(cabin.unitId));
 
+  const stayChanged =
+    JSON.stringify({ check_in: checkIn, check_out: checkOut, cabins }) !==
+    JSON.stringify(form.formState.defaultValues);
+  const pricedCabins = cabins.map((cabin) => {
+    const unit = units.find((u) => u.unit_id === cabin.unitId);
+    if (!unit) return null;
+    const pricing = priceCabin(cabinRates(unit, pricingConfig), checkIn, checkOut, cabin.guests);
+    return {
+      unit_id: cabin.unitId,
+      assigned_guests: cabin.guests,
+      unit_price: pricing.base_total,
+      weekend_surcharge: pricing.weekend_surcharge,
+      extra_person_charge: pricing.extra_person_fee,
+      subtotal: pricing.unit_total,
+    };
+  });
+  // An Airbnb booking's total is the payout, so current rates never apply (ADR 0006)
+  const newTotal = pricedCabins.reduce((sum, cabin) => sum + (cabin?.subtotal ?? 0), 0);
+  // Without the pricing config, cabinRates falls back to each cabin's own rates
+  const showNewPrice =
+    booking.booking_source !== "Airbnb" &&
+    stayChanged &&
+    nights > 0 &&
+    !!pricingConfig &&
+    pricedCabins.every((cabin) => cabin !== null) &&
+    newTotal !== booking.total_amount;
+  const priceChange = `Total ${formatCurrency(booking.total_amount)} → ${formatCurrency(newTotal)}`;
+  const recomputing = isManager && showNewPrice && recompute;
+
   // Same table as enforce_booking_edit_rules: staff keep Confirmed dates, and a stay in progress keeps its check-in day
   const datesLocked = booking.booking_status === "Confirmed" && !isManager;
   const checkInLocked = booking.booking_status === "CheckedIn";
@@ -297,10 +333,13 @@ function StayForm(props: Omit<EditSheetProps, "open">) {
           updateStay.mutateAsync({
             bookingId: booking.booking_id,
             stay: { check_in: values.check_in, check_out: values.check_out },
-            cabins: values.cabins.map((cabin) => ({
-              unit_id: cabin.unitId,
-              assigned_guests: cabin.guests,
-            })),
+            cabins: recomputing
+              ? pricedCabins.filter((cabin) => cabin !== null)
+              : values.cabins.map((cabin) => ({
+                  unit_id: cabin.unitId,
+                  assigned_guests: cabin.guests,
+                })),
+            recompute: recomputing,
           }),
         isPending: updateStay.isPending,
       }}
@@ -369,6 +408,28 @@ function StayForm(props: Omit<EditSheetProps, "open">) {
           A picked cabin is not free on these dates. Remove it or pick other dates.
         </p>
       )}
+      {showNewPrice &&
+        (isManager ? (
+          <div className="space-y-1">
+            <Label
+              htmlFor="recompute-total"
+              className="coarse:min-h-11 flex items-center gap-2 text-sm font-normal"
+            >
+              <Checkbox
+                id="recompute-total"
+                checked={recompute}
+                onCheckedChange={(checked) => setRecompute(checked === true)}
+              />
+              Recompute total from current rates
+            </Label>
+            <p className="text-muted-foreground pl-6 text-xs tabular-nums">{priceChange}</p>
+          </div>
+        ) : (
+          <div className="text-muted-foreground space-y-1 text-xs">
+            <p className="tabular-nums">{priceChange}</p>
+            <p>Ask a manager to update the total</p>
+          </div>
+        ))}
     </EditForm>
   );
 }

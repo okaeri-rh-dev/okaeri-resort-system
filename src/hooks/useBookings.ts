@@ -137,11 +137,13 @@ export const useUpdateBookingStay = () =>
       bookingId,
       stay,
       cabins,
+      recompute,
     }: {
       bookingId: string;
       stay: StayDays;
       cabins: StayCabin[];
-    }) => updateBookingStay(supabase, bookingId, stay, cabins),
+      recompute?: boolean;
+    }) => updateBookingStay(supabase, bookingId, stay, cabins, recompute),
     onSuccess: () => {
       toast.success("Booking updated");
     },
