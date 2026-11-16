@@ -1,7 +1,7 @@
 // src/__tests__/architecture/pricing-parity.test.ts
 /**
  * The same stay must cost the same on every live pricing path:
- * - the staff booking stepper (priceCabin with cabinRates, as NewBookingFlow calls it),
+ * - the staff booking stepper and the Stay edit sheet (priceStayCabin),
  * - booking creation, which stores the price (functions/lib/unit-pricing.ts),
  * - the quote / guest-booking calculator (functions/lib/pricing.ts).
  *
@@ -11,7 +11,7 @@
 
 import { describe, expect, it } from "vitest";
 
-import { cabinRates, priceCabin } from "@/lib/pricing/cabin-pricing";
+import { priceStayCabin } from "@/lib/pricing/cabin-pricing";
 import { isWeekendNight } from "@/lib/pricing/weekend-night";
 
 import { calculateBookingPrice } from "../../../functions/lib/pricing";
@@ -79,12 +79,13 @@ describe("pricing parity", () => {
   for (const stay of STAYS) {
     for (const guests of GUEST_COUNTS) {
       it(`${stay.label}, ${guests} guests: form, stored and quote totals agree`, async () => {
-        const formTotal = priceCabin(
-          cabinRates({ base_rate: 0, base_occupancy: 0 }, PRICING_CONFIG),
+        const formTotal = priceStayCabin(
+          { unit_id: "unit-1", base_rate: 0, base_occupancy: 0 },
+          PRICING_CONFIG,
           stay.checkIn,
           stay.checkOut,
           guests
-        ).unit_total;
+        ).subtotal;
 
         const storedTotal = calculateStoredUnitPricing(
           {

@@ -27,7 +27,7 @@ import { usePricingConfig } from "@/hooks/usePricingConfig";
 import { useUnits } from "@/hooks/useUnits";
 import { nightsBetween, unavailableReason } from "@/lib/bookings";
 import { formatCurrency } from "@/lib/formatters";
-import { cabinRates, priceCabin } from "@/lib/pricing/cabin-pricing";
+import { priceStayCabin } from "@/lib/pricing/cabin-pricing";
 import { cn } from "@/lib/utils";
 
 import {
@@ -68,16 +68,17 @@ export function NewBookingFlow() {
   const lines: CabinLine[] = draft.cabins.flatMap((cabin) => {
     const unit = units.find((u) => u.unit_id === cabin.unitId);
     if (!unit) return [];
-    const pricing =
+    const subtotal =
       nights > 0
-        ? priceCabin(
-            cabinRates(unit, pricingConfig),
+        ? priceStayCabin(
+            unit,
+            pricingConfig,
             draft.checkIn ?? "",
             draft.checkOut ?? "",
             cabin.guests
-          )
-        : null;
-    return [{ ...cabin, unit, subtotal: pricing?.unit_total ?? 0 }];
+          ).subtotal
+        : 0;
+    return [{ ...cabin, unit, subtotal }];
   });
   const isAirbnb = draft.source === "Airbnb";
   const payout = Number(draft.payout);

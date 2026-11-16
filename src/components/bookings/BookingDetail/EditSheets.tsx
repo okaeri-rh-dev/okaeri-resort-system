@@ -41,7 +41,7 @@ import {
   type ManilaDay,
 } from "@/lib/bookings";
 import { formatCurrency } from "@/lib/formatters";
-import { cabinRates, priceCabin } from "@/lib/pricing/cabin-pricing";
+import { priceStayCabin } from "@/lib/pricing/cabin-pricing";
 import { confirmationCodeSchema } from "@/lib/validations";
 import type { Booking } from "@/types";
 
@@ -290,20 +290,10 @@ function StayForm(props: Omit<EditSheetProps, "open">) {
     JSON.stringify(form.formState.defaultValues);
   const pricedCabins = cabins.map((cabin) => {
     const unit = units.find((u) => u.unit_id === cabin.unitId);
-    if (!unit) return null;
-    const pricing = priceCabin(cabinRates(unit, pricingConfig), checkIn, checkOut, cabin.guests);
-    return {
-      unit_id: cabin.unitId,
-      assigned_guests: cabin.guests,
-      unit_price: pricing.base_total,
-      weekend_surcharge: pricing.weekend_surcharge,
-      extra_person_charge: pricing.extra_person_fee,
-      subtotal: pricing.unit_total,
-    };
+    return unit ? priceStayCabin(unit, pricingConfig, checkIn, checkOut, cabin.guests) : null;
   });
-  // An Airbnb booking's total is the payout, so current rates never apply (ADR 0006)
   const newTotal = pricedCabins.reduce((sum, cabin) => sum + (cabin?.subtotal ?? 0), 0);
-  // Without the pricing config, cabinRates falls back to each cabin's own rates
+  // An Airbnb booking's total is the payout (ADR 0006), and without the pricing config each cabin's own rates would apply
   const showNewPrice =
     booking.booking_source !== "Airbnb" &&
     stayChanged &&

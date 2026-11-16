@@ -1,4 +1,4 @@
-import { manilaDayOf, nightsBetween } from "@/lib/bookings";
+import { manilaDayOf, nightsBetween, type PricedUnit } from "@/lib/bookings";
 import type { BookingUnit } from "@/types/multi-unit-booking";
 
 import { isWeekendNight } from "./weekend-night";
@@ -55,5 +55,24 @@ export function priceCabin(
     weekend_surcharge: weekendSurcharge,
     extra_person_fee: extraPersonFee,
     unit_total: baseTotal + weekendSurcharge + extraPersonFee,
+  };
+}
+
+/** A cabin priced at current rates, in the shape a booking's cabin row stores. */
+export function priceStayCabin(
+  unit: UnitRates & { unit_id: string },
+  config: CabinRates | undefined,
+  checkIn: string,
+  checkOut: string,
+  guests: number
+): PricedUnit {
+  const pricing = priceCabin(cabinRates(unit, config), checkIn, checkOut, guests);
+  return {
+    unit_id: unit.unit_id,
+    assigned_guests: guests,
+    unit_price: pricing.base_total,
+    weekend_surcharge: pricing.weekend_surcharge,
+    extra_person_charge: pricing.extra_person_fee,
+    subtotal: pricing.unit_total,
   };
 }
