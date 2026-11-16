@@ -40,8 +40,8 @@ import {
 import { confirmationCodeSchema } from "@/lib/validations";
 import type { Booking } from "@/types";
 
+import { CabinPicker } from "../CabinPicker";
 import { BookingSourceField, ConfirmationCodeField } from "../form-fields";
-import { CabinPicker } from "../NewBookingFlow/StayStep";
 
 interface EditSheetProps {
   booking: Booking;

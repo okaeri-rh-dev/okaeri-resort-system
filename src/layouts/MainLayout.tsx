@@ -28,10 +28,9 @@ import {
 } from "@/components/patterns";
 import { InstallBanner } from "@/components/pwa/InstallBanner";
 import { RESORT_NAME } from "@/config/settings";
-import { AuditRole, clearRoleCache } from "@/lib/audit-roles";
+import { AuditRole, clearRoleCache, hasRoleLevel } from "@/lib/audit-roles";
 import { auth } from "@/lib/auth";
 import { logger } from "@/lib/logger";
-import { hasRoleLevel } from "@/lib/route-guards";
 import { supabase } from "@/lib/supabase";
 import { useCanShowInstallBanner, useInstallPromptStore } from "@/stores/useInstallPromptStore";
 import { useUIStore } from "@/stores/useUIStore";

@@ -20,7 +20,7 @@
 
 import { redirect } from "@tanstack/react-router";
 
-import { AuditRole, getUserAuditRole } from "./audit-roles";
+import { AuditRole, getUserAuditRole, hasRoleLevel } from "./audit-roles";
 import { logger } from "./logger";
 
 // ============================================
@@ -98,29 +98,4 @@ export async function requireManager(): Promise<void> {
     requiredRole: AuditRole.MANAGER,
     message: "This page requires Manager access or higher",
   });
-}
-
-// ============================================
-// SYNCHRONOUS ROLE CHECK HELPER
-// ============================================
-
-/**
- * Check if a user role meets the minimum required role level
- * Useful for synchronous checks in UI components
- *
- * @param userRole - The user's current role
- * @param requiredRole - The minimum required role
- * @returns true if userRole meets or exceeds requiredRole
- */
-export function hasRoleLevel(userRole: AuditRole | null, requiredRole: AuditRole): boolean {
-  if (!userRole) return false;
-
-  const roleHierarchy: Record<AuditRole, number> = {
-    [AuditRole.ADMIN]: 4,
-    [AuditRole.OWNER]: 3,
-    [AuditRole.MANAGER]: 2,
-    [AuditRole.STAFF]: 1,
-  };
-
-  return roleHierarchy[userRole] >= roleHierarchy[requiredRole];
 }

@@ -1,15 +1,14 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import type { TableName } from "@/lib/after-write";
-import { AuditRole } from "@/lib/audit-roles";
-import { hasRoleLevel } from "@/lib/route-guards";
+import { AuditRole, hasRoleLevel } from "@/lib/audit-roles";
 import type { BookingStatus } from "@/types/booking-status";
 import type { Database, Tables, TablesUpdate } from "@/types/database.types";
 
 import { BlockedUnitError, isBlockedNightError } from "./availability";
 import { DuplicateConfirmationCodeError, isDuplicateConfirmationCode } from "./confirmation-code";
 import type { BookingSource } from "./source";
-import { toStayInstants, type ManilaDay } from "./stay";
+import { toStayInstants, type StayDays } from "./stay";
 
 type Client = SupabaseClient<Database>;
 type BookingRow = Tables<"bookings">;
@@ -26,7 +25,7 @@ export type BookingChanges = Partial<{
   airbnb_confirmation_code: string | null;
   /** Manager and above only; split across the cabins by the database. */
   total_amount: number;
-}> & { stay?: { check_in: ManilaDay; check_out: ManilaDay } };
+}> & { stay?: StayDays };
 
 type Result<T> = { data: T | null; error: { message: string; code?: string } | null };
 
@@ -120,7 +119,7 @@ export const UPDATE_STAY_WRITES = [
 export async function updateBookingStay(
   client: Client,
   bookingId: string,
-  stay: { check_in: ManilaDay; check_out: ManilaDay },
+  stay: StayDays,
   cabins: StayCabin[]
 ) {
   const instants = toStayInstants(stay.check_in, stay.check_out);

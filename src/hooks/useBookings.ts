@@ -11,9 +11,9 @@ import {
   updateBooking,
   updateBookingStay,
   type BookingChanges,
-  type ManilaDay,
   type StatusChange,
   type StayCabin,
+  type StayDays,
 } from "@/lib/bookings";
 import { adaptBookingFromDB } from "@/lib/database-adapters";
 import { throwDetailLoadError } from "@/lib/detail-load-error";
@@ -139,7 +139,7 @@ export const useUpdateBookingStay = () =>
       cabins,
     }: {
       bookingId: string;
-      stay: { check_in: ManilaDay; check_out: ManilaDay };
+      stay: StayDays;
       cabins: StayCabin[];
     }) => updateBookingStay(supabase, bookingId, stay, cabins),
     onSuccess: () => {
