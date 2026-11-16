@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { cabinRates, priceCabin } from "../cabin-pricing";
+import { cabinRates, priceCabin, priceStayCabin } from "../cabin-pricing";
 
 const UNIT = { base_rate: 2000, weekend_rate: 2500, extra_person_rate: 300, base_occupancy: 2 };
 const CONFIG = { base_rate: 3000, weekend_rate: 3500, extra_person_rate: 500, base_occupancy: 4 };
@@ -40,5 +40,20 @@ describe("priceCabin", () => {
 
   it("charges no extra-person fee at or under base occupancy", () => {
     expect(priceCabin(UNIT, "2026-10-12", "2026-10-13", 2).unit_total).toBe(2000);
+  });
+});
+
+describe("priceStayCabin", () => {
+  it("prices a cabin from the pricing config in the shape a cabin row stores", () => {
+    expect(
+      priceStayCabin({ ...UNIT, unit_id: "unit-1" }, CONFIG, "2026-10-09", "2026-10-12", 5)
+    ).toEqual({
+      unit_id: "unit-1",
+      assigned_guests: 5,
+      unit_price: 9000,
+      weekend_surcharge: 1000,
+      extra_person_charge: 1500,
+      subtotal: 11500,
+    });
   });
 });

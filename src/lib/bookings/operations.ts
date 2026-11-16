@@ -7,6 +7,7 @@ import type { Database, Tables, TablesUpdate } from "@/types/database.types";
 
 import { BlockedUnitError, isBlockedNightError } from "./availability";
 import { DuplicateConfirmationCodeError, isDuplicateConfirmationCode } from "./confirmation-code";
+import type { PricedUnit } from "./create";
 import type { BookingSource } from "./source";
 import { toStayInstants, type StayDays } from "./stay";
 
@@ -107,7 +108,9 @@ export function canEditSection(
   }
 }
 
-export type StayCabin = { unit_id: string; assigned_guests: number };
+export type StayCabin = { unit_id: string; assigned_guests: number } & Partial<
+  Pick<PricedUnit, "unit_price" | "weekend_surcharge" | "extra_person_charge" | "subtotal">
+>;
 
 export const UPDATE_STAY_WRITES = [
   "bookings",
@@ -115,12 +118,13 @@ export const UPDATE_STAY_WRITES = [
   "booking_unit_availability",
 ] as const satisfies readonly TableName[];
 
-/** Saves the dates and replaces the cabins in one transaction; the total stays as it is. */
+/** Saves the dates and replaces the cabins in one transaction; the total follows the cabins' prices only on a recompute (manager and above, never Airbnb). */
 export async function updateBookingStay(
   client: Client,
   bookingId: string,
   stay: StayDays,
-  cabins: StayCabin[]
+  cabins: StayCabin[],
+  recompute = false
 ) {
   const instants = toStayInstants(stay.check_in, stay.check_out);
   const { error } = await client.rpc("update_booking_stay", {
@@ -128,6 +132,7 @@ export async function updateBookingStay(
     p_check_in: instants.check_in,
     p_check_out: instants.check_out,
     p_units: cabins,
+    p_recompute: recompute,
   });
   throwIfError(error);
 }

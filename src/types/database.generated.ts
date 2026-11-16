@@ -1597,7 +1597,13 @@ export type Database = {
         Returns: undefined;
       };
       update_booking_stay: {
-        Args: { p_booking_id: string; p_check_in: string; p_check_out: string; p_units: Json };
+        Args: {
+          p_booking_id: string;
+          p_check_in: string;
+          p_check_out: string;
+          p_recompute?: boolean;
+          p_units: Json;
+        };
         Returns: undefined;
       };
       verify_and_confirm_booking: {
