@@ -14,6 +14,7 @@ import type {
 } from "@/types/audit.types";
 
 import { AUDIT_CACHE_CONFIG } from "./audit-constants";
+import { hideDerivedHistoryRows } from "./audit-display";
 import { db } from "./supabase";
 
 /** The 50 newest audit rows for one record, for detail-page loaders. A failure shows an empty history, not an error page. */
@@ -32,6 +33,8 @@ export const recentRecordAuditLogsQuery = (tableName: string, recordId: string) 
   });
 
 export const BOOKING_HISTORY_LIMIT = 50;
+// Over-fetch so the cap still fills after hideDerivedHistoryRows drops a cabin change's derived rows
+const BOOKING_HISTORY_FETCH_LIMIT = BOOKING_HISTORY_LIMIT * 4;
 
 /** A booking's History: its own audit rows and its cabins' rows, the newest first. */
 export const bookingHistoryQuery = (bookingId: string) =>
@@ -39,12 +42,13 @@ export const bookingHistoryQuery = (bookingId: string) =>
     queryKey: auditKeys.bookingHistory(bookingId),
     queryFn: async () => {
       const [bookingRows, cabinRows] = await Promise.all([
-        db.auditLogs.recentByRecord("bookings", bookingId, BOOKING_HISTORY_LIMIT),
-        db.auditLogs.recentForBookingCabins(bookingId, BOOKING_HISTORY_LIMIT),
+        db.auditLogs.recentByRecord("bookings", bookingId, BOOKING_HISTORY_FETCH_LIMIT),
+        db.auditLogs.recentForBookingCabins(bookingId, BOOKING_HISTORY_FETCH_LIMIT),
       ]);
-      return [...bookingRows, ...cabinRows]
-        .sort((a, b) => (b.created_at ?? "").localeCompare(a.created_at ?? ""))
-        .slice(0, BOOKING_HISTORY_LIMIT);
+      const newestFirst = [...bookingRows, ...cabinRows].sort((a, b) =>
+        (b.created_at ?? "").localeCompare(a.created_at ?? "")
+      );
+      return hideDerivedHistoryRows(newestFirst).slice(0, BOOKING_HISTORY_LIMIT);
     },
     staleTime: 60000,
   });

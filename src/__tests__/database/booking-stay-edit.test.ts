@@ -10,6 +10,7 @@
 
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
+import { hideDerivedHistoryRows } from "@/lib/audit-display";
 import { toStayInstants, type ManilaDay } from "@/lib/bookings";
 import type { AppRoleName } from "@/types/app-role";
 import type { BookingStatus } from "@/types/booking-status";
@@ -124,6 +125,48 @@ describe("update_booking_stay", () => {
         check_out: new Date(row.check_out).toISOString(),
       }))
     ).toEqual([second.unit_id, third.unit_id].sort().map((unit_id) => ({ unit_id, ...stay })));
+  });
+
+  it("leaves only the removed and added cabins in History after a swap", async () => {
+    if (!shouldRun) return;
+    const { bookingId, unitId } = await bookingIn("Pending", "2034-02-10", "2034-02-12");
+    const added = await createTestUnit();
+
+    const { error } = await saveStayAs("staff", bookingId, "2034-02-10", "2034-02-12", [
+      { unit_id: added.unit_id, assigned_guests: 2 },
+    ]);
+    expect(error).toBeNull();
+
+    const [bookingRows, cabinRows] = await Promise.all([
+      service
+        .from("audit_logs")
+        .select("*")
+        .eq("table_name", "bookings")
+        .eq("record_id", bookingId),
+      service
+        .from("audit_logs")
+        .select("*")
+        .eq("table_name", "booking_units")
+        .or(`new_data->>booking_id.eq.${bookingId},old_data->>booking_id.eq.${bookingId}`),
+    ]);
+    const rows = [...(bookingRows.data ?? []), ...(cabinRows.data ?? [])];
+    const swapMoment = rows
+      .map((row) => row.created_at ?? "")
+      .sort()
+      .at(-1);
+    const swapRows = rows.filter((row) => row.created_at === swapMoment);
+
+    expect(swapRows.length).toBeGreaterThan(2);
+    expect(
+      hideDerivedHistoryRows(swapRows)
+        .map((row) => {
+          const cabin = (row.action === "DELETE" ? row.old_data : row.new_data) as {
+            unit_id: string;
+          };
+          return `${row.table_name} ${row.action} ${cabin.unit_id}`;
+        })
+        .sort()
+    ).toEqual([`booking_units DELETE ${unitId}`, `booking_units INSERT ${added.unit_id}`]);
   });
 
   it("keeps a cabin that stays, changing only its guest count", async () => {
