@@ -290,7 +290,10 @@ function StayForm(props: Omit<EditSheetProps, "open">) {
     JSON.stringify(form.formState.defaultValues);
   const pricedCabins = cabins.map((cabin) => {
     const unit = units.find((u) => u.unit_id === cabin.unitId);
-    return unit ? priceStayCabin(unit, pricingConfig, checkIn, checkOut, cabin.guests) : null;
+    // Mid-pick the check-out day is empty, which pricing cannot parse
+    return unit && nights > 0
+      ? priceStayCabin(unit, pricingConfig, checkIn, checkOut, cabin.guests)
+      : null;
   });
   const newTotal = pricedCabins.reduce((sum, cabin) => sum + (cabin?.subtotal ?? 0), 0);
   // An Airbnb booking's total is the payout (ADR 0006), and without the pricing config each cabin's own rates would apply

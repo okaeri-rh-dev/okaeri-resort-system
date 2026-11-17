@@ -649,6 +649,17 @@ describe("BookingDetailPage", () => {
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 
+  it("keeps the stay sheet open while only the new check-in day is picked", async () => {
+    renderPage();
+
+    await userEvent.click(screen.getByRole("button", { name: "Edit stay" }));
+    await userEvent.click(screen.getByRole("button", { name: "Stay dates" }));
+    await userEvent.click(screen.getAllByRole("button", { name: / 20th, / })[0]);
+
+    expect(screen.getByRole("dialog", { name: "Edit stay" })).toBeInTheDocument();
+    expect(screen.getByText("Pick the dates first to see free cabins.")).toBeInTheDocument();
+  });
+
   const swapCabin2ForCabin4 = async () => {
     if (!screen.queryByRole("dialog")) {
       await userEvent.click(screen.getByRole("button", { name: "Edit stay" }));
