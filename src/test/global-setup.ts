@@ -149,6 +149,38 @@ const STORAGE_DRIFT_MESSAGE = [
   "Warning: --no-backup deletes all local data.",
 ].join("\n");
 
+const MAX_CLOCK_SKEW_SECONDS = 30;
+
+// The API's Date header comes from the Docker VM clock, which falls behind after the host sleeps.
+async function stackClockSkewSeconds(): Promise<number | null> {
+  try {
+    const response = await fetch(`${TEST_SUPABASE_URL}/rest/v1/`, { method: "HEAD" });
+    const stackDate = Date.parse(response.headers.get("date") ?? "");
+    return Number.isNaN(stackDate) ? null : Math.abs(Date.now() - stackDate) / 1000;
+  } catch {
+    return null;
+  }
+}
+
+async function resyncStackClock() {
+  const skew = await stackClockSkewSeconds();
+  if (skew === null || skew <= MAX_CLOCK_SKEW_SECONDS) return;
+
+  console.warn(`⚠️  Docker clock is ${Math.round(skew)}s off the host clock. Resyncing it...`);
+  try {
+    execSync("docker run --rm --privileged alpine hwclock -s", { stdio: "ignore" });
+  } catch {
+    // The check below reports the failure.
+  }
+
+  const skewAfter = await stackClockSkewSeconds();
+  if (skewAfter !== null && skewAfter > MAX_CLOCK_SKEW_SECONDS) {
+    throw new Error(
+      `Docker clock is still ${Math.round(skewAfter)}s off the host clock, so timestamp tests would fail. Restart Docker Desktop.`
+    );
+  }
+}
+
 /**
  * Global setup function - runs once before all tests
  */
@@ -171,6 +203,15 @@ export default async function globalSetup() {
   if (dbAvailable && (await storageUploadsFailWith42P10())) {
     releaseDbLock();
     throw new Error(STORAGE_DRIFT_MESSAGE);
+  }
+
+  if (dbAvailable) {
+    try {
+      await resyncStackClock();
+    } catch (error) {
+      releaseDbLock();
+      throw error;
+    }
   }
 
   // Seed test data if database is available

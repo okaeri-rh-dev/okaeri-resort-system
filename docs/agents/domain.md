@@ -31,3 +31,7 @@ If the concept you need isn't in the glossary yet, that's a signal: either you'r
 If your output contradicts an existing ADR, surface it explicitly rather than silently overriding:
 
 > _Contradicts ADR-0001 (booking payment status derived in database), but worth reopening because…_
+
+## Domain code pointers
+
+- **Pricing**: the header of `src/__tests__/architecture/pricing-parity.test.ts` lists every live pricing path. The stored booking total comes from the `update_booking_totals` trigger on `booking_units`.

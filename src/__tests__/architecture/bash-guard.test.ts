@@ -18,8 +18,10 @@ function decision(toolInput: { command: string; run_in_background?: boolean; tim
 describe("bash guard hook", () => {
   it.each([
     "supabase db push",
-    "cd /repo && npx supabase db push --dry-run",
+    "supabase db push --dry-run && supabase db push",
     "echo hi; supabase migration repair --status applied 1",
+    "grep -rn foo src --include=*.ts",
+    "cd src && grep -rln foo . --exclude=*.test.tsx",
     "supabase db reset --linked",
     "npx wrangler pages deploy dist",
     "npx wrangler pages secret put X --project-name okaeri-resort",
@@ -37,6 +39,8 @@ describe("bash guard hook", () => {
     "supabase db reset",
     "rm -rf dist coverage",
     "rm -r src/__probe",
+    "cd /repo && npx supabase db push --dry-run",
+    "grep -rn foo src --include='*.ts' --include=\"*.tsx\"",
   ])("allows %s", (command) => {
     expect(decision({ command })).toBe("allow");
   });
@@ -47,6 +51,12 @@ describe("bash guard hook", () => {
     );
     expect(decision({ command: "git push origin main --no-verify", run_in_background: true })).toBe(
       "block"
+    );
+  });
+
+  it("reads push flags only up to the end of the push command", () => {
+    expect(decision({ command: "git push origin main; rm -f stale.log", timeout: 600000 })).toBe(
+      "allow"
     );
   });
 
