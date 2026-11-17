@@ -30,6 +30,7 @@ import { usePricingConfig } from "@/hooks/usePricingConfig";
 import { useUnits } from "@/hooks/useUnits";
 import {
   BOOKING_SOURCES,
+  bookingEditRules,
   manilaDayOf,
   manilaDaySchema,
   nightsBetween,
@@ -199,10 +200,10 @@ export const NotesEditSheet = (props: EditSheetProps) => (
 
 function NotesForm(props: Omit<EditSheetProps, "open">) {
   const { booking } = props;
-  // A Cancelled booking allows only its internal note to change (docs/adr/0007)
-  const internalOnly = booking.booking_status === "Cancelled";
+  const { role } = useUserRole();
+  const { internalNoteOnly } = bookingEditRules(booking, role);
   const save = useSaveChanges(booking, (values: NotesValues) => ({
-    ...(!internalOnly && { special_requests: values.special_requests.trim() || null }),
+    ...(!internalNoteOnly && { special_requests: values.special_requests.trim() || null }),
     internal_notes: values.internal_notes.trim() || null,
   }));
   const form = useForm<NotesValues>({
@@ -215,7 +216,7 @@ function NotesForm(props: Omit<EditSheetProps, "open">) {
 
   return (
     <EditForm {...props} title="Edit notes" form={form} save={save}>
-      {!internalOnly && (
+      {!internalNoteOnly && (
         <FormField
           control={form.control}
           name="special_requests"
@@ -257,7 +258,8 @@ const dayLabel = (day: ManilaDay) => format(parseISO(day), "EEE, MMM d");
 
 function StayForm(props: Omit<EditSheetProps, "open">) {
   const { booking } = props;
-  const { isManager } = useUserRole();
+  const { role, isManager } = useUserRole();
+  const { datesLocked, checkInLocked } = bookingEditRules(booking, role);
   const { data: units = [] } = useUnits();
   const { data: pricingConfig } = usePricingConfig();
   const updateStay = useUpdateBookingStay();
@@ -303,10 +305,6 @@ function StayForm(props: Omit<EditSheetProps, "open">) {
     newTotal !== booking.total_amount;
   const priceChange = `Total ${formatCurrency(booking.total_amount)} → ${formatCurrency(newTotal)}`;
   const recomputing = isManager && showNewPrice && recompute;
-
-  // Same table as enforce_booking_edit_rules: staff keep Confirmed dates, and a stay in progress keeps its check-in day
-  const datesLocked = booking.booking_status === "Confirmed" && !isManager;
-  const checkInLocked = booking.booking_status === "CheckedIn";
 
   const setDays = (days: { check_in?: ManilaDay; check_out?: ManilaDay }) => {
     if (days.check_in) form.setValue("check_in", days.check_in);

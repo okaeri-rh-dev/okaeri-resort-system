@@ -89,24 +89,35 @@ export const canTransitionStatus = (current: BookingStatus, next: BookingStatus)
 export const EDITABLE_SECTIONS = ["guest", "stay", "notes"] as const;
 export type EditableSection = (typeof EDITABLE_SECTIONS)[number];
 
-/** The sections a booking's status and the role leave editable; the database enforces the same table (docs/adr/0007). */
-export function canEditSection(
+/** What a booking's status and the role leave editable; the database enforces the same table (docs/adr/0007). */
+export function bookingEditRules(
   booking: { booking_status: BookingStatus | null; anonymized_at?: string | null },
-  section: EditableSection,
   role: AuditRole | null | undefined
 ) {
-  if (booking.anonymized_at) return false;
-  switch (booking.booking_status) {
-    case "Cancelled":
-      return section === "notes";
-    case "CheckedOut":
-      return section !== "stay";
-    case "CheckedIn":
-      return section !== "stay" || hasRoleLevel(role ?? null, AuditRole.MANAGER);
-    default:
-      return true;
-  }
+  const status = booking.booking_status;
+  const isManager = hasRoleLevel(role ?? null, AuditRole.MANAGER);
+  const editable = !booking.anonymized_at;
+  return {
+    sections: {
+      guest: editable && status !== "Cancelled",
+      stay:
+        editable &&
+        status !== "Cancelled" &&
+        status !== "CheckedOut" &&
+        (status !== "CheckedIn" || isManager),
+      notes: editable,
+    } satisfies Record<EditableSection, boolean>,
+    datesLocked: status === "Confirmed" && !isManager,
+    checkInLocked: status === "CheckedIn",
+    internalNoteOnly: status === "Cancelled",
+  };
 }
+
+export const canEditSection = (
+  booking: Parameters<typeof bookingEditRules>[0],
+  section: EditableSection,
+  role: AuditRole | null | undefined
+) => bookingEditRules(booking, role).sections[section];
 
 export type StayCabin = { unit_id: string; assigned_guests: number } & Partial<
   Pick<PricedUnit, "unit_price" | "weekend_surcharge" | "extra_person_charge" | "subtotal">
