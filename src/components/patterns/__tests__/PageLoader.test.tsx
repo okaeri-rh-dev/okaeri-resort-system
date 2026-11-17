@@ -52,7 +52,7 @@ describe("PageLoader", () => {
     renderRouter({ slowLayout: true });
 
     const loader = await screen.findByRole("status", { name: "Loading" });
-    expect(loader.querySelector("svg")).toHaveClass("w-[min(60vw,240px)]");
+    expect(loader.querySelector("svg")).toHaveClass("w-[clamp(160px,60vw,360px)]");
     expect(screen.queryByRole("navigation", { name: "Main" })).not.toBeInTheDocument();
   });
 

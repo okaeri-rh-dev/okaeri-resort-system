@@ -13,7 +13,9 @@ describe("LogoLoader", () => {
 
   it("draws the splash-sized logo by default and a smaller one for content areas", () => {
     const { rerender } = render(<LogoLoader />);
-    expect(screen.getByRole("status").querySelector("svg")).toHaveClass("w-[min(60vw,240px)]");
+    expect(screen.getByRole("status").querySelector("svg")).toHaveClass(
+      "w-[clamp(160px,60vw,360px)]"
+    );
 
     rerender(<LogoLoader size="content" />);
     expect(screen.getByRole("status").querySelector("svg")).toHaveClass("w-32");
