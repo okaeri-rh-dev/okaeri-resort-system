@@ -8,7 +8,7 @@ const roofPaths = [
 ];
 
 const sizes = {
-  full: "w-[min(60vw,240px)]",
+  full: "w-[clamp(160px,60vw,360px)]",
   content: "w-32",
 } as const;
 
