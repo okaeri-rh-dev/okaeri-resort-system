@@ -1,5 +1,5 @@
 import { StatusBadge } from "@/components/patterns";
-import { outstandingBalance } from "@/lib/dashboard";
+import { outstandingBalance } from "@/lib/bookings";
 import { formatCurrency } from "@/lib/formatters";
 import { statusBadgeProps } from "@/lib/status-tone";
 import type { Booking } from "@/types";

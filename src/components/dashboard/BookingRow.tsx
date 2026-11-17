@@ -3,8 +3,9 @@ import { format, parseISO } from "date-fns";
 import { ChevronRight } from "lucide-react";
 
 import { StatusBadge } from "@/components/patterns";
+import { outstandingBalance } from "@/lib/bookings";
 import { manilaDayOf } from "@/lib/bookings/stay";
-import { isPending, outstandingBalance } from "@/lib/dashboard";
+import { isPending } from "@/lib/dashboard";
 import { formatCurrency } from "@/lib/formatters";
 import { statusBadgeProps } from "@/lib/status-tone";
 import { cn } from "@/lib/utils";

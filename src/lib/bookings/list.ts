@@ -1,9 +1,9 @@
 import { z } from "zod";
 
-import { outstandingBalance } from "@/lib/dashboard";
 import { PAYMENT_STATUSES, type Booking, type BookingStatus } from "@/types";
 import type { AppRoleName } from "@/types/app-role";
 
+import { outstandingBalance } from "./payment";
 import { BOOKING_SOURCES } from "./source";
 import { isManilaDay, manilaDayOf, type ManilaDay } from "./stay";
 

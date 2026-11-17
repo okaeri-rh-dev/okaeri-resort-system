@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from "react";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { format, parseISO } from "date-fns";
+import { parseISO } from "date-fns";
 import { Loader2 } from "lucide-react";
 import { useForm, type FieldValues, type UseFormReturn } from "react-hook-form";
 import { z } from "zod";
@@ -41,7 +41,7 @@ import {
   type BookingChanges,
   type ManilaDay,
 } from "@/lib/bookings";
-import { formatCurrency } from "@/lib/formatters";
+import { formatCurrency, formatWeekdayDate } from "@/lib/formatters";
 import { priceStayCabin } from "@/lib/pricing/cabin-pricing";
 import { confirmationCodeSchema } from "@/lib/validations";
 import type { Booking } from "@/types";
@@ -254,8 +254,6 @@ export const StayEditSheet = (props: EditSheetProps) => (
   </EditSheet>
 );
 
-const dayLabel = (day: ManilaDay) => format(parseISO(day), "EEE, MMM d");
-
 function StayForm(props: Omit<EditSheetProps, "open">) {
   const { booking } = props;
   const { role, isManager } = useUserRole();
@@ -338,7 +336,7 @@ function StayForm(props: Omit<EditSheetProps, "open">) {
         {datesLocked ? (
           <>
             <p className="text-sm">
-              {dayLabel(checkIn)} → {dayLabel(checkOut)}
+              {formatWeekdayDate(checkIn)} → {formatWeekdayDate(checkOut)}
             </p>
             <p className="text-muted-foreground text-xs">
               Only a manager can change the dates of a confirmed booking.
@@ -346,7 +344,7 @@ function StayForm(props: Omit<EditSheetProps, "open">) {
           </>
         ) : checkInLocked ? (
           <>
-            <p className="text-sm">Check-in {dayLabel(checkIn)}</p>
+            <p className="text-sm">Check-in {formatWeekdayDate(checkIn)}</p>
             <DatePicker
               aria-label="Check-out day"
               placeholder="Check-out day"

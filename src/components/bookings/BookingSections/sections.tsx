@@ -4,11 +4,15 @@ import { Pencil, Plus } from "lucide-react";
 
 import { formatPhoneNumber, RelatedEntityLink } from "@/components/entity-detail";
 import { Button, ListCard, ListCardRow, StatusBadge } from "@/components/patterns";
-import { canRecordPayment, manilaDayOf, nightsBetween } from "@/lib/bookings";
-import { outstandingBalance, receivedAmount } from "@/lib/dashboard";
-import { formatCurrency } from "@/lib/formatters";
+import {
+  canRecordPayment,
+  manilaDayOf,
+  nightsBetween,
+  outstandingBalance,
+  receivedAmount,
+} from "@/lib/bookings";
+import { formatCurrency, formatWeekdayDate, pluralize } from "@/lib/formatters";
 import { statusBadgeProps } from "@/lib/status-tone";
-import { formatPhilippineDate } from "@/lib/timezone";
 import type { Booking } from "@/types";
 
 import { CabinChip } from "./CabinChip";
@@ -18,10 +22,6 @@ interface SectionProps {
   /** Shows the section's Edit button; left out where the section is read-only. */
   onEdit?: () => void;
 }
-
-const plural = (count: number, word: string) => `${count} ${word}${count === 1 ? "" : "s"}`;
-
-const weekdayDate = (iso: string) => formatPhilippineDate(new Date(iso), "EEE, MMM d");
 
 const REMOVED = <p className="text-muted-foreground text-sm">Personal details removed.</p>;
 
@@ -68,11 +68,11 @@ export function StayCard({ booking, onEdit }: SectionProps) {
   const nights = nightsBetween(manilaDayOf(booking.check_in), manilaDayOf(booking.check_out));
   return (
     <SectionCard title="Stay" action={<EditButton section="stay" onEdit={onEdit} />}>
-      <ListCardRow label="Check-in" value={weekdayDate(booking.check_in)} />
-      <ListCardRow label="Check-out" value={weekdayDate(booking.check_out)} />
+      <ListCardRow label="Check-in" value={formatWeekdayDate(booking.check_in)} />
+      <ListCardRow label="Check-out" value={formatWeekdayDate(booking.check_out)} />
       <ListCardRow
         label="Length"
-        value={`${plural(nights, "night")} · ${plural(booking.num_guests, "guest")}`}
+        value={`${nights} ${pluralize(nights, "night")} · ${booking.num_guests} ${pluralize(booking.num_guests, "guest")}`}
       />
       {booking.booking_units?.length ? (
         <ul aria-label="Cabins" className="divide-y border-t">
@@ -81,7 +81,8 @@ export function StayCard({ booking, onEdit }: SectionProps) {
               <CabinChip bookingUnit={bookingUnit} />
               <span className="min-w-0 flex-1 truncate">{bookingUnit.unit?.unit_name}</span>
               <span className="text-muted-foreground tabular-nums">
-                {plural(bookingUnit.assigned_guests ?? 0, "guest")}
+                {bookingUnit.assigned_guests ?? 0}{" "}
+                {pluralize(bookingUnit.assigned_guests ?? 0, "guest")}
               </span>
             </li>
           ))}

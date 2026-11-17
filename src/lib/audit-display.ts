@@ -43,8 +43,11 @@ const changesOnly = (log: AuditLog, fields: Set<string>) =>
   !!log.changed_fields?.length &&
   log.changed_fields.every((field) => fields.has(field));
 
-const totalIn = (data: AuditLog["old_data"]) =>
-  data && typeof data === "object" && !Array.isArray(data) ? Number(data.total_amount) : NaN;
+/** One column of an audit row's old_data or new_data snapshot. */
+export const auditRowValue = (data: AuditLog["old_data"], key: string) =>
+  data && typeof data === "object" && !Array.isArray(data) ? data[key] : undefined;
+
+const totalIn = (data: AuditLog["old_data"]) => Number(auditRowValue(data, "total_amount"));
 
 /** Total updates chain a→b→c, so the net change is zero when the old and new totals match as multisets; rows of one moment have no order. */
 function transactionChangesTotal(bookingUpdates: AuditLog[]): boolean {

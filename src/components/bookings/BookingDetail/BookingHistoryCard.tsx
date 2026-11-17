@@ -12,7 +12,7 @@ import {
   ListCard,
 } from "@/components/patterns";
 import { allUnitsQuery } from "@/hooks/useUnits";
-import { auditActorLabel } from "@/lib/audit-display";
+import { auditActorLabel, auditRowValue } from "@/lib/audit-display";
 import { BOOKING_HISTORY_LIMIT, bookingHistoryQuery } from "@/lib/audit-hooks";
 import { formatPhilippineDate } from "@/lib/timezone";
 import type { AuditLog } from "@/types/audit.types";
@@ -28,13 +28,10 @@ const BOOKING_VERBS: Record<string, string> = {
   DELETE: "Booking deleted",
 };
 
-const rowValue = (data: AuditLog["new_data"], key: string) =>
-  data && typeof data === "object" && !Array.isArray(data) ? data[key] : undefined;
-
 function describeHistoryEntry(log: AuditLog, unitNames: Map<string, string>): string | null {
   if (log.description) return log.description;
   if (log.table_name === "booking_units") {
-    const unitId = rowValue(log.new_data ?? log.old_data, "unit_id");
+    const unitId = auditRowValue(log.new_data ?? log.old_data, "unit_id");
     const name = (typeof unitId === "string" && unitNames.get(unitId)) || "A cabin";
     return `${name} ${CABIN_VERBS[log.action] ?? "changed"}`;
   }

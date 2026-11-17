@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import { monthNumbers, movementsOn, outstandingBalance } from "@/lib/dashboard";
+import { outstandingBalance } from "@/lib/bookings";
+import { monthNumbers, movementsOn } from "@/lib/dashboard";
 import type { Booking, BookingStatus } from "@/types";
 
 process.env.TZ = "America/Los_Angeles";

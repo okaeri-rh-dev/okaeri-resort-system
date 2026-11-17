@@ -33,17 +33,6 @@ export function movementsOn(bookings: Booking[], day: ManilaDay): DayMovements {
 export const isPending = (booking: Booking) =>
   booking.is_guest_booking === true && booking.unit_assignment_status === "pending";
 
-/** The sum of the counted (Active) payments. */
-export const receivedAmount = (booking: Booking): number =>
-  (booking.payments ?? [])
-    .filter((payment) => payment.status === "Active")
-    .reduce((sum, payment) => sum + payment.amount, 0);
-
-/** Total price minus counted payments (GLOSSARY), never below 0. */
-export function outstandingBalance(booking: Booking): number {
-  return Math.max(booking.total_amount - receivedAmount(booking), 0);
-}
-
 const isConfirmed = (booking: Booking) =>
   booking.booking_status !== "Pending" && booking.booking_status !== "Cancelled";
 
