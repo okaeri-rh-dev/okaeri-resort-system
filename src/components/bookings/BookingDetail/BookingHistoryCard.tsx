@@ -53,7 +53,7 @@ export function BookingHistoryCard({ bookingId }: { bookingId: string }) {
   const unitNames = new Map(units.map((unit) => [unit.unit_id, unit.unit_name]));
 
   return (
-    <section aria-labelledby={headingId} className="expanded:col-span-2">
+    <section aria-labelledby={headingId} className="@2xl:col-span-2">
       <ListCard>
         <Collapsible>
           <h2 id={headingId} className="font-display text-base font-semibold">
