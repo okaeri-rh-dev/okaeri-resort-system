@@ -16,7 +16,7 @@ const startsWith = (pattern) => new RegExp(commandStart + pattern, "m");
 
 const blocked = [
   [
-    startsWith(String.raw`supabase\s+db\s+push\b`),
+    startsWith(String.raw`supabase\s+db\s+push\b(?![^;&|\n]*--dry-run)`),
     "supabase db push applies migrations to the linked PRODUCTION project. Ask the user to run it.",
   ],
   [
@@ -48,12 +48,16 @@ const blocked = [
     "npm run deploy bypasses the CI quality gate. Push to main instead.",
   ],
   [
-    startsWith(String.raw`git\s+push\b.*(\s--force\b|\s-f\b|--force-with-lease)`),
+    startsWith(String.raw`git\s+push\b[^;&|\n]*(\s--force\b|\s-f\b|--force-with-lease)`),
     "Force-push rewrites shared history. Ask the user.",
   ],
   [
-    startsWith(String.raw`git\s+push\b.*(--no-verify|\s-n\b)`),
+    startsWith(String.raw`git\s+push\b[^;&|\n]*(--no-verify|\s-n\b)`),
     "CLAUDE.md: never skip the pre-push hook without asking. Run `npm run verify` and ask the user.",
+  ],
+  [
+    startsWith(String.raw`grep\b[^;&|\n]*--(include|exclude)=(?!['"])[^\s]*[*?]`),
+    "The shell is zsh: an unquoted glob fails with 'no matches found'. Quote it: --include='*.ts'.",
   ],
 ];
 
