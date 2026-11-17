@@ -110,6 +110,8 @@ Two faces: **Figtree** (`font-sans`) for everything, and **Bricolage Grotesque**
 | KPI / money figure | display 3xl / 600, tabular        | sans lg / 600, tabular             |
 | Form input         | base on compact, sm from `medium` | base                               |
 
+Exception: the dense booking detail cards use display base / 600 for their section headings ([spec #454](https://github.com/okaeri-rh-dev/okaeri-resort-system/issues/454)).
+
 Inputs stay at 16px or more on compact windows, which prevents iOS zoom on focus. Figtree has no ₱ glyph, so the `sans` stack falls through to Bricolage for it (see the comment in `src/index.css`).
 
 Rationale: [Type scale and font loading](https://github.com/okaeri-rh-dev/okaeri-resort-system/issues/36).

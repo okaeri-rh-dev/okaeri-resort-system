@@ -4,6 +4,7 @@
 
 import { format } from "date-fns";
 
+import { formatPhilippineDate } from "@/lib/timezone";
 import { utcToResortTime } from "@/utils/date-helpers";
 
 // ============================================
@@ -26,6 +27,10 @@ export const formatCurrency = (amount: number): string => {
 /** The noun for a count, with a plain "s" plural: `${n} ${pluralize(n, "cabin")}`. */
 export const pluralize = (count: number, singular: string): string =>
   count === 1 ? singular : `${singular}s`;
+
+/** "Tue, Nov 10" in resort time, for an instant or a resort day ("2026-11-10"). */
+export const formatWeekdayDate = (date: string): string =>
+  formatPhilippineDate(new Date(date), "EEE, MMM d");
 
 /**
  * Format percentage with one decimal place

@@ -34,11 +34,11 @@ import type { Payment as PaymentRow } from "@/types/entity-detail.types";
 const paidAt = (payment: PaymentRow) => payment.payment_date ?? payment.created_at;
 
 const UNCOUNTED_LABEL: Partial<Record<PaymentRecordStatus, string>> = {
-  Deleted: "Removed",
+  Deleted: "Deleted",
   Refunded: "Refunded",
 };
 
-/** Every payment on the booking in date order; removed and refunded ones stay, muted. */
+/** Every payment on the booking in date order; deleted and refunded ones stay, muted. */
 export function PaymentRows({
   payments,
   readOnly = false,
@@ -58,7 +58,7 @@ export function PaymentRows({
 
   const remove = (payment: PaymentRow) =>
     softDeletePayment.mutate(payment.payment_id, {
-      onError: () => toast.error("Failed to remove payment. Please try again."),
+      onError: () => toast.error("Failed to delete payment. Please try again."),
     });
 
   return (
@@ -87,7 +87,7 @@ export function PaymentRows({
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Remove payment</AlertDialogTitle>
+            <AlertDialogTitle>Delete payment</AlertDialogTitle>
             <AlertDialogDescription>
               The payment of {paymentToRemove && formatCurrency(paymentToRemove.amount)} will stop
               counting toward Received. An owner can restore it.
@@ -99,7 +99,7 @@ export function PaymentRows({
               onClick={() => paymentToRemove && remove(paymentToRemove)}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              Remove
+              Delete
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -139,7 +139,7 @@ function PaymentRowItem({
         ]
       : []),
     ...(canSoftDelete && !uncounted
-      ? [{ label: "Remove", onClick: () => onRemove(payment), variant: "destructive" as const }]
+      ? [{ label: "Delete", onClick: () => onRemove(payment), variant: "destructive" as const }]
       : []),
   ];
 

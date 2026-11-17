@@ -36,7 +36,7 @@ export const BOOKING_HISTORY_LIMIT = 50;
 // Over-fetch so the cap still fills after hideDerivedHistoryRows drops a cabin change's derived rows
 const BOOKING_HISTORY_FETCH_LIMIT = BOOKING_HISTORY_LIMIT * 4;
 
-/** A booking's History: its own audit rows and its cabins' rows, the newest first. */
+/** A booking's History: its own audit rows and its cabins' rows, the newest first, one past the limit so the card knows when more exist. */
 export const bookingHistoryQuery = (bookingId: string) =>
   queryOptions({
     queryKey: auditKeys.bookingHistory(bookingId),
@@ -48,7 +48,7 @@ export const bookingHistoryQuery = (bookingId: string) =>
       const newestFirst = [...bookingRows, ...cabinRows].sort((a, b) =>
         (b.created_at ?? "").localeCompare(a.created_at ?? "")
       );
-      return hideDerivedHistoryRows(newestFirst).slice(0, BOOKING_HISTORY_LIMIT);
+      return hideDerivedHistoryRows(newestFirst).slice(0, BOOKING_HISTORY_LIMIT + 1);
     },
     staleTime: 60000,
   });

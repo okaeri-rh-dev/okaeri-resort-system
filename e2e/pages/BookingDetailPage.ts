@@ -286,6 +286,34 @@ export class BookingDetailPage {
   // ================== Actions ==================
 
   /**
+   * Open the Edit stay sheet
+   */
+  async openStaySheet(): Promise<Locator> {
+    await this.editButton.click();
+    return this.page.getByRole("dialog", { name: "Edit stay" });
+  }
+
+  /**
+   * Pick new stay dates in the open Edit stay sheet; the calendar starts at today's month
+   */
+  async pickStayDates(
+    sheet: Locator,
+    monthsAhead: number,
+    checkInDay: RegExp,
+    checkOutDay: RegExp
+  ): Promise<void> {
+    await sheet.getByRole("button", { name: "Stay dates" }).click();
+    const picker = this.page.getByRole("dialog", { name: "Select Date Range" });
+    for (let i = 0; i < monthsAhead; i++) {
+      await picker.getByRole("button", { name: /next month/i }).click();
+    }
+    await picker.getByRole("button", { name: checkInDay }).click();
+    await picker.getByRole("button", { name: checkOutDay }).click();
+    await picker.getByRole("button", { name: "Done" }).click();
+    await expect(picker).toBeHidden();
+  }
+
+  /**
    * Cancel the booking
    */
   async cancelBooking(): Promise<void> {

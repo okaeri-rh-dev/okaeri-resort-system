@@ -11,7 +11,7 @@ _Avoid_: Okaeri Resort
 ### Stays
 
 **Booking**:
-A guest's reserved stay for one or more units over a check-in to check-out date range, with an agreed total price.
+A guest's reserved stay for one or more cabins over a check-in to check-out date range, with an agreed total price.
 _Avoid_: Reservation, order
 
 **Check-in day**:
@@ -35,7 +35,7 @@ A booking made on Airbnb and entered by staff by hand. Airbnb has already confir
 _Avoid_: OTA booking, external booking
 
 **Pending booking**:
-A booking that waits for payment before staff confirm it: an online booking waits for staff to verify its payment proof and choose its units (the guest asks only for a number of cabins), and a staff-made booking (such as a walk-in) waits for its deposit.
+A booking that waits for payment before staff confirm it: an online booking waits for staff to verify its payment proof and choose its cabins (the guest asks only for how many), and a staff-made booking (such as a walk-in) waits for its deposit.
 _Avoid_: Unverified booking, request
 
 **Confirmed booking**:
@@ -63,19 +63,19 @@ What staff write on a booking for other staff. Guests never see it.
 _Avoid_: Special request, comment, remark
 
 **Occupancy**:
-For one calendar month, the booked cabin nights of confirmed bookings divided by the number of units times the days in the month.
+For one calendar month, the booked cabin nights of confirmed bookings divided by the number of cabins times the days in the month.
 _Avoid_: Utilisation, load
 
-**Unit**:
-A rentable accommodation (cabin or room) that a booking occupies. Guests and staff call units "cabins", so screen copy says "cabin"; the model says unit.
-_Avoid_: Room, property
+**Cabin**:
+A rentable accommodation that a booking occupies. Screen copy and code say cabin; the database tables keep the names `units` and `booking_units`.
+_Avoid_: Room, property, unit (in new code names; the database names stay)
 
 **Block**:
-A range of nights when one unit, or every unit, cannot be booked, with a reason such as maintenance or aircon cleaning. Like a booking, it covers nights, so a guest can still check out on a block's first day. Blocks may overlap. Screen copy says "blocked dates".
+A range of nights when one cabin, or every cabin, cannot be booked, with a reason such as maintenance or aircon cleaning. Like a booking, it covers nights, so a guest can still check out on a block's first day. Blocks may overlap. Screen copy says "blocked dates".
 _Avoid_: Blackout, hold, out of order
 
 **Resort closure**:
-A block that covers every unit, including units added after it was made.
+A block that covers every cabin, including cabins added after it was made.
 _Avoid_: Shutdown, holiday
 
 ### Money received

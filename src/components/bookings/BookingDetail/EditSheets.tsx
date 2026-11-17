@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from "react";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { format, parseISO } from "date-fns";
+import { parseISO } from "date-fns";
 import { Loader2 } from "lucide-react";
 import { useForm, type FieldValues, type UseFormReturn } from "react-hook-form";
 import { z } from "zod";
@@ -30,6 +30,7 @@ import { usePricingConfig } from "@/hooks/usePricingConfig";
 import { useUnits } from "@/hooks/useUnits";
 import {
   BOOKING_SOURCES,
+  bookingEditRules,
   manilaDayOf,
   manilaDaySchema,
   nightsBetween,
@@ -40,7 +41,7 @@ import {
   type BookingChanges,
   type ManilaDay,
 } from "@/lib/bookings";
-import { formatCurrency } from "@/lib/formatters";
+import { formatCurrency, formatWeekdayDate } from "@/lib/formatters";
 import { priceStayCabin } from "@/lib/pricing/cabin-pricing";
 import { confirmationCodeSchema } from "@/lib/validations";
 import type { Booking } from "@/types";
@@ -199,10 +200,10 @@ export const NotesEditSheet = (props: EditSheetProps) => (
 
 function NotesForm(props: Omit<EditSheetProps, "open">) {
   const { booking } = props;
-  // A Cancelled booking allows only its internal note to change (docs/adr/0007)
-  const internalOnly = booking.booking_status === "Cancelled";
+  const { role } = useUserRole();
+  const { internalNoteOnly } = bookingEditRules(booking, role);
   const save = useSaveChanges(booking, (values: NotesValues) => ({
-    ...(!internalOnly && { special_requests: values.special_requests.trim() || null }),
+    ...(!internalNoteOnly && { special_requests: values.special_requests.trim() || null }),
     internal_notes: values.internal_notes.trim() || null,
   }));
   const form = useForm<NotesValues>({
@@ -215,7 +216,7 @@ function NotesForm(props: Omit<EditSheetProps, "open">) {
 
   return (
     <EditForm {...props} title="Edit notes" form={form} save={save}>
-      {!internalOnly && (
+      {!internalNoteOnly && (
         <FormField
           control={form.control}
           name="special_requests"
@@ -253,11 +254,10 @@ export const StayEditSheet = (props: EditSheetProps) => (
   </EditSheet>
 );
 
-const dayLabel = (day: ManilaDay) => format(parseISO(day), "EEE, MMM d");
-
 function StayForm(props: Omit<EditSheetProps, "open">) {
   const { booking } = props;
-  const { isManager } = useUserRole();
+  const { role, isManager } = useUserRole();
+  const { datesLocked, checkInLocked } = bookingEditRules(booking, role);
   const { data: units = [] } = useUnits();
   const { data: pricingConfig } = usePricingConfig();
   const updateStay = useUpdateBookingStay();
@@ -290,7 +290,10 @@ function StayForm(props: Omit<EditSheetProps, "open">) {
     JSON.stringify(form.formState.defaultValues);
   const pricedCabins = cabins.map((cabin) => {
     const unit = units.find((u) => u.unit_id === cabin.unitId);
-    return unit ? priceStayCabin(unit, pricingConfig, checkIn, checkOut, cabin.guests) : null;
+    // Mid-pick the check-out day is empty, which pricing cannot parse
+    return unit && nights > 0
+      ? priceStayCabin(unit, pricingConfig, checkIn, checkOut, cabin.guests)
+      : null;
   });
   const newTotal = pricedCabins.reduce((sum, cabin) => sum + (cabin?.subtotal ?? 0), 0);
   // An Airbnb booking's total is the payout (ADR 0006), and without the pricing config each cabin's own rates would apply
@@ -303,10 +306,6 @@ function StayForm(props: Omit<EditSheetProps, "open">) {
     newTotal !== booking.total_amount;
   const priceChange = `Total ${formatCurrency(booking.total_amount)} → ${formatCurrency(newTotal)}`;
   const recomputing = isManager && showNewPrice && recompute;
-
-  // Same table as enforce_booking_edit_rules: staff keep Confirmed dates, and a stay in progress keeps its check-in day
-  const datesLocked = booking.booking_status === "Confirmed" && !isManager;
-  const checkInLocked = booking.booking_status === "CheckedIn";
 
   const setDays = (days: { check_in?: ManilaDay; check_out?: ManilaDay }) => {
     if (days.check_in) form.setValue("check_in", days.check_in);
@@ -340,7 +339,7 @@ function StayForm(props: Omit<EditSheetProps, "open">) {
         {datesLocked ? (
           <>
             <p className="text-sm">
-              {dayLabel(checkIn)} → {dayLabel(checkOut)}
+              {formatWeekdayDate(checkIn)} → {formatWeekdayDate(checkOut)}
             </p>
             <p className="text-muted-foreground text-xs">
               Only a manager can change the dates of a confirmed booking.
@@ -348,7 +347,7 @@ function StayForm(props: Omit<EditSheetProps, "open">) {
           </>
         ) : checkInLocked ? (
           <>
-            <p className="text-sm">Check-in {dayLabel(checkIn)}</p>
+            <p className="text-sm">Check-in {formatWeekdayDate(checkIn)}</p>
             <DatePicker
               aria-label="Check-out day"
               placeholder="Check-out day"

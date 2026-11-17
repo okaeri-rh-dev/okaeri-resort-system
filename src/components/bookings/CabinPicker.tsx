@@ -1,6 +1,7 @@
 import { Minus, Plus, X } from "lucide-react";
 
 import { Button } from "@/components/patterns";
+import { pluralize } from "@/lib/formatters";
 import { cn } from "@/lib/utils";
 import type { Unit } from "@/types";
 
@@ -31,7 +32,7 @@ function GuestCount({
         <Minus aria-hidden="true" />
       </Button>
       <span className="w-16 text-center text-sm tabular-nums">
-        {value} {value === 1 ? "guest" : "guests"}
+        {value} {pluralize(value, "guest")}
       </span>
       <Button
         type="button"

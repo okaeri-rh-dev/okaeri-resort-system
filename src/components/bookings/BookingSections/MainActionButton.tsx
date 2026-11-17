@@ -12,8 +12,13 @@ import {
   Button,
 } from "@/components/patterns";
 import { useUserRole } from "@/hooks";
-import { mainActionFor, manilaDayOf, type MainAction, type UndoAction } from "@/lib/bookings";
-import { outstandingBalance } from "@/lib/dashboard";
+import {
+  mainActionFor,
+  manilaDayOf,
+  outstandingBalance,
+  type MainAction,
+  type UndoAction,
+} from "@/lib/bookings";
 import { formatCurrency } from "@/lib/formatters";
 import type { Booking, BookingStatus } from "@/types";
 

@@ -361,7 +361,7 @@ describe("BookingDetailPage", () => {
     expect(within(rows[1]).queryByLabelText("Has payment proof")).not.toBeInTheDocument();
   });
 
-  it("mutes a removed or refunded payment and leaves it out of Received", () => {
+  it("mutes a deleted or refunded payment and leaves it out of Received", () => {
     renderPage({
       payments: [
         { payment_id: "pay-1", amount: 3000, status: "Active", payment_date: "2026-11-10" },
@@ -373,7 +373,7 @@ describe("BookingDetailPage", () => {
       "listitem"
     );
 
-    expect(within(rows[1]).getByText("Removed")).toBeInTheDocument();
+    expect(within(rows[1]).getByText("Deleted")).toBeInTheDocument();
     expect(within(rows[1]).getByText("₱1,000.00")).toHaveClass("line-through");
     expect(within(rows[2]).getByText("Refunded")).toBeInTheDocument();
     expect(within(rows[2]).getByText("₱500.00")).toHaveClass("line-through");
@@ -381,21 +381,21 @@ describe("BookingDetailPage", () => {
     expect(card("Payments").getByText("₱6,000.00")).toBeInTheDocument();
   });
 
-  it("gives a manager View proof, Edit and Remove, and Remove asks first", async () => {
+  it("gives a manager View proof, Edit and Delete, and Delete asks first", async () => {
     renderPage();
 
     await userEvent.click(screen.getByRole("button", { name: "Actions for payment ₱3,000.00" }));
     expect(screen.getByRole("menuitem", { name: "View proof" })).toBeInTheDocument();
     expect(screen.getByRole("menuitem", { name: "Edit" })).toBeInTheDocument();
-    // A removed payment with no proof leaves nothing to do
+    // A deleted payment with no proof leaves nothing to do
     expect(
       screen.queryByRole("button", { name: "Actions for payment ₱1,000.00" })
     ).not.toBeInTheDocument();
-    await userEvent.click(screen.getByRole("menuitem", { name: "Remove" }));
+    await userEvent.click(screen.getByRole("menuitem", { name: "Delete" }));
 
     expect(softDeletePayment.mutate).not.toHaveBeenCalled();
     await userEvent.click(
-      within(screen.getByRole("alertdialog")).getByRole("button", { name: "Remove" })
+      within(screen.getByRole("alertdialog")).getByRole("button", { name: "Delete" })
     );
     expect(softDeletePayment.mutate).toHaveBeenCalledWith("pay-1", expect.anything());
   });
@@ -407,7 +407,7 @@ describe("BookingDetailPage", () => {
     await userEvent.click(screen.getByRole("button", { name: "Actions for payment ₱3,000.00" }));
     expect(screen.getByRole("menuitem", { name: "View proof" })).toBeInTheDocument();
     expect(screen.queryByRole("menuitem", { name: "Edit" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("menuitem", { name: "Remove" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("menuitem", { name: "Delete" })).not.toBeInTheDocument();
     expect(
       screen.queryByRole("button", { name: "Actions for payment ₱1,000.00" })
     ).not.toBeInTheDocument();
@@ -649,6 +649,17 @@ describe("BookingDetailPage", () => {
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 
+  it("keeps the stay sheet open while only the new check-in day is picked", async () => {
+    renderPage();
+
+    await userEvent.click(screen.getByRole("button", { name: "Edit stay" }));
+    await userEvent.click(screen.getByRole("button", { name: "Stay dates" }));
+    await userEvent.click(screen.getAllByRole("button", { name: / 20th, / })[0]);
+
+    expect(screen.getByRole("dialog", { name: "Edit stay" })).toBeInTheDocument();
+    expect(screen.getByText("Pick the dates first to see free cabins.")).toBeInTheDocument();
+  });
+
   const swapCabin2ForCabin4 = async () => {
     if (!screen.queryByRole("dialog")) {
       await userEvent.click(screen.getByRole("button", { name: "Edit stay" }));
@@ -797,22 +808,31 @@ describe("BookingDetailPage", () => {
     expect(screen.queryByText("Showing the 50 newest changes.")).not.toBeInTheDocument();
   });
 
-  it("says when History shows only the 50 newest changes", async () => {
-    historyRows.value = Array.from({ length: 50 }, (_, index) =>
-      auditRow({
-        audit_id: `a-${index}`,
-        table_name: "bookings",
-        action: "UPDATE",
-        changed_fields: ["internal_notes"],
-        created_at: "2026-11-10T02:00:00Z",
-      })
-    );
-    renderPage();
+  it.each([
+    [50, false],
+    [51, true],
+  ])(
+    "with %i changes, History shows 50 and says so only when some are hidden",
+    async (count, notice) => {
+      historyRows.value = Array.from({ length: count }, (_, index) =>
+        auditRow({
+          audit_id: `a-${index}`,
+          table_name: "bookings",
+          action: "UPDATE",
+          changed_fields: ["internal_notes"],
+          created_at: "2026-11-10T02:00:00Z",
+        })
+      );
+      renderPage();
 
-    await userEvent.click(await screen.findByRole("button", { name: "History 50" }));
+      await userEvent.click(await screen.findByRole("button", { name: "History 50" }));
 
-    expect(screen.getByText("Showing the 50 newest changes.")).toBeInTheDocument();
-  });
+      expect(
+        within(screen.getByRole("list", { name: "History" })).getAllByRole("listitem")
+      ).toHaveLength(50);
+      expect(screen.queryByText("Showing the 50 newest changes.") !== null).toBe(notice);
+    }
+  );
 
   it.each(["owner", "admin"])("gives an %s the History card", async (role) => {
     user.role = role;
