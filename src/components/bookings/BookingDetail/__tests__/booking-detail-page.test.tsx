@@ -361,7 +361,7 @@ describe("BookingDetailPage", () => {
     expect(within(rows[1]).queryByLabelText("Has payment proof")).not.toBeInTheDocument();
   });
 
-  it("mutes a removed or refunded payment and leaves it out of Received", () => {
+  it("mutes a deleted or refunded payment and leaves it out of Received", () => {
     renderPage({
       payments: [
         { payment_id: "pay-1", amount: 3000, status: "Active", payment_date: "2026-11-10" },
@@ -373,7 +373,7 @@ describe("BookingDetailPage", () => {
       "listitem"
     );
 
-    expect(within(rows[1]).getByText("Removed")).toBeInTheDocument();
+    expect(within(rows[1]).getByText("Deleted")).toBeInTheDocument();
     expect(within(rows[1]).getByText("₱1,000.00")).toHaveClass("line-through");
     expect(within(rows[2]).getByText("Refunded")).toBeInTheDocument();
     expect(within(rows[2]).getByText("₱500.00")).toHaveClass("line-through");
@@ -381,21 +381,21 @@ describe("BookingDetailPage", () => {
     expect(card("Payments").getByText("₱6,000.00")).toBeInTheDocument();
   });
 
-  it("gives a manager View proof, Edit and Remove, and Remove asks first", async () => {
+  it("gives a manager View proof, Edit and Delete, and Delete asks first", async () => {
     renderPage();
 
     await userEvent.click(screen.getByRole("button", { name: "Actions for payment ₱3,000.00" }));
     expect(screen.getByRole("menuitem", { name: "View proof" })).toBeInTheDocument();
     expect(screen.getByRole("menuitem", { name: "Edit" })).toBeInTheDocument();
-    // A removed payment with no proof leaves nothing to do
+    // A deleted payment with no proof leaves nothing to do
     expect(
       screen.queryByRole("button", { name: "Actions for payment ₱1,000.00" })
     ).not.toBeInTheDocument();
-    await userEvent.click(screen.getByRole("menuitem", { name: "Remove" }));
+    await userEvent.click(screen.getByRole("menuitem", { name: "Delete" }));
 
     expect(softDeletePayment.mutate).not.toHaveBeenCalled();
     await userEvent.click(
-      within(screen.getByRole("alertdialog")).getByRole("button", { name: "Remove" })
+      within(screen.getByRole("alertdialog")).getByRole("button", { name: "Delete" })
     );
     expect(softDeletePayment.mutate).toHaveBeenCalledWith("pay-1", expect.anything());
   });
@@ -407,7 +407,7 @@ describe("BookingDetailPage", () => {
     await userEvent.click(screen.getByRole("button", { name: "Actions for payment ₱3,000.00" }));
     expect(screen.getByRole("menuitem", { name: "View proof" })).toBeInTheDocument();
     expect(screen.queryByRole("menuitem", { name: "Edit" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("menuitem", { name: "Remove" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("menuitem", { name: "Delete" })).not.toBeInTheDocument();
     expect(
       screen.queryByRole("button", { name: "Actions for payment ₱1,000.00" })
     ).not.toBeInTheDocument();
