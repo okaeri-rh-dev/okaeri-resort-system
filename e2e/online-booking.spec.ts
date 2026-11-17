@@ -7,13 +7,8 @@
 import { expect, test } from "@playwright/test";
 
 import { loginAsAdmin } from "./fixtures/auth";
+import { PNG_1X1 } from "./fixtures/payment-proof";
 import { serviceClient } from "./fixtures/service-client";
-
-// 1x1 PNG, accepted by the payment-proofs bucket (image/*)
-const PNG_1X1 = Buffer.from(
-  "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
-  "base64"
-);
 
 test.describe("Online booking: verify payment", () => {
   const db = serviceClient();
