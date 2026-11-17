@@ -55,6 +55,7 @@ export const E2E_REF = {
   QUEUE: "E2E-QUEUE",
   QUEUE_PAID: "E2E-PAID-QUEUE",
   ASSIGN_PAID: "E2E-ASSIGN-PAID",
+  PHONE_EDIT: "E2E-PHONE-EDIT",
 } as const;
 
 const manilaDay = (msFromNow: number) =>
@@ -107,6 +108,16 @@ export const E2E_BOOKINGS: E2EBookingFixture[] = [
     check_in: "2099-06-30",
     check_out: "2099-07-02",
     total_amount: 5000,
+    num_guests: 2,
+  },
+  // Only booking-page-mobile.spec.ts changes its stay and records a payment on it
+  {
+    booking_reference: E2E_REF.PHONE_EDIT,
+    booking_status: "Confirmed",
+    payment_status: "Pending",
+    check_in: "2099-08-03",
+    check_out: "2099-08-04",
+    total_amount: 2500,
     num_guests: 2,
   },
   {

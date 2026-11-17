@@ -41,7 +41,6 @@
     "src/__tests__/**",
     "src/stores/**",
     "src/routes/_authenticated/units/**",
-    "src/components/bookings/BookingEdit/**",
     "src/hooks/entity/__tests__/**",
     "src/lib/availability.ts",
     "src/lib/database-adapters.ts",

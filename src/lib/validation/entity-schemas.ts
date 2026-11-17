@@ -2,52 +2,9 @@
 
 import { z } from "zod";
 
-import { BOOKING_SOURCES } from "@/lib/bookings/source";
 import { sanitizeText } from "@/lib/security/sanitize";
-import { confirmationCodeSchema } from "@/lib/validations";
 
 import { typeError } from "./type-error";
-
-// ============================================
-// BOOKING EDIT SCHEMA
-// ============================================
-
-/**
- * Validation schema for booking edit/create forms
- * Includes XSS prevention via DOMPurify transforms
- */
-export const bookingEditSchema = z
-  .object({
-    guest_name: z.string().min(1, "Guest name is required").max(200, "Name too long"),
-    email: z.string().email("Invalid email address"),
-    contact_number: z.string().min(10, "Valid phone number required").max(20, "Phone too long"),
-    check_in: z.date({ error: typeError("Check-in date is required") }),
-    check_out: z.date({ error: typeError("Check-out date is required") }),
-    unit_id: z.guid("Valid unit required"),
-    num_guests: z
-      .number({ error: typeError("Number of guests is required") })
-      .int()
-      .min(1, "At least 1 guest required")
-      .max(20, "Maximum 20 guests"),
-    payment_method: z.enum(["Cash", "GCash", "BankTransfer", "Card"], {
-      error: typeError("Payment method is required"),
-    }),
-    special_requests: z
-      .string()
-      .transform((val) => sanitizeText(val))
-      .optional(),
-    booking_source: z.enum(BOOKING_SOURCES),
-    airbnb_confirmation_code: confirmationCodeSchema,
-    total_amount: z
-      .number({ error: typeError("Total is required") })
-      .min(0, "Total cannot be negative"),
-  })
-  .refine((data) => data.check_out > data.check_in, {
-    message: "Check-out must be after check-in",
-    path: ["check_out"],
-  });
-
-export type BookingEditInput = z.infer<typeof bookingEditSchema>;
 
 // ============================================
 // UNIT EDIT SCHEMA

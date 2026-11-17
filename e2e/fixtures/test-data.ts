@@ -91,7 +91,6 @@ export const ROUTES = {
     dashboard: "/admin/dashboard",
     bookings: "/admin/bookings",
     bookingDetail: (id: string) => `/admin/bookings/${id}`,
-    bookingEdit: (id: string) => `/admin/bookings/${id}/edit`,
     units: "/admin/units",
     unitDetail: (id: string) => `/admin/units/${id}`,
     unitEdit: (id: string) => `/admin/units/${id}/edit`,

@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 
-import { bookingEditSchema } from "@/lib/validation/entity-schemas";
 import { completeBookingSchema } from "@/lib/validations";
 
 describe("booking source validation across booking schemas", () => {
@@ -49,22 +48,5 @@ describe("booking source validation across booking schemas", () => {
 
   it("completeBookingSchema rejects when booking_source is omitted", () => {
     expect(() => completeBookingSchema.parse(baseCompleteInput)).toThrow();
-  });
-
-  const baseEditInput = {
-    guest_name: "Edit Walk",
-    email: "edit@example.com",
-    contact_number: "+639170000000",
-    check_in: new Date("2099-03-01"),
-    check_out: new Date("2099-03-02"),
-    unit_id: "22222222-2222-2222-2222-222222222222",
-    num_guests: 1,
-    payment_method: "Cash" as const,
-    total_amount: 5000,
-  };
-
-  it("bookingEditSchema keeps a Website source", () => {
-    const parsed = bookingEditSchema.parse({ ...baseEditInput, booking_source: "Website" });
-    expect(parsed.booking_source).toBe("Website");
   });
 });

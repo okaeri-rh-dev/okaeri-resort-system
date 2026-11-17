@@ -38,12 +38,11 @@ export interface DetailPageLayoutProps {
  * @example
  * ```tsx
  * <DetailPageLayout
- *   title={`Booking ${booking.booking_reference}`}
- *   breadcrumbs={[{ label: "Bookings", to: "/admin/bookings" }, { label: booking.booking_reference }]}
- *   status={<StatusBadge {...statusBadgeProps(booking.booking_status, "Pending")} />}
- *   editRoute={{ to: "/admin/bookings/$bookingId/edit", params: { bookingId: booking.id } }}
+ *   title={guest.guest_name}
+ *   breadcrumbs={[{ label: "Guests", to: "/admin/guests" }, { label: guest.guest_name }]}
+ *   editRoute={{ to: "/admin/guests/$guestId/edit", params: { guestId: guest.guest_id } }}
  * >
- *   <DetailSection title="Stay">…</DetailSection>
+ *   <DetailSection title="Contact">…</DetailSection>
  * </DetailPageLayout>
  * ```
  */

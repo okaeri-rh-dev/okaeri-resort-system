@@ -285,7 +285,7 @@ describe("BookingCard ⋯ menu role gating", () => {
       .getAllByRole("button")
       .find((b) => b.querySelector("svg.lucide-ellipsis"));
     await user.click(trigger!);
-    expect(await screen.findByText("Edit")).toBeInTheDocument();
+    expect(await screen.findByText("Record payment")).toBeInTheDocument();
     expect(screen.queryByText("Delete")).not.toBeInTheDocument();
   });
 
@@ -310,7 +310,7 @@ describe("BookingCard ⋯ menu role gating", () => {
       .getAllByRole("button")
       .find((b) => b.querySelector("svg.lucide-ellipsis"));
     await user.click(trigger!);
-    expect(await screen.findByText("Edit")).toBeInTheDocument();
+    expect(await screen.findByText("Record payment")).toBeInTheDocument();
     expect(screen.queryByText("Cancel")).not.toBeInTheDocument();
   });
 
@@ -324,22 +324,19 @@ describe("BookingCard ⋯ menu role gating", () => {
     const trigger = moreButtons.find((b) => b.querySelector("svg.lucide-ellipsis"));
     expect(trigger).toBeDefined();
     await user.click(trigger!);
-    expect(await screen.findByText("Edit")).toBeInTheDocument();
+    expect(await screen.findByText("Record payment")).toBeInTheDocument();
     // No "Confirm" menu item should exist
     expect(screen.queryByText(/^Confirm$/)).not.toBeInTheDocument();
   });
 
-  it("offers staff Edit but not Cancel", async () => {
+  it("offers staff Record payment but not Cancel", async () => {
     const user = userEvent.setup();
-    renderCard({
-      booking: { booking_status: "Confirmed", payment_status: "Completed" },
-      role: staffRole,
-    });
+    renderCard({ booking: { booking_status: "Confirmed" }, role: staffRole });
     const trigger = screen
       .getAllByRole("button")
       .find((b) => b.querySelector("svg.lucide-ellipsis"));
     await user.click(trigger!);
-    expect(await screen.findByText("Edit")).toBeInTheDocument();
+    expect(await screen.findByText("Record payment")).toBeInTheDocument();
     expect(screen.queryByText("Cancel")).not.toBeInTheDocument();
   });
 });
@@ -382,9 +379,8 @@ describe("BookingCard info-zone navigation", () => {
     const user = userEvent.setup();
     renderCard();
     await user.click(screen.getByRole("button", { name: "Actions for BK-TEST-001" }));
-    await user.click(await screen.findByText("Edit"));
-    expect(navigateMock).toHaveBeenCalledOnce();
-    expect(navigateMock.mock.calls[0][0]).toMatchObject({ to: "/admin/bookings/$bookingId/edit" });
+    await user.click(await screen.findByText("Record payment"));
+    expect(navigateMock).not.toHaveBeenCalled();
   });
 
   it("clicking the primary Confirm button does not also trigger info-zone navigation", async () => {

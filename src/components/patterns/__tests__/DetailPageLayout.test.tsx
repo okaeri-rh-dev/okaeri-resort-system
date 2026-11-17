@@ -48,7 +48,7 @@ describe("DetailPageLayout", () => {
         breadcrumbs={[]}
         status={<StatusBadge tone="success">Confirmed</StatusBadge>}
         actions={<Button>Record payment</Button>}
-        editRoute={{ to: "/admin/bookings/$bookingId/edit", params: { bookingId: "b1" } }}
+        editRoute={{ to: "/admin/guests/$guestId/edit", params: { guestId: "g1" } }}
       >
         <p>Body</p>
       </DetailPageLayout>
@@ -59,7 +59,7 @@ describe("DetailPageLayout", () => {
     expect(within(actions).getByRole("button", { name: "Record payment" })).toBeVisible();
     expect(within(actions).getByRole("link", { name: "Edit" })).toHaveAttribute(
       "href",
-      "/admin/bookings/b1/edit"
+      "/admin/guests/g1/edit"
     );
   });
 
@@ -70,7 +70,7 @@ describe("DetailPageLayout", () => {
           title="Booking OKR-1042"
           breadcrumbs={[{ label: "Bookings", to: "/admin/bookings" }, { label: "OKR-1042" }]}
           status={<StatusBadge tone="warning">Pending</StatusBadge>}
-          editRoute={{ to: "/admin/bookings/$bookingId/edit", params: { bookingId: "b1" } }}
+          editRoute={{ to: "/admin/guests/$guestId/edit", params: { guestId: "g1" } }}
         >
           <DetailSection title="Stay" collapsible>
             <p>Two nights</p>

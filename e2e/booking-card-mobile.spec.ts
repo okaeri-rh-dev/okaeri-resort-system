@@ -57,7 +57,8 @@ test.describe("Mobile booking card", () => {
     // ⋯ trigger is an unlabeled icon button inside the card header.
     await card.locator("button:has(svg.lucide-ellipsis)").click();
     const menu = page.getByRole("menu");
-    await expect(menu.getByRole("menuitem", { name: "Edit" })).toBeVisible();
+    // Editing lives on the booking page
+    await expect(menu.getByRole("menuitem", { name: "Edit" })).toHaveCount(0);
     await expect(menu.getByRole("menuitem", { name: "Record payment" })).toBeVisible();
     await expect(menu.getByRole("menuitem", { name: "Cancel" })).toBeVisible();
     // Bookings are cancelled, never deleted, even by an owner.

@@ -141,7 +141,7 @@ export class BookingDetailPage {
     this.adminNotes = page.locator('[data-testid="admin-notes"], [class*="admin-notes"]');
 
     // Action buttons
-    this.editButton = page.getByRole("menuitem", { name: "Edit", exact: true });
+    this.editButton = page.getByRole("button", { name: "Edit stay" });
     this.cancelButton = page.getByRole("button", { name: /cancel.*booking/i });
     this.checkInButton = page.getByRole("button", { name: /check.?in/i });
     this.checkOutButton = page.getByRole("button", { name: /check.?out/i });
@@ -286,15 +286,6 @@ export class BookingDetailPage {
   // ================== Actions ==================
 
   /**
-   * Edit the booking
-   */
-  async editBooking(): Promise<void> {
-    await this.actionsMenu.click();
-    await this.editButton.click();
-    await this.page.waitForURL(/\/edit$/);
-  }
-
-  /**
    * Cancel the booking
    */
   async cancelBooking(): Promise<void> {
@@ -402,7 +393,6 @@ export class BookingDetailPage {
    * Verify edit button is visible
    */
   async expectEditButtonVisible(): Promise<void> {
-    await this.actionsMenu.click();
     await expect(this.editButton).toBeVisible();
   }
 

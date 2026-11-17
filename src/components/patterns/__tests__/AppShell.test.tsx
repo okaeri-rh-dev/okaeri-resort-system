@@ -389,7 +389,7 @@ describe("AppShell, admin grouped nav", () => {
   });
 
   it("marks the parent destination and its group on a child route no destination owns", async () => {
-    renderGrouped("/admin/bookings/booking-1/edit");
+    renderGrouped("/admin/bookings/booking-1");
 
     const nav = await screen.findByRole("navigation", { name: "Main" });
     const bookings = within(nav).getByRole("list", { name: "Bookings" });
