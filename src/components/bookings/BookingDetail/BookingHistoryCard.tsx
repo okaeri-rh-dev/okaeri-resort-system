@@ -47,7 +47,8 @@ function describeHistoryEntry(log: AuditLog, unitNames: Map<string, string>): st
 /** The audit trail of a booking and its cabins, for managers and above. */
 export function BookingHistoryCard({ bookingId }: { bookingId: string }) {
   const headingId = useId();
-  const { data: logs = [], isPending, isError } = useQuery(bookingHistoryQuery(bookingId));
+  const { data: fetched = [], isPending, isError } = useQuery(bookingHistoryQuery(bookingId));
+  const logs = fetched.slice(0, BOOKING_HISTORY_LIMIT);
   const { data: units = [] } = useQuery(allUnitsQuery());
   const unitNames = new Map(units.map((unit) => [unit.unit_id, unit.unit_name]));
 
@@ -104,7 +105,7 @@ export function BookingHistoryCard({ bookingId }: { bookingId: string }) {
                 })}
               </ul>
             )}
-            {logs.length >= BOOKING_HISTORY_LIMIT && (
+            {fetched.length > BOOKING_HISTORY_LIMIT && (
               <p className="text-muted-foreground pt-2 text-xs">
                 Showing the {BOOKING_HISTORY_LIMIT} newest changes.
               </p>

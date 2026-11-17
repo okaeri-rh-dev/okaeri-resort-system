@@ -797,22 +797,31 @@ describe("BookingDetailPage", () => {
     expect(screen.queryByText("Showing the 50 newest changes.")).not.toBeInTheDocument();
   });
 
-  it("says when History shows only the 50 newest changes", async () => {
-    historyRows.value = Array.from({ length: 50 }, (_, index) =>
-      auditRow({
-        audit_id: `a-${index}`,
-        table_name: "bookings",
-        action: "UPDATE",
-        changed_fields: ["internal_notes"],
-        created_at: "2026-11-10T02:00:00Z",
-      })
-    );
-    renderPage();
+  it.each([
+    [50, false],
+    [51, true],
+  ])(
+    "with %i changes, History shows 50 and says so only when some are hidden",
+    async (count, notice) => {
+      historyRows.value = Array.from({ length: count }, (_, index) =>
+        auditRow({
+          audit_id: `a-${index}`,
+          table_name: "bookings",
+          action: "UPDATE",
+          changed_fields: ["internal_notes"],
+          created_at: "2026-11-10T02:00:00Z",
+        })
+      );
+      renderPage();
 
-    await userEvent.click(await screen.findByRole("button", { name: "History 50" }));
+      await userEvent.click(await screen.findByRole("button", { name: "History 50" }));
 
-    expect(screen.getByText("Showing the 50 newest changes.")).toBeInTheDocument();
-  });
+      expect(
+        within(screen.getByRole("list", { name: "History" })).getAllByRole("listitem")
+      ).toHaveLength(50);
+      expect(screen.queryByText("Showing the 50 newest changes.") !== null).toBe(notice);
+    }
+  );
 
   it.each(["owner", "admin"])("gives an %s the History card", async (role) => {
     user.role = role;
