@@ -17,7 +17,6 @@ const ERROR_SCREEN_WAIT = { timeout: 30_000 };
 
 const DETAIL_ROUTES = [
   { path: `/admin/bookings/${MISSING_ID}`, heading: "Failed to Load Booking" },
-  { path: `/admin/bookings/${MISSING_ID}/edit`, heading: "Failed to Load Booking Editor" },
   { path: `/admin/guests/${MISSING_ID}`, heading: "Failed to Load Guest" },
   { path: `/admin/guests/${MISSING_ID}/edit`, heading: "Failed to Load Guest Editor" },
   { path: `/admin/expenses/${MISSING_ID}`, heading: "Failed to Load Expense" },

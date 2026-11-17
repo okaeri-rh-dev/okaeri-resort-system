@@ -157,7 +157,7 @@ export const undoActionFor = (
   return isOwnRecentChange ? action : undefined;
 };
 
-export type OverflowAction = "Record payment" | "Edit" | UndoAction | "Cancel";
+export type OverflowAction = "Record payment" | UndoAction | "Cancel";
 
 export const canRecordPayment = (booking: Booking) =>
   booking.booking_status !== "Cancelled" && outstandingBalance(booking) > 0;
@@ -175,7 +175,6 @@ export const overflowActionsFor = (
 
   const items: OverflowAction[] = [];
   if (canRecordPayment(booking)) items.push("Record payment");
-  if (status === "Pending" || status === "Confirmed" || status === "CheckedIn") items.push("Edit");
   if (undo) items.push(undo);
   if (isManagerRole(role) && (status === "Pending" || status === "Confirmed")) items.push("Cancel");
   return items;

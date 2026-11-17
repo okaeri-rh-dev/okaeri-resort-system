@@ -392,10 +392,9 @@ test.describe("Role-Based Access", () => {
     const bookingsTable = new BookingsTablePage(page);
     await bookingsTable.goto();
 
-    await bookingsTable.openActionsMenu(E2E_REF.CONFIRMED);
+    await bookingsTable.clickBookingRow(E2E_REF.CONFIRMED);
 
-    // Edit option should be available for admins
-    await expect(page.getByRole("menuitem", { name: /edit/i })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Edit stay" })).toBeVisible();
   });
 });
 

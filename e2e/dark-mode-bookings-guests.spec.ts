@@ -45,9 +45,8 @@ test.describe("Dark mode bookings and guests", () => {
       await expect(page.getByRole("region", { name: "Stay" })).toBeVisible();
       await expectReadable(page);
 
-      await page.getByRole("button", { name: `Actions for ${E2E_REF.CONF_PAID}` }).click();
-      await page.getByRole("menuitem", { name: "Edit" }).click();
-      await expect(page.getByLabel("Guest Name")).toHaveValue(E2E_GUEST.guest_name);
+      await page.getByRole("button", { name: "Edit guest" }).click();
+      await expect(page.getByLabel("Guest name")).toHaveValue(E2E_GUEST.guest_name);
       await expectReadable(page);
     });
   }

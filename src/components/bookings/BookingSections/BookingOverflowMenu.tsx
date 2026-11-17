@@ -1,7 +1,5 @@
 import { useState } from "react";
 
-import { useNavigate } from "@tanstack/react-router";
-
 import {
   ActionMenu,
   AlertDialog,
@@ -33,7 +31,6 @@ export const BookingOverflowMenu = ({
   onRecordPayment,
   onCancel,
 }: BookingOverflowMenuProps) => {
-  const navigate = useNavigate();
   const { role, userId } = useUserRole();
   const [showCancelDialog, setShowCancelDialog] = useState(false);
 
@@ -43,7 +40,6 @@ export const BookingOverflowMenu = ({
   const bookingId = booking.booking_id;
   const run: Record<OverflowAction, () => void> = {
     "Record payment": onRecordPayment,
-    Edit: () => void navigate({ to: "/admin/bookings/$bookingId/edit", params: { bookingId } }),
     "Undo check-in": () =>
       updateBookingStatus.mutate({ bookingId, status: UNDO_STATUS["Undo check-in"] }),
     "Undo check-out": () =>

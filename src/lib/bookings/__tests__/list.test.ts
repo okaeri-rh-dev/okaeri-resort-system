@@ -333,12 +333,12 @@ describe("overflowActionsFor", () => {
   ) => overflowActionsFor(booking(status, "2026-10-15", "2026-10-17", fields), role, actorId, NOW);
 
   it.each([
-    ["Pending", "manager", due, ["Record payment", "Edit", "Cancel"]],
-    ["Pending", "staff", due, ["Record payment", "Edit"]],
-    ["Confirmed", "owner", paid, ["Edit", "Cancel"]],
-    ["Confirmed", "staff", paid, ["Edit"]],
-    ["CheckedIn", "staff", due, ["Record payment", "Edit"]],
-    ["CheckedIn", "admin", paid, ["Edit", "Undo check-in"]],
+    ["Pending", "manager", due, ["Record payment", "Cancel"]],
+    ["Pending", "staff", due, ["Record payment"]],
+    ["Confirmed", "owner", paid, ["Cancel"]],
+    ["Confirmed", "staff", paid, []],
+    ["CheckedIn", "staff", due, ["Record payment"]],
+    ["CheckedIn", "admin", paid, ["Undo check-in"]],
     ["CheckedOut", "staff", due, ["Record payment"]],
     ["CheckedOut", "staff", paid, []],
     ["CheckedOut", "manager", due, ["Record payment", "Undo check-out"]],

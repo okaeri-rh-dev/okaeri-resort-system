@@ -21,14 +21,9 @@ import { expect, test } from "@playwright/test";
 
 import { E2E_REF } from "../scripts/e2e/fixtures";
 import { loginAsOwner, loginAsStaff } from "./fixtures/auth";
+import { expectPaymentRecorded, uploadPaymentProof } from "./fixtures/payment-proof";
 import { serviceClient } from "./fixtures/service-client";
 import { BookingsTablePage } from "./pages/BookingsTablePage";
-
-// 1x1 PNG — a valid image the payment-proofs bucket (accept image/*) will accept.
-const PNG_1X1 = Buffer.from(
-  "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
-  "base64"
-);
 
 test.describe("RLS role smoke (browser)", () => {
   const db = serviceClient();
@@ -71,26 +66,10 @@ test.describe("RLS role smoke (browser)", () => {
 
     // "Record payment" triggers a native file chooser (handleUploadPayment
     // creates + clicks a file input).
-    const [fileChooser] = await Promise.all([
-      page.waitForEvent("filechooser"),
-      page.getByRole("menuitem", { name: /record payment/i }).click(),
-    ]);
-    await fileChooser.setFiles({ name: "proof.png", mimeType: "image/png", buffer: PNG_1X1 });
+    await uploadPaymentProof(page);
 
-    // Success is silent in the UI — assert the payment row was inserted (this is
-    // the staff payments INSERT that RLS must allow).
-    await expect
-      .poll(
-        async () => {
-          const { count } = await db
-            .from("payments")
-            .select("payment_id", { count: "exact", head: true })
-            .eq("booking_id", bookingId!);
-          return count ?? 0;
-        },
-        { timeout: 20_000, message: "expected a payment row after staff upload" }
-      )
-      .toBeGreaterThan(0);
+    // The staff payments INSERT that RLS must allow
+    await expectPaymentRecorded(db, bookingId!);
   });
 
   test("owner can open the Expenses page (owner SELECT expenses)", async ({ page }) => {

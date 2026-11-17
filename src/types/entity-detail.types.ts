@@ -19,7 +19,6 @@ export type EntityType = "booking" | "unit" | "guest" | "payment" | "expense";
 /**
  * Extract row types from Supabase schema for type safety
  */
-export type Booking = Database["public"]["Tables"]["bookings"]["Row"];
 export type Unit = Database["public"]["Tables"]["units"]["Row"];
 export type Guest = Database["public"]["Tables"]["guests"]["Row"];
 export type Payment = Database["public"]["Tables"]["payments"]["Row"];
