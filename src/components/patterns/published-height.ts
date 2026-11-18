@@ -25,12 +25,12 @@ export function usePublishedHeight(variable: string, enabled: boolean) {
 }
 
 /**
- * Ref for a page's own fixed bottom bar (the one that sits above the admin bottom bar). On a compact
+ * Ref for a page's own fixed bottom bar that cannot be a `PageBottomBar`. On a compact
  * window it publishes the bar's height to `--page-bottom-bar-height`, so toasts stack above the bar
  * instead of covering it. Pass `false` when the bar is not at the screen foot (in a sheet, say).
  *
  * @example
- * <div ref={usePageBottomBarRef()} className="fixed inset-x-0 bottom-(--admin-bottom-bar-height)">…</div>
+ * <div ref={usePageBottomBarRef(placement === "page")} className={placementClasses}>…</div>
  */
 export function usePageBottomBarRef(isPageBar = true) {
   const isCompact = useContext(CompactWindowContext);

@@ -5,6 +5,7 @@ import { Download, Eye, FileText, Settings } from "lucide-react";
 import {
   Button,
   Callout,
+  PageBottomBar,
   Sheet,
   SheetContent,
   SheetHeader,
@@ -13,7 +14,6 @@ import {
   TabsContent,
   TabsList,
   TabsTrigger,
-  usePageBottomBarRef,
 } from "@/components/patterns";
 import { useAllocateDocumentNumber, useLetterhead } from "@/hooks/useDocuments";
 import { useDocumentStore } from "@/stores/useDocumentStore";
@@ -31,7 +31,6 @@ export function DocumentGenerator() {
   const { mutateAsync: allocateDocumentNumber, isPending: isAllocating } =
     useAllocateDocumentNumber();
   const { generate } = useGeneratePDF();
-  const bottomBarRef = usePageBottomBarRef();
 
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [mobilePreviewOpen, setMobilePreviewOpen] = useState(false);
@@ -175,11 +174,7 @@ export function DocumentGenerator() {
         <DocumentForm />
       </div>
 
-      {/* Mobile sticky bottom bar: above the admin bottom bar on compact, at the screen foot from medium */}
-      <div
-        ref={bottomBarRef}
-        className="bg-background expanded:hidden medium:bottom-0 medium:left-20 medium:pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))] fixed right-0 bottom-(--admin-bottom-bar-height) left-0 z-40 flex items-center gap-2 border-t p-3"
-      >
+      <PageBottomBar>
         <Button
           variant="outline"
           className="min-h-[44px] flex-1"
@@ -192,7 +187,7 @@ export function DocumentGenerator() {
           <Download className="mr-2 h-4 w-4" />
           {isBusy ? "Generating..." : "Download PDF"}
         </Button>
-      </div>
+      </PageBottomBar>
 
       {/* Mobile Preview Sheet */}
       <Sheet open={mobilePreviewOpen} onOpenChange={setMobilePreviewOpen}>

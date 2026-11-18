@@ -24,7 +24,7 @@ import { axe } from "vitest-axe";
 
 import {
   AppShell,
-  usePageBottomBarRef,
+  PageBottomBar,
   type ShellDestination,
   type ShellGroup,
 } from "@/components/patterns";
@@ -120,9 +120,6 @@ describe("AppShell, admin", () => {
       offsetHeight.mockRestore();
     });
 
-    function PageBar() {
-      return <div ref={usePageBottomBarRef()}>Page actions</div>;
-    }
     const publishedPageBarHeight = () =>
       document.documentElement.style.getPropertyValue("--page-bottom-bar-height");
 
@@ -142,7 +139,7 @@ describe("AppShell, admin", () => {
       const { unmount } = renderAt(
         "/admin/documents",
         <AppShell surface="admin" brand={brand} destinations={staffDestinations}>
-          <PageBar />
+          <PageBottomBar>Page actions</PageBottomBar>
         </AppShell>
       );
 

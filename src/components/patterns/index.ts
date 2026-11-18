@@ -78,4 +78,5 @@ export {
   type ShellGroup,
 } from "./AppShell";
 export { usePageBottomBarRef } from "./published-height";
+export { PageBottomBar, type PageBottomBarProps } from "./PageBottomBar";
 export type { ShellTheme, ThemeSetting } from "./ThemeControls";
