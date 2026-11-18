@@ -209,18 +209,6 @@ export const useUIStore = create<UIStore>()(
   )
 );
 
-// ============================================
-// HOOKS
-// ============================================
-
-// Hook for handling async operations with loading state
-
-// Hook for confirmation dialogs
-
-// Hook for managing form state with loading
-
-// Hook for keyboard shortcuts
-
 // Initialize theme on app start; index.html has already applied the class before first paint
 export const initializeTheme = () => {
   const savedTheme = localStorage.getItem("theme") as "light" | "dark" | "system" | null;
