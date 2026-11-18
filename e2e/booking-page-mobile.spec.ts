@@ -53,11 +53,7 @@ test("a phone edits the stay and records a payment from the booking page", async
   await sheet.getByRole("button", { name: "One guest more in Cabin 3" }).click();
   await sheet.getByRole("button", { name: "Save changes" }).click();
   await expect(sheet).toBeHidden();
-  // shortcut: the toast sits over the action bar until it goes (a hovering pointer keeps it); drop this wait with #473
-  const toast = page.getByText("Booking updated");
-  await expect(toast).toBeVisible();
-  await page.mouse.move(0, 0);
-  await expect(toast).toBeHidden({ timeout: 10_000 });
+  await expect(page.getByText("Booking updated")).toBeVisible();
   expect(await detail.getCheckInDate()).toContain(format(newCheckIn, "MMM d"));
   expect(await detail.getAssignedUnits()).toEqual([expect.stringMatching(/Cabin 3.*3 guests/)]);
 

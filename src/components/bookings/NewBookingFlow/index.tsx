@@ -17,6 +17,7 @@ import {
   CardContent,
   PageHeader,
   toast,
+  usePageBottomBarRef,
 } from "@/components/patterns";
 import {
   OfflineBookingError,
@@ -53,6 +54,7 @@ export function NewBookingFlow() {
   const [draft, setDraft] = useState<Draft>(EMPTY_DRAFT);
   const update = (patch: Partial<Draft>) => setDraft((prev) => ({ ...prev, ...patch }));
   const saved = useRef(false);
+  const bottomBarRef = usePageBottomBarRef();
 
   const { data: units = [] } = useUnits();
   const { data: pricingConfig } = usePricingConfig();
@@ -219,7 +221,10 @@ export function NewBookingFlow() {
         )}
       </div>
 
-      <div className="bg-background border-border expanded:hidden medium:bottom-0 medium:left-20 fixed right-0 bottom-(--admin-bottom-bar-height) left-0 z-40 flex items-center justify-between gap-2 border-t p-3">
+      <div
+        ref={bottomBarRef}
+        className="bg-background border-border expanded:hidden medium:bottom-0 medium:left-20 fixed right-0 bottom-(--admin-bottom-bar-height) left-0 z-40 flex items-center justify-between gap-2 border-t p-3"
+      >
         <div className="min-w-0 text-sm">
           <p className="font-semibold tabular-nums">{formatCurrency(total)}</p>
           <p className="text-muted-foreground truncate text-xs">

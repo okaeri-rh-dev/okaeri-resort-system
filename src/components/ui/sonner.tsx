@@ -13,7 +13,8 @@ const Toaster = ({ ...props }: ToasterProps) => {
       // eslint-disable-next-line better-tailwindcss/no-unknown-classes -- marker class for the group-[.toaster]: selectors below
       className="toaster group"
       mobileOffset={{
-        bottom: "var(--admin-bottom-bar-height, env(safe-area-inset-bottom, 0px))",
+        bottom:
+          "calc(var(--admin-bottom-bar-height, env(safe-area-inset-bottom, 0px)) + var(--page-bottom-bar-height, 0px))",
       }}
       toastOptions={{
         classNames: {

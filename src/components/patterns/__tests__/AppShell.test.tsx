@@ -22,7 +22,12 @@ import {
 import { beforeAll, describe, expect, it, vi } from "vitest";
 import { axe } from "vitest-axe";
 
-import { AppShell, type ShellDestination, type ShellGroup } from "@/components/patterns";
+import {
+  AppShell,
+  usePageBottomBarRef,
+  type ShellDestination,
+  type ShellGroup,
+} from "@/components/patterns";
 
 // The setup file's vi.fn() ResizeObserver is reset between tests; Radix menus measure with it
 beforeAll(() => {
@@ -112,6 +117,40 @@ describe("AppShell, admin", () => {
 
       unmount();
       expect(publishedHeight()).toBe("");
+      offsetHeight.mockRestore();
+    });
+
+    function PageBar() {
+      return <div ref={usePageBottomBarRef()}>Page actions</div>;
+    }
+    const publishedPageBarHeight = () =>
+      document.documentElement.style.getPropertyValue("--page-bottom-bar-height");
+
+    it("publishes a page's bottom bar height so toasts can sit above it", async () => {
+      const offsetHeight = vi
+        .spyOn(HTMLElement.prototype, "offsetHeight", "get")
+        .mockReturnValue(56);
+      vi.mocked(window.matchMedia).mockImplementation(
+        (query: string) =>
+          ({
+            matches: true,
+            media: query,
+            addEventListener: vi.fn(),
+            removeEventListener: vi.fn(),
+          }) as unknown as MediaQueryList
+      );
+      const { unmount } = renderAt(
+        "/admin/documents",
+        <AppShell surface="admin" brand={brand} destinations={staffDestinations}>
+          <PageBar />
+        </AppShell>
+      );
+
+      await screen.findByText("Page actions");
+      expect(publishedPageBarHeight()).toBe("56px");
+
+      unmount();
+      expect(publishedPageBarHeight()).toBe("");
       offsetHeight.mockRestore();
     });
 

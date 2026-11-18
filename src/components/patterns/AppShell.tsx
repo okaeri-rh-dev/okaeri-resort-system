@@ -2,8 +2,6 @@ import {
   createContext,
   useContext,
   useId,
-  useLayoutEffect,
-  useRef,
   useState,
   type ComponentProps,
   type ReactNode,
@@ -33,6 +31,7 @@ import type { RoutePath } from "@/types/route-path";
 
 import { Logo } from "./Logo";
 import { PageHeader, type PageHeaderProps } from "./PageHeader";
+import { usePublishedHeight } from "./published-height";
 import { ShellContentContext } from "./shell-content";
 import { DarkModeSwitch, ThemeSegments, type ShellTheme } from "./ThemeControls";
 import { CompactWindowContext, useCompactWindowQuery } from "./window-size";
@@ -437,32 +436,6 @@ const sheetItem = cn(
   "focus-visible:ring-2 focus-visible:outline-hidden"
 );
 
-/**
- * Writes the compact bottom bar's rendered height, safe area included, to `--admin-bottom-bar-height`
- * on the document root, so a page's own fixed bottom bar and the toasts can sit directly above it.
- * From medium the bar is the full-height rail, so nothing is published.
- */
-function usePublishedBottomBarHeight(isCompact: boolean) {
-  const barRef = useRef<HTMLDivElement>(null);
-
-  useLayoutEffect(() => {
-    const bar = barRef.current;
-    if (!isCompact || !bar) return;
-    const root = document.documentElement;
-    const publish = () =>
-      root.style.setProperty("--admin-bottom-bar-height", `${bar.offsetHeight}px`);
-    publish();
-    const observer = new ResizeObserver(publish);
-    observer.observe(bar);
-    return () => {
-      observer.disconnect();
-      root.style.removeProperty("--admin-bottom-bar-height");
-    };
-  }, [isCompact]);
-
-  return barRef;
-}
-
 const adminSheetLink = cn(
   sheetItem,
   "hover:bg-sidebar-accent focus-visible:ring-sidebar-ring",
@@ -486,7 +459,8 @@ function AdminShell({
   const sections = navGroups && toSections(destinations, navGroups);
   const current = useCurrentDestination(destinations);
   const isCompact = useContext(CompactWindowContext);
-  const barRef = usePublishedBottomBarHeight(isCompact);
+  // Lets a page's own fixed bottom bar and the toasts sit directly above the bar; from medium it is the full-height rail
+  const barRef = usePublishedHeight("--admin-bottom-bar-height", isCompact);
 
   return (
     <CurrentDestinationContext.Provider value={current}>

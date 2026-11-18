@@ -77,4 +77,5 @@ export {
   type ShellDestination,
   type ShellGroup,
 } from "./AppShell";
+export { usePageBottomBarRef } from "./published-height";
 export type { ShellTheme, ThemeSetting } from "./ThemeControls";
