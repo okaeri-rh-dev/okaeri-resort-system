@@ -11,7 +11,7 @@ Entity stores (`useGuestStore`, `useExpenseStore`, `usePaymentStore`) hold clien
 
 ## Files outside the entity pattern
 
-- `useUIStore.ts`: theme, toasts and confirm dialogs.
+- `useUIStore.ts`: theme, toasts, confirm dialogs, loading and global error state, and sidebar state.
 - `useAuditStore.ts`: audit log filters, quick filter presets and table state. It has no query hooks.
 - `useDocumentStore.ts`: the document draft and preview mode. Nothing is persisted; the letterhead and document numbers live in the database (`src/hooks/useDocuments.ts`).
 - `useInstallPromptStore.ts`: the PWA install prompt (`useCanShowInstallBanner`).
