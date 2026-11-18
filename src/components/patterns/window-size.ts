@@ -11,7 +11,7 @@ function subscribe(onChange: () => void) {
 
 /**
  * The shell's one window query. Private to the kit: `AppShell` provides it, and only the admin
- * shell's bottom bar height and overlays whose form follows the window (the date picker's bottom
+ * shell's and a page's bottom bar heights and overlays whose form follows the window (the date picker's bottom
  * sheet) read it.
  */
 export function useCompactWindowQuery(): boolean {

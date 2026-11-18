@@ -1,3 +1,4 @@
+import { usePageBottomBarRef } from "@/components/patterns";
 import { useUserRole } from "@/hooks";
 import { mainActionFor, manilaDayOf, overflowActionsFor } from "@/lib/bookings";
 import { cn } from "@/lib/utils";
@@ -33,6 +34,7 @@ export function BookingActionBar({
   placement,
 }: BookingActionBarProps) {
   const { role, userId } = useUserRole();
+  const bottomBarRef = usePageBottomBarRef(placement === "page");
   const now = new Date();
   const hasActions =
     !!mainActionFor(booking, role, manilaDayOf(now)) ||
@@ -41,6 +43,7 @@ export function BookingActionBar({
 
   return (
     <div
+      ref={bottomBarRef}
       className={cn(
         "bg-card shadow-popover expanded:border-0 expanded:bg-transparent expanded:p-0 expanded:shadow-none z-30 flex items-center gap-2 border-t px-4 py-2",
         PLACEMENT_CLASSES[placement]
