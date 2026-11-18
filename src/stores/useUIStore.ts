@@ -14,18 +14,6 @@ export interface Toast {
   duration?: number;
 }
 
-export type ModalType =
-  | "createBooking"
-  | "editBooking"
-  | "createUnit"
-  | "editUnit"
-  | "createGuest"
-  | "editGuest"
-  | "paymentProof"
-  | "confirmDelete"
-  | "bulkAction"
-  | null;
-
 export interface ConfirmDialogState {
   isOpen: boolean;
   title: string;
@@ -46,10 +34,6 @@ interface UIStore {
   loadingMessage: string | null;
   globalError: string | null;
 
-  // Modal states
-  activeModal: ModalType;
-  modalData: unknown;
-
   // Toast notifications
   toasts: Toast[];
 
@@ -65,10 +49,6 @@ interface UIStore {
   // Actions - Loading
   setLoading: (loading: boolean, message?: string) => void;
   setGlobalError: (error: string | null) => void;
-
-  // Actions - Modals
-  openModal: (modal: ModalType, data?: unknown) => void;
-  closeModal: () => void;
 
   // Actions - Toasts
   addToast: (toast: Omit<Toast, "id">) => void;
@@ -107,8 +87,6 @@ export const useUIStore = create<UIStore>()(
       isLoading: false,
       loadingMessage: null,
       globalError: null,
-      activeModal: null,
-      modalData: null,
       toasts: [],
       confirmDialog: {
         isOpen: false,
@@ -124,11 +102,6 @@ export const useUIStore = create<UIStore>()(
         set({ isLoading: loading, loadingMessage: message }),
 
       setGlobalError: (error) => set({ globalError: error }),
-
-      // Modal actions
-      openModal: (modal, data = undefined) => set({ activeModal: modal, modalData: data }),
-
-      closeModal: () => set({ activeModal: null, modalData: null }),
 
       // Toast actions
       addToast: (toast) => {
@@ -235,18 +208,6 @@ export const useUIStore = create<UIStore>()(
     }
   )
 );
-
-// ============================================
-// HOOKS
-// ============================================
-
-// Hook for handling async operations with loading state
-
-// Hook for confirmation dialogs
-
-// Hook for managing form state with loading
-
-// Hook for keyboard shortcuts
 
 // Initialize theme on app start; index.html has already applied the class before first paint
 export const initializeTheme = () => {
