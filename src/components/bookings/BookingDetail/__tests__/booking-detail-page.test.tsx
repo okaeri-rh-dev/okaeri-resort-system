@@ -547,6 +547,7 @@ describe("BookingDetailPage", () => {
       },
     });
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
   });
 
   it("keeps the booking source of a Website booking", async () => {
@@ -623,6 +624,19 @@ describe("BookingDetailPage", () => {
 
     expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
+  it("asks before Close drops changed stay dates", async () => {
+    renderPage();
+
+    await userEvent.click(screen.getByRole("button", { name: "Edit stay" }));
+    await userEvent.click(screen.getByRole("button", { name: "Stay dates" }));
+    await userEvent.click(screen.getAllByRole("button", { name: / 20th, / })[0]);
+    await userEvent.keyboard("{Escape}");
+    // The sheet also has a corner X button named Close
+    await userEvent.click(screen.getByText("Close", { selector: "button" }));
+
+    expect(screen.getByRole("alertdialog", { name: "Leave without saving?" })).toBeInTheDocument();
   });
 
   it("asks before closing a stay sheet with a changed cabin", async () => {
