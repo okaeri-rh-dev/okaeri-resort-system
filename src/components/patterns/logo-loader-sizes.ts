@@ -1,10 +1,9 @@
 /**
  * The logo width of each LogoLoader size. `full` matches the boot splash in `index.html`.
- * Tests read it, so a size change edits this file and `index.html` only.
  *
  * @example
  * ```tsx
- * expect(svg).toHaveClass(logoLoaderSizes.full);
+ * <svg className={logoLoaderSizes.content} />
  * ```
  */
 export const logoLoaderSizes = {
