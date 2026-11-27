@@ -2,6 +2,11 @@
 -- No rule, error code or message changes.
 BEGIN;
 
+CREATE OR REPLACE FUNCTION public.manila_day(p_instant TIMESTAMPTZ)
+RETURNS DATE AS $$
+    SELECT (p_instant AT TIME ZONE 'Asia/Manila')::DATE;
+$$ LANGUAGE sql STABLE SET search_path = '';
+
 CREATE OR REPLACE FUNCTION public.enforce_booking_edit_rules()
 RETURNS trigger
 LANGUAGE plpgsql
@@ -15,11 +20,9 @@ DECLARE
     v_dates_changed boolean :=
         (NEW.check_in, NEW.check_out) IS DISTINCT FROM (OLD.check_in, OLD.check_out);
     v_check_in_day_changed boolean :=
-        (NEW.check_in AT TIME ZONE 'Asia/Manila')::date
-            IS DISTINCT FROM (OLD.check_in AT TIME ZONE 'Asia/Manila')::date;
+        public.manila_day(NEW.check_in) IS DISTINCT FROM public.manila_day(OLD.check_in);
     v_stay_days_changed boolean := v_check_in_day_changed
-        OR (NEW.check_out AT TIME ZONE 'Asia/Manila')::date
-            IS DISTINCT FROM (OLD.check_out AT TIME ZONE 'Asia/Manila')::date;
+        OR public.manila_day(NEW.check_out) IS DISTINCT FROM public.manila_day(OLD.check_out);
     v_booking_changed boolean :=
         (NEW.payment_method, NEW.is_walk_in, NEW.num_guests)
             IS DISTINCT FROM (OLD.payment_method, OLD.is_walk_in, OLD.num_guests);
