@@ -1562,6 +1562,7 @@ export type Database = {
       };
       lock_block_units: { Args: { p_unit_ids: string[] }; Returns: undefined };
       lock_units: { Args: { p_unit_ids: string[] }; Returns: undefined };
+      manila_day: { Args: { p_instant: string }; Returns: string };
       monthly_archive_until: {
         Args: { dry_run?: boolean; final_cutoff_date: string };
         Returns: {
