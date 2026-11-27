@@ -7,14 +7,6 @@ import { useForm, type FieldValues, type UseFormReturn } from "react-hook-form";
 import { z } from "zod";
 
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
   Button,
   Callout,
   Checkbox,
@@ -24,6 +16,7 @@ import {
   FormField,
   Input,
   Label,
+  LeaveWithoutSavingDialog,
   Sheet,
   SheetContent,
   SheetDescription,
@@ -64,8 +57,7 @@ interface EditSheetProps {
 }
 
 interface EditFormProps extends Omit<EditSheetProps, "open"> {
-  /** Close that first asks when the form has unsaved changes */
-  onCancel: () => void;
+  onRequestClose: () => void;
   onDirtyChange: (isDirty: boolean) => void;
 }
 
@@ -74,8 +66,8 @@ function EditSheet({
   open,
   onClose,
   booking,
-  form: EditFormBody,
-}: EditSheetProps & { form: ComponentType<EditFormProps> }) {
+  body: EditFormBody,
+}: EditSheetProps & { body: ComponentType<EditFormProps> }) {
   const [isDirty, setIsDirty] = useState(false);
   const [confirmingLeave, setConfirmingLeave] = useState(false);
   const requestClose = () => (isDirty ? setConfirmingLeave(true) : onClose());
@@ -86,24 +78,19 @@ function EditSheet({
         <EditFormBody
           booking={booking}
           onClose={onClose}
-          onCancel={requestClose}
+          onRequestClose={requestClose}
           onDirtyChange={setIsDirty}
         />
       </SheetContent>
-      <AlertDialog open={confirmingLeave} onOpenChange={setConfirmingLeave}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Leave without saving?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Your changes to this booking are not saved. If you leave now, they are lost.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Keep editing</AlertDialogCancel>
-            <AlertDialogAction onClick={onClose}>Leave</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <LeaveWithoutSavingDialog
+        open={confirmingLeave}
+        description="Your changes to this booking are not saved. If you leave now, they are lost."
+        onKeepEditing={() => setConfirmingLeave(false)}
+        onLeave={() => {
+          setConfirmingLeave(false);
+          onClose();
+        }}
+      />
     </Sheet>
   );
 }
@@ -111,7 +98,7 @@ function EditSheet({
 function EditForm<TValues extends FieldValues>({
   booking,
   onClose,
-  onCancel,
+  onRequestClose,
   onDirtyChange,
   title,
   form,
@@ -158,7 +145,12 @@ function EditForm<TValues extends FieldValues>({
         </div>
 
         <div className="medium:flex-row medium:justify-end flex flex-col-reverse gap-2 border-t p-4">
-          <Button type="button" variant="outline" onClick={onCancel} disabled={save.isPending}>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onRequestClose}
+            disabled={save.isPending}
+          >
             Close
           </Button>
           <Button type="submit" disabled={save.isPending || !canSave}>
@@ -181,7 +173,7 @@ const guestSchema = z.object({
 
 type GuestValues = z.infer<typeof guestSchema>;
 
-export const GuestEditSheet = (props: EditSheetProps) => <EditSheet {...props} form={GuestForm} />;
+export const GuestEditSheet = (props: EditSheetProps) => <EditSheet {...props} body={GuestForm} />;
 
 /** Saves a form's changes through the shared booking update path */
 function useSaveChanges<TValues>(booking: Booking, toChanges: (values: TValues) => BookingChanges) {
@@ -236,7 +228,7 @@ const notesSchema = z.object({ special_requests: z.string(), internal_notes: z.s
 
 type NotesValues = z.infer<typeof notesSchema>;
 
-export const NotesEditSheet = (props: EditSheetProps) => <EditSheet {...props} form={NotesForm} />;
+export const NotesEditSheet = (props: EditSheetProps) => <EditSheet {...props} body={NotesForm} />;
 
 function NotesForm(props: EditFormProps) {
   const { booking } = props;
@@ -288,7 +280,7 @@ const staySchema = withStayRules(
 
 type StayValues = z.infer<typeof staySchema>;
 
-export const StayEditSheet = (props: EditSheetProps) => <EditSheet {...props} form={StayForm} />;
+export const StayEditSheet = (props: EditSheetProps) => <EditSheet {...props} body={StayForm} />;
 
 function StayForm(props: EditFormProps) {
   const { booking } = props;
