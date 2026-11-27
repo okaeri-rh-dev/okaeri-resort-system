@@ -67,6 +67,7 @@ export { TableEmptyState, type TableEmptyStateProps } from "./TableEmptyState";
 export { DataTable, type DataTableProps } from "./DataTable";
 export { Logo, type LogoProps } from "./Logo";
 export { LogoLoader, type LogoLoaderProps } from "./LogoLoader";
+export { logoLoaderSizes } from "./logo-loader-sizes";
 export { PageLoader } from "./PageLoader";
 export { BrandedScreen, type BrandedScreenProps } from "./BrandedScreen";
 export {

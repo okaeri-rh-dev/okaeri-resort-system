@@ -11,7 +11,7 @@ import { Home } from "lucide-react";
 import { describe, expect, it } from "vitest";
 import { axe } from "vitest-axe";
 
-import { AppShell, PageLoader } from "@/components/patterns";
+import { AppShell, logoLoaderSizes, PageLoader } from "@/components/patterns";
 
 const never = () => new Promise<never>(() => {});
 
@@ -52,7 +52,7 @@ describe("PageLoader", () => {
     renderRouter({ slowLayout: true });
 
     const loader = await screen.findByRole("status", { name: "Loading" });
-    expect(loader.querySelector("svg")).toHaveClass("w-[clamp(160px,60vw,360px)]");
+    expect(loader.querySelector("svg")).toHaveClass(logoLoaderSizes.full);
     expect(screen.queryByRole("navigation", { name: "Main" })).not.toBeInTheDocument();
   });
 
@@ -60,7 +60,7 @@ describe("PageLoader", () => {
     renderRouter({ slowPage: true });
 
     const loader = await screen.findByRole("status", { name: "Loading" });
-    expect(loader.querySelector("svg")).toHaveClass("w-32");
+    expect(loader.querySelector("svg")).toHaveClass(logoLoaderSizes.content);
     expect(screen.getByRole("main")).toContainElement(loader);
     expect(screen.getByRole("navigation", { name: "Main" })).toBeInTheDocument();
   });
