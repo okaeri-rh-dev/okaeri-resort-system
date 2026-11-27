@@ -2,7 +2,7 @@ import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { axe } from "vitest-axe";
 
-import { LogoLoader } from "@/components/patterns";
+import { LogoLoader, logoLoaderSizes } from "@/components/patterns";
 
 describe("LogoLoader", () => {
   it("is a status named Loading", () => {
@@ -13,12 +13,10 @@ describe("LogoLoader", () => {
 
   it("draws the splash-sized logo by default and a smaller one for content areas", () => {
     const { rerender } = render(<LogoLoader />);
-    expect(screen.getByRole("status").querySelector("svg")).toHaveClass(
-      "w-[clamp(160px,60vw,360px)]"
-    );
+    expect(screen.getByRole("status").querySelector("svg")).toHaveClass(logoLoaderSizes.full);
 
     rerender(<LogoLoader size="content" />);
-    expect(screen.getByRole("status").querySelector("svg")).toHaveClass("w-32");
+    expect(screen.getByRole("status").querySelector("svg")).toHaveClass(logoLoaderSizes.content);
   });
 
   it("shows Loading… text only under reduced motion", () => {

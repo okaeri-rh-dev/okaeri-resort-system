@@ -1,5 +1,7 @@
 import { cn } from "@/lib/utils";
 
+import { logoLoaderSizes } from "./logo-loader-sizes";
+
 // Copies of the #roof paths in public/logo.svg: a <use> clone cannot animate its paths one by one
 const roofPaths = [
   "M108.8 195.1 99.4 184.1 216.7 130.7 229 140z",
@@ -7,14 +9,9 @@ const roofPaths = [
   "M221.4 195.1 212 184.1 335 128.4 412.1 188 401 196.3 333.4 144.4z",
 ];
 
-const sizes = {
-  full: "w-[clamp(160px,60vw,360px)]",
-  content: "w-32",
-} as const;
-
 export interface LogoLoaderProps {
   /** `full`: the boot splash's size, for full-screen waits. `content`: for a content area. */
-  size?: keyof typeof sizes;
+  size?: keyof typeof logoLoaderSizes;
   /** Placement only. */
   className?: string;
 }
@@ -34,7 +31,11 @@ export interface LogoLoaderProps {
 export function LogoLoader({ size = "full", className }: LogoLoaderProps) {
   return (
     <div role="status" aria-label="Loading" className={cn("text-foreground relative", className)}>
-      <svg viewBox="16 124 480 236" aria-hidden="true" className={cn("block", sizes[size])}>
+      <svg
+        viewBox="16 124 480 236"
+        aria-hidden="true"
+        className={cn("block", logoLoaderSizes[size])}
+      >
         <g className="logo-loader-roof fill-brand">
           {roofPaths.map((path) => (
             <path key={path} d={path} />
