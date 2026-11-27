@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ComponentType, type ReactNode } from "react";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { parseISO } from "date-fns";
@@ -16,6 +16,7 @@ import {
   FormField,
   Input,
   Label,
+  LeaveWithoutSavingDialog,
   Sheet,
   SheetContent,
   SheetDescription,
@@ -55,24 +56,56 @@ interface EditSheetProps {
   onClose: () => void;
 }
 
+interface EditFormProps extends Omit<EditSheetProps, "open"> {
+  onRequestClose: () => void;
+  onDirtyChange: (isDirty: boolean) => void;
+}
+
 // SheetContent mounts the form only while open, so a closed sheet drops unsaved changes
-const EditSheet = ({ open, onClose, children }: EditSheetProps & { children: ReactNode }) => (
-  <Sheet open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
-    <SheetContent className="medium:max-w-md flex w-full flex-col gap-0 overflow-y-auto p-0">
-      {children}
-    </SheetContent>
-  </Sheet>
-);
+function EditSheet({
+  open,
+  onClose,
+  booking,
+  body: EditFormBody,
+}: EditSheetProps & { body: ComponentType<EditFormProps> }) {
+  const [isDirty, setIsDirty] = useState(false);
+  const [confirmingLeave, setConfirmingLeave] = useState(false);
+  const requestClose = () => (isDirty ? setConfirmingLeave(true) : onClose());
+
+  return (
+    <Sheet open={open} onOpenChange={(isOpen) => !isOpen && requestClose()}>
+      <SheetContent className="medium:max-w-md flex w-full flex-col gap-0 overflow-y-auto p-0">
+        <EditFormBody
+          booking={booking}
+          onClose={onClose}
+          onRequestClose={requestClose}
+          onDirtyChange={setIsDirty}
+        />
+      </SheetContent>
+      <LeaveWithoutSavingDialog
+        open={confirmingLeave}
+        description="Your changes to this booking are not saved. If you leave now, they are lost."
+        onKeepEditing={() => setConfirmingLeave(false)}
+        onLeave={() => {
+          setConfirmingLeave(false);
+          onClose();
+        }}
+      />
+    </Sheet>
+  );
+}
 
 function EditForm<TValues extends FieldValues>({
   booking,
   onClose,
+  onRequestClose,
+  onDirtyChange,
   title,
   form,
   save,
   canSave = true,
   children,
-}: Omit<EditSheetProps, "open"> & {
+}: EditFormProps & {
   title: string;
   form: UseFormReturn<TValues>;
   save: { submit: (values: TValues) => Promise<unknown>; isPending: boolean };
@@ -81,6 +114,8 @@ function EditForm<TValues extends FieldValues>({
   children: ReactNode;
 }) {
   const [refusal, setRefusal] = useState<string | null>(null);
+  const { isDirty } = form.formState;
+  useEffect(() => onDirtyChange(isDirty), [isDirty, onDirtyChange]);
 
   const onSubmit = async (values: TValues) => {
     setRefusal(null);
@@ -110,7 +145,12 @@ function EditForm<TValues extends FieldValues>({
         </div>
 
         <div className="medium:flex-row medium:justify-end flex flex-col-reverse gap-2 border-t p-4">
-          <Button type="button" variant="outline" onClick={onClose} disabled={save.isPending}>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onRequestClose}
+            disabled={save.isPending}
+          >
             Close
           </Button>
           <Button type="submit" disabled={save.isPending || !canSave}>
@@ -133,11 +173,7 @@ const guestSchema = z.object({
 
 type GuestValues = z.infer<typeof guestSchema>;
 
-export const GuestEditSheet = (props: EditSheetProps) => (
-  <EditSheet {...props}>
-    <GuestForm {...props} />
-  </EditSheet>
-);
+export const GuestEditSheet = (props: EditSheetProps) => <EditSheet {...props} body={GuestForm} />;
 
 /** Saves a form's changes through the shared booking update path */
 function useSaveChanges<TValues>(booking: Booking, toChanges: (values: TValues) => BookingChanges) {
@@ -149,7 +185,7 @@ function useSaveChanges<TValues>(booking: Booking, toChanges: (values: TValues) 
   };
 }
 
-function GuestForm(props: Omit<EditSheetProps, "open">) {
+function GuestForm(props: EditFormProps) {
   const { booking } = props;
   const save = useSaveChanges(booking, (values: GuestValues) => ({
     guest_name: values.guest_name,
@@ -192,13 +228,9 @@ const notesSchema = z.object({ special_requests: z.string(), internal_notes: z.s
 
 type NotesValues = z.infer<typeof notesSchema>;
 
-export const NotesEditSheet = (props: EditSheetProps) => (
-  <EditSheet {...props}>
-    <NotesForm {...props} />
-  </EditSheet>
-);
+export const NotesEditSheet = (props: EditSheetProps) => <EditSheet {...props} body={NotesForm} />;
 
-function NotesForm(props: Omit<EditSheetProps, "open">) {
+function NotesForm(props: EditFormProps) {
   const { booking } = props;
   const { role } = useUserRole();
   const { internalNoteOnly } = bookingEditRules(booking, role);
@@ -248,13 +280,9 @@ const staySchema = withStayRules(
 
 type StayValues = z.infer<typeof staySchema>;
 
-export const StayEditSheet = (props: EditSheetProps) => (
-  <EditSheet {...props}>
-    <StayForm {...props} />
-  </EditSheet>
-);
+export const StayEditSheet = (props: EditSheetProps) => <EditSheet {...props} body={StayForm} />;
 
-function StayForm(props: Omit<EditSheetProps, "open">) {
+function StayForm(props: EditFormProps) {
   const { booking } = props;
   const { role, isManager } = useUserRole();
   const { datesLocked, checkInLocked } = bookingEditRules(booking, role);
@@ -308,8 +336,11 @@ function StayForm(props: Omit<EditSheetProps, "open">) {
   const recomputing = isManager && showNewPrice && recompute;
 
   const setDays = (days: { check_in?: ManilaDay; check_out?: ManilaDay }) => {
-    if (days.check_in) form.setValue("check_in", days.check_in);
-    form.setValue("check_out", days.check_out ?? "", { shouldValidate: !!days.check_out });
+    if (days.check_in) form.setValue("check_in", days.check_in, { shouldDirty: true });
+    form.setValue("check_out", days.check_out ?? "", {
+      shouldDirty: true,
+      shouldValidate: !!days.check_out,
+    });
   };
 
   return (
@@ -386,7 +417,7 @@ function StayForm(props: Omit<EditSheetProps, "open">) {
       <CabinPicker
         units={units}
         cabins={cabins}
-        onChange={(next) => form.setValue("cabins", next)}
+        onChange={(next) => form.setValue("cabins", next, { shouldDirty: true })}
         hasDates={nights > 0}
         isChecking={isFetching}
         notFree={notFree}

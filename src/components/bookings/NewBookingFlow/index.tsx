@@ -4,17 +4,10 @@ import { getRouteApi, Navigate, useBlocker } from "@tanstack/react-router";
 import { ArrowLeft, Check, Loader2 } from "lucide-react";
 
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
   Button,
   Card,
   CardContent,
+  LeaveWithoutSavingDialog,
   PageBottomBar,
   PageHeader,
   toast,
@@ -241,20 +234,12 @@ export function NewBookingFlow() {
         </div>
       </PageBottomBar>
 
-      <AlertDialog open={blocker.status === "blocked"}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Leave without saving?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This booking is not saved yet. If you leave now, what you entered is lost.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => blocker.reset?.()}>Keep editing</AlertDialogCancel>
-            <AlertDialogAction onClick={() => blocker.proceed?.()}>Leave</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <LeaveWithoutSavingDialog
+        open={blocker.status === "blocked"}
+        description="This booking is not saved yet. If you leave now, what you entered is lost."
+        onKeepEditing={() => blocker.reset?.()}
+        onLeave={() => blocker.proceed?.()}
+      />
     </div>
   );
 }

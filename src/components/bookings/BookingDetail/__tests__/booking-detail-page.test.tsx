@@ -547,6 +547,7 @@ describe("BookingDetailPage", () => {
       },
     });
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
   });
 
   it("keeps the booking source of a Website booking", async () => {
@@ -590,15 +591,67 @@ describe("BookingDetailPage", () => {
     });
   });
 
-  it("drops unsaved changes when the sheet closes", async () => {
+  it("asks before Escape drops unsaved changes, and Keep editing keeps them", async () => {
     renderPage();
 
     await userEvent.click(screen.getByRole("button", { name: "Edit notes" }));
     await userEvent.type(screen.getByLabelText("Internal note"), "Draft");
     await userEvent.keyboard("{Escape}");
-    await userEvent.click(screen.getByRole("button", { name: "Edit notes" }));
+    await userEvent.click(screen.getByRole("button", { name: "Keep editing" }));
 
-    expect(screen.getByLabelText("Internal note")).toHaveValue("");
+    expect(screen.getByLabelText("Internal note")).toHaveValue("Draft");
+  });
+
+  it("drops unsaved changes when staff leave from the Close button", async () => {
+    renderPage();
+
+    await userEvent.click(screen.getByRole("button", { name: "Edit guest" }));
+    await userEvent.type(screen.getByLabelText("Guest name"), " Jr");
+    await userEvent.click(screen.getByText("Close", { selector: "button" }));
+    expect(screen.getByRole("alertdialog", { name: "Leave without saving?" })).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Leave" }));
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Edit guest" }));
+
+    expect(screen.getByLabelText("Guest name")).toHaveValue(booking.guest_name);
+  });
+
+  it("closes a sheet with no changes at once", async () => {
+    renderPage();
+
+    await userEvent.click(screen.getByRole("button", { name: "Edit guest" }));
+    await userEvent.keyboard("{Escape}");
+
+    expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
+  it("asks before Close drops changed stay dates", async () => {
+    renderPage();
+
+    await userEvent.click(screen.getByRole("button", { name: "Edit stay" }));
+    await userEvent.click(screen.getByRole("button", { name: "Stay dates" }));
+    await userEvent.click(screen.getAllByRole("button", { name: / 20th, / })[0]);
+    await userEvent.keyboard("{Escape}");
+    // The sheet also has a corner X button named Close
+    await userEvent.click(screen.getByText("Close", { selector: "button" }));
+
+    expect(screen.getByRole("alertdialog", { name: "Leave without saving?" })).toBeInTheDocument();
+  });
+
+  it("asks before closing a stay sheet with a changed cabin", async () => {
+    renderPage();
+
+    await swapCabin2ForCabin4();
+
+    for (const close of screen.getAllByRole("button", { name: "Close" })) {
+      await userEvent.click(close);
+      expect(
+        screen.getByRole("alertdialog", { name: "Leave without saving?" })
+      ).toBeInTheDocument();
+      await userEvent.click(screen.getByRole("button", { name: "Keep editing" }));
+    }
+    expect(screen.getByRole("dialog", { name: "Edit stay" })).toBeInTheDocument();
   });
 
   it("shows a database refusal in the sheet and keeps it open", async () => {

@@ -35,6 +35,10 @@ export { StatusBadge, type StatusBadgeProps } from "./StatusBadge";
 export type { StatusTone } from "./status-tone-classes";
 export { staleProps } from "./stale-props";
 export { Callout, type CalloutProps } from "./Callout";
+export {
+  LeaveWithoutSavingDialog,
+  type LeaveWithoutSavingDialogProps,
+} from "./LeaveWithoutSavingDialog";
 export { Form, FormField, type FormFieldProps } from "./FormField";
 export { SelectControl, type SelectControlProps } from "./SelectControl";
 export { PageHeader, type PageHeaderProps } from "./PageHeader";
